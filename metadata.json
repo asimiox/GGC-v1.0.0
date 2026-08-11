@@ -1,0 +1,6 @@
+{
+  "name": "GGC Mandi Bahauddin",
+  "description": "Official companion app for Government Graduate College Mandi Bahauddin",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
