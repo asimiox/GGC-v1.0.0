@@ -20,9 +20,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
@@ -51,9 +50,13 @@ import com.example.ui.theme.GgcGoldTertiary
 data class OfficialNotice(
     val id: String,
     val title: String,
+    val description: String,
     val issuer: String,
     val date: String,
     val category: String,
+    val department: String? = null,
+    val attachmentName: String? = null,
+    val attachmentUrl: String? = null,
     val hasPdf: Boolean = true,
     val isUrgent: Boolean = false
 )
@@ -62,6 +65,7 @@ data class OfficialNotice(
 fun NoticesScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("All") }
+    var selectedNotice by remember { mutableStateOf<OfficialNotice?>(null) }
 
     val filters = listOf("All", "Admissions", "Exams", "Events", "Scholarships", "General")
 
@@ -70,45 +74,60 @@ fun NoticesScreen() {
             OfficialNotice(
                 id = "1",
                 title = "Official Notification: BS 4-Year Admissions Open (Session 2026-2030) - Download Prospectus & Form",
+                description = "Online and physical applications are invited for admission to 4-Year BS Honors Degree Programs for the Academic Session 2026-2030 at Govt Graduate College Mandi Bahauddin. Interested candidates can obtain the official college prospectus and admission forms from the college main admission office or download them directly from the college web portal. Candidates must submit attested copies of Matriculation, Intermediate certificates, CNIC/B-Form, and passport-size photographs along with their application. The last date for form submission is 30th August 2026.",
                 issuer = "Office of the Principal / Admission Cell",
                 date = "10 August 2026",
                 category = "Admissions",
+                department = "Admission Office",
+                attachmentName = "BS_Admissions_Prospectus_2026.pdf",
                 hasPdf = true,
                 isUrgent = true
             ),
             OfficialNotice(
                 id = "2",
                 title = "Spring 2026 Mid-Term Examination Datesheet for BS 2nd, 4th, 6th & 8th Semesters",
+                description = "The official datesheet for Mid-Term Examinations of BS 2nd, 4th, 6th, and 8th Semesters has been released by the Controller of Examinations. All students must bring their official college identity cards and roll number slips to the examination halls. Cell phones, smart watches, and unauthorized material are strictly prohibited inside the exam centers. Exams will commence from 25th August 2026.",
                 issuer = "Controller of Examinations",
                 date = "08 August 2026",
                 category = "Exams",
+                department = "Examination Branch",
+                attachmentName = "BS_MidTerm_Datesheet_Spring2026.pdf",
                 hasPdf = true,
                 isUrgent = false
             ),
             OfficialNotice(
                 id = "3",
                 title = "HEC Need-Based & Ehsaas Undergraduate Scholarship Merit List 2026",
+                description = "The preliminary merit list of selected candidates for HEC Need-Based and Ehsaas Undergraduate Scholarships for the session 2026 has been published on the official notice board. Selected students are instructed to complete physical document verification at the Financial Aid office by 20th August 2026 to ensure timely stipend disbursement.",
                 issuer = "Financial Aid & Scholarship Committee",
                 date = "06 August 2026",
                 category = "Scholarships",
+                department = "Financial Aid Committee",
+                attachmentName = "HEC_Scholarship_MeritList_2026.pdf",
                 hasPdf = true,
                 isUrgent = false
             ),
             OfficialNotice(
                 id = "4",
                 title = "Schedule for Annual Inter-Departmental Athletics & Debate Championship",
+                description = "The Directorate of Physical Education and Student Affairs announces the schedule for the Annual Inter-Departmental Athletics, Cricket, and Debate Competitions. Student captains should register their department teams at the Sports Office before 15th August 2026.",
                 issuer = "Directorate of Physical Education",
                 date = "03 August 2026",
                 category = "Events",
+                department = "Sports & Physical Education",
+                attachmentName = null,
                 hasPdf = false,
                 isUrgent = false
             ),
             OfficialNotice(
                 id = "5",
                 title = "Submission of College & Library Clearance Forms for Graduating BS Batches",
+                description = "Graduating BS students of batch 2022-2026 are instructed to submit their completed college clearance forms, library clearance receipts, and department clearance cards to the Admin Office prior to final result card and degree issuance.",
                 issuer = "Chief Librarian / Admin Office",
                 date = "01 August 2026",
                 category = "General",
+                department = "Central Library",
+                attachmentName = "College_Clearance_Form_2026.pdf",
                 hasPdf = true,
                 isUrgent = false
             )
@@ -116,8 +135,16 @@ fun NoticesScreen() {
     }
 
     val filteredNotices = notices.filter { notice ->
-        (searchQuery.isEmpty() || notice.title.contains(searchQuery, ignoreCase = true) || notice.issuer.contains(searchQuery, ignoreCase = true)) &&
+        (searchQuery.isEmpty() || notice.title.contains(searchQuery, ignoreCase = true) || notice.issuer.contains(searchQuery, ignoreCase = true) || notice.description.contains(searchQuery, ignoreCase = true)) &&
                 (selectedFilter == "All" || notice.category.equals(selectedFilter, ignoreCase = true))
+    }
+
+    if (selectedNotice != null) {
+        NoticeDetailScreen(
+            notice = selectedNotice!!,
+            onBack = { selectedNotice = null }
+        )
+        return
     }
 
     Column(
@@ -208,102 +235,141 @@ fun NoticesScreen() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Notice Cards List
+        // Notice Cards List / Empty State
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(filteredNotices) { notice ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { /* Future notice detail viewer */ }
-                        .testTag("notice_item_${notice.id}"),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+            if (filteredNotices.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("no_notices_empty_state"),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(
-                                            if (notice.isUrgent) Color(0xFFDC2626)
-                                            else MaterialTheme.colorScheme.primaryContainer
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(36.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "No notices available.",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "There are currently no official college announcements matching your search criteria or category filter.",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(filteredNotices) { notice ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedNotice = notice }
+                            .testTag("notice_item_${notice.id}"),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(
+                                                if (notice.isUrgent) Color(0xFFDC2626)
+                                                else MaterialTheme.colorScheme.primaryContainer
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = notice.category.uppercase(),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (notice.isUrgent) Color.White else MaterialTheme.colorScheme.primary
                                         )
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
+                                    }
+                                }
+
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarToday,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = notice.category.uppercase(),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (notice.isUrgent) Color.White else MaterialTheme.colorScheme.primary
+                                        text = notice.date,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarToday,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = notice.date,
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = notice.title,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                lineHeight = 20.sp
+                            )
 
-                        Text(
-                            text = notice.title,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = 20.sp
-                        )
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Issued by: ${notice.issuer}",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
 
-                        Text(
-                            text = "Issued by: ${notice.issuer}",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        if (notice.hasPdf) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.secondaryContainer)
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PictureAsPdf,
-                                    contentDescription = "PDF Circular",
-                                    tint = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Official PDF Document Attached",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
+                            if (notice.hasPdf) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PictureAsPdf,
+                                        contentDescription = "PDF Circular",
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Official PDF Document Attached",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
                             }
                         }
                     }

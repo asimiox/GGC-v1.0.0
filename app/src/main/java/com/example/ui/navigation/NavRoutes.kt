@@ -1,13 +1,13 @@
 package com.example.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Announcement
+import androidx.compose.material.icons.automirrored.outlined.Announcement
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Announcement
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Announcement
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.School
@@ -24,6 +24,15 @@ object NavRoutes {
     const val NOTICES = "notices_tab"
     const val COLLEGE = "college_tab"
     const val PROFILE = "profile_tab"
+
+    // Major College Feature Routes
+    const val DEPARTMENTS = "departments"
+    const val DEPARTMENT_DETAIL = "department_detail"
+    const val FACULTY = "faculty"
+    const val PROGRAMS = "programs"
+    const val EVENTS = "events"
+    const val STUDENT_SECTION = "student_section"
+    const val ACADEMIC_RESOURCES = "academic_resources"
 
     // Detail Screens
     const val COLLEGE_HISTORY = "college_history"
@@ -58,8 +67,8 @@ sealed class BottomNavItem(
     object Notices : BottomNavItem(
         route = NavRoutes.NOTICES,
         title = "Notices",
-        selectedIcon = Icons.Filled.Announcement,
-        unselectedIcon = Icons.Outlined.Announcement,
+        selectedIcon = Icons.AutoMirrored.Filled.Announcement,
+        unselectedIcon = Icons.AutoMirrored.Outlined.Announcement,
         testTag = "nav_notices"
     )
 

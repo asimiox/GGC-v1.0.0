@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,21 +24,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Announcement
-import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.automirrored.filled.Announcement
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.FolderSpecial
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -79,7 +81,13 @@ fun HomeScreen(
     onNavigateToAcademics: () -> Unit,
     onNavigateToNotices: () -> Unit,
     onNavigateToCollege: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToDepartments: () -> Unit = onNavigateToAcademics,
+    onNavigateToFaculty: () -> Unit = {},
+    onNavigateToPrograms: () -> Unit = onNavigateToAcademics,
+    onNavigateToEvents: () -> Unit = {},
+    onNavigateToStudentSection: () -> Unit = onNavigateToProfile,
+    onNavigateToResources: () -> Unit = onNavigateToAcademics
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -128,7 +136,7 @@ fun HomeScreen(
                 contentScale = ContentScale.Crop
             )
 
-            // Dark Gradient Overlay for Readability
+            // Dark Overlay for Readability
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -188,7 +196,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Affiliated with University of Sargodha • Punjab Higher Education",
+                    text = "Affiliated with University of the Punjab • Punjab Higher Education",
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 11.sp
                 )
@@ -257,10 +265,10 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Quick Access Grid Section
+        // Major College Sections Grid (8 Core Areas)
         Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             Text(
-                text = "Academic Quick Access",
+                text = "College Sections & Services",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -268,59 +276,73 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            val quickActions = listOf(
+            val coreSectionsRow1 = listOf(
+                QuickActionItem(
+                    title = "College Info",
+                    subtitle = "History & Campus",
+                    icon = Icons.Default.School,
+                    tag = "qa_college_info",
+                    onClick = onNavigateToCollege
+                ),
                 QuickActionItem(
                     title = "Departments",
-                    subtitle = "BS Programs",
-                    icon = Icons.Default.School,
+                    subtitle = "BS Faculties",
+                    icon = Icons.Default.Business,
                     tag = "qa_departments",
-                    onClick = onNavigateToAcademics
+                    onClick = onNavigateToDepartments
                 ),
+                QuickActionItem(
+                    title = "Faculty",
+                    subtitle = "Staff Directory",
+                    icon = Icons.Default.People,
+                    tag = "qa_faculty",
+                    onClick = onNavigateToFaculty
+                ),
+                QuickActionItem(
+                    title = "Programs",
+                    subtitle = "BS Honors",
+                    icon = Icons.AutoMirrored.Filled.MenuBook,
+                    tag = "qa_programs",
+                    onClick = onNavigateToPrograms
+                )
+            )
+
+            val coreSectionsRow2 = listOf(
                 QuickActionItem(
                     title = "Notices",
                     subtitle = "Circulars & Exams",
-                    icon = Icons.Default.Announcement,
+                    icon = Icons.AutoMirrored.Filled.Announcement,
                     tag = "qa_notices",
                     onClick = onNavigateToNotices
                 ),
                 QuickActionItem(
-                    title = "Notes & Papers",
-                    subtitle = "Past Papers & PDFs",
-                    icon = Icons.Default.MenuBook,
-                    tag = "qa_notes",
-                    onClick = onNavigateToAcademics
+                    title = "Events",
+                    subtitle = "Sports & Seminars",
+                    icon = Icons.Default.Event,
+                    tag = "qa_events",
+                    onClick = onNavigateToEvents
                 ),
                 QuickActionItem(
-                    title = "Timetable",
-                    subtitle = "Classes & Exams",
-                    icon = Icons.Default.DateRange,
-                    tag = "qa_timetable",
-                    onClick = onNavigateToAcademics
+                    title = "Student Section",
+                    subtitle = "Portal & Rules",
+                    icon = Icons.Default.AccountCircle,
+                    tag = "qa_student_section",
+                    onClick = onNavigateToStudentSection
                 ),
                 QuickActionItem(
-                    title = "GPA Calculator",
-                    subtitle = "Academic Tool",
-                    icon = Icons.Default.Calculate,
-                    tag = "qa_gpa_calc",
-                    onClick = onNavigateToProfile
-                ),
-                QuickActionItem(
-                    title = "Official Website",
-                    subtitle = "ggcmbdin.edu.pk",
-                    icon = Icons.Default.Language,
-                    tag = "qa_website",
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.ggcmbdin.edu.pk/"))
-                        context.startActivity(intent)
-                    }
+                    title = "Resources",
+                    subtitle = "Notes & Papers",
+                    icon = Icons.Default.FolderSpecial,
+                    tag = "qa_resources",
+                    onClick = onNavigateToResources
                 )
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                quickActions.take(3).forEach { action ->
+                coreSectionsRow1.forEach { action ->
                     QuickActionCard(
                         action = action,
                         modifier = Modifier.weight(1f)
@@ -328,18 +350,62 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                quickActions.drop(3).take(3).forEach { action ->
+                coreSectionsRow2.forEach { action ->
                     QuickActionCard(
                         action = action,
                         modifier = Modifier.weight(1f)
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Utility Shortcut Row (Timetable, GPA Calculator, Web Portal)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickActionCard(
+                    action = QuickActionItem(
+                        title = "Timetable",
+                        subtitle = "Class Schedule",
+                        icon = Icons.Default.DateRange,
+                        tag = "qa_timetable",
+                        onClick = onNavigateToAcademics
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+
+                QuickActionCard(
+                    action = QuickActionItem(
+                        title = "GPA Calc",
+                        subtitle = "CGPA Tool",
+                        icon = Icons.Default.Calculate,
+                        tag = "qa_gpa_calc",
+                        onClick = onNavigateToProfile
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+
+                QuickActionCard(
+                    action = QuickActionItem(
+                        title = "Web Portal",
+                        subtitle = "ggcmbdin.edu.pk",
+                        icon = Icons.Default.Language,
+                        tag = "qa_website",
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.ggcmbdin.edu.pk/"))
+                            context.startActivity(intent)
+                        }
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
 
@@ -542,13 +608,13 @@ fun QuickActionCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 6.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(38.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
@@ -557,15 +623,15 @@ fun QuickActionCard(
                     imageVector = action.icon,
                     contentDescription = action.title,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = action.title,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -574,7 +640,7 @@ fun QuickActionCard(
 
             Text(
                 text = action.subtitle,
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -599,3 +665,4 @@ fun StatItem(number: String, label: String) {
         )
     }
 }
+

@@ -134,7 +134,7 @@ fun CollegeInfoScreen() {
             InfoCard(
                 title = "College History & Legacy",
                 icon = Icons.Default.History,
-                content = "Government Graduate College Mandi Bahauddin was established in 1959 to serve the educational needs of Mandi Bahauddin and surrounding districts. Over six decades, it has evolved into a premier postgraduate institution affiliated with the University of Sargodha, offering 4-Year BS Honors programs across Sciences, Arts, Humanities, Commerce, and Information Technology."
+                content = "Government Graduate College Mandi Bahauddin was established in 1959 to serve the educational needs of Mandi Bahauddin and surrounding districts. Over six decades, it has evolved into a premier postgraduate institution affiliated with the University of the Punjab, offering 4-Year BS Honors programs across Sciences, Arts, Humanities, Commerce, and Information Technology."
             )
 
             Spacer(modifier = Modifier.height(14.dp))
