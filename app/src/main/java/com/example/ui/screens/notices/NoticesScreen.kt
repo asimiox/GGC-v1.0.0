@@ -67,71 +67,10 @@ fun NoticesScreen() {
     var selectedFilter by remember { mutableStateOf("All") }
     var selectedNotice by remember { mutableStateOf<OfficialNotice?>(null) }
 
-    val filters = listOf("All", "Admissions", "Exams", "Events", "Scholarships", "General")
+    val filters = listOf("All", "Admissions", "Examinations", "Academic", "General", "Department")
 
     val notices = remember {
-        listOf(
-            OfficialNotice(
-                id = "1",
-                title = "Official Notification: BS 4-Year Admissions Open (Session 2026-2030) - Download Prospectus & Form",
-                description = "Online and physical applications are invited for admission to 4-Year BS Honors Degree Programs for the Academic Session 2026-2030 at Govt Graduate College Mandi Bahauddin. Interested candidates can obtain the official college prospectus and admission forms from the college main admission office or download them directly from the college web portal. Candidates must submit attested copies of Matriculation, Intermediate certificates, CNIC/B-Form, and passport-size photographs along with their application. The last date for form submission is 30th August 2026.",
-                issuer = "Office of the Principal / Admission Cell",
-                date = "10 August 2026",
-                category = "Admissions",
-                department = "Admission Office",
-                attachmentName = "BS_Admissions_Prospectus_2026.pdf",
-                hasPdf = true,
-                isUrgent = true
-            ),
-            OfficialNotice(
-                id = "2",
-                title = "Spring 2026 Mid-Term Examination Datesheet for BS 2nd, 4th, 6th & 8th Semesters",
-                description = "The official datesheet for Mid-Term Examinations of BS 2nd, 4th, 6th, and 8th Semesters has been released by the Controller of Examinations. All students must bring their official college identity cards and roll number slips to the examination halls. Cell phones, smart watches, and unauthorized material are strictly prohibited inside the exam centers. Exams will commence from 25th August 2026.",
-                issuer = "Controller of Examinations",
-                date = "08 August 2026",
-                category = "Exams",
-                department = "Examination Branch",
-                attachmentName = "BS_MidTerm_Datesheet_Spring2026.pdf",
-                hasPdf = true,
-                isUrgent = false
-            ),
-            OfficialNotice(
-                id = "3",
-                title = "HEC Need-Based & Ehsaas Undergraduate Scholarship Merit List 2026",
-                description = "The preliminary merit list of selected candidates for HEC Need-Based and Ehsaas Undergraduate Scholarships for the session 2026 has been published on the official notice board. Selected students are instructed to complete physical document verification at the Financial Aid office by 20th August 2026 to ensure timely stipend disbursement.",
-                issuer = "Financial Aid & Scholarship Committee",
-                date = "06 August 2026",
-                category = "Scholarships",
-                department = "Financial Aid Committee",
-                attachmentName = "HEC_Scholarship_MeritList_2026.pdf",
-                hasPdf = true,
-                isUrgent = false
-            ),
-            OfficialNotice(
-                id = "4",
-                title = "Schedule for Annual Inter-Departmental Athletics & Debate Championship",
-                description = "The Directorate of Physical Education and Student Affairs announces the schedule for the Annual Inter-Departmental Athletics, Cricket, and Debate Competitions. Student captains should register their department teams at the Sports Office before 15th August 2026.",
-                issuer = "Directorate of Physical Education",
-                date = "03 August 2026",
-                category = "Events",
-                department = "Sports & Physical Education",
-                attachmentName = null,
-                hasPdf = false,
-                isUrgent = false
-            ),
-            OfficialNotice(
-                id = "5",
-                title = "Submission of College & Library Clearance Forms for Graduating BS Batches",
-                description = "Graduating BS students of batch 2022-2026 are instructed to submit their completed college clearance forms, library clearance receipts, and department clearance cards to the Admin Office prior to final result card and degree issuance.",
-                issuer = "Chief Librarian / Admin Office",
-                date = "01 August 2026",
-                category = "General",
-                department = "Central Library",
-                attachmentName = "College_Clearance_Form_2026.pdf",
-                hasPdf = true,
-                isUrgent = false
-            )
-        )
+        emptyList<OfficialNotice>()
     }
 
     val filteredNotices = notices.filter { notice ->
