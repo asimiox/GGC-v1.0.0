@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Badge Circle -->
+    <path
+        android:fillColor="#004D40"
+        android:pathData="M60,4 C29.07,4 4,29.07 4,60 C4,90.93 29.07,116 60,116 C90.93,116 116,90.93 116,60 C116,29.07 90.93,4 60,4 Z"/>
+
+    <!-- Inner Gold Ring -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M60,12 C33.49,12 12,33.49 12,60 C12,86.51 33.49,108 60,108 C86.51,108 108,86.51 108,60 C108,33.49 86.51,12 60,12 Z M60,18 C83.19,18 102,36.81 102,60 C102,83.19 83.19,102 60,102 C36.81,102 18,83.19 18,60 C18,36.81 36.81,18 60,18 Z"/>
+
+    <!-- Inner Dark Shield Backdrop -->
+    <path
+        android:fillColor="#00251A"
+        android:pathData="M60,22 C40,22 28,32 28,58 C28,82 48,94 60,98 C72,94 92,82 92,58 C92,32 80,22 60,22 Z"/>
+
+    <!-- Graduation Cap Top (Mortarboard - White) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,32 L86,43 L60,54 L34,43 Z"/>
+
+    <!-- Cap Skullcap -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M46,49.5 L46,58 C46,62 52,65 60,65 C68,65 74,62 74,58 L74,49.5 L60,56 Z"/>
+
+    <!-- Tassel (Gold) -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M80,45.5 L80,60 C80,61.5 78.8,62.5 77.5,62.5 C76.2,62.5 75,61.5 75,60 L75,47.5 Z"/>
+
+    <!-- Open Book (Left Page - White) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,68 C44,66 54,67.5 59,71 L59,84 C54,81 44,79.5 36,81 Z"/>
+
+    <!-- Open Book (Right Page - Light Grey) -->
+    <path
+        android:fillColor="#ECEFF1"
+        android:pathData="M84,68 C76,66 66,67.5 61,71 L61,84 C66,81 76,79.5 84,81 Z"/>
+
+    <!-- Book Spine (Gold) -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M59,71 L61,71 L61,84.5 L59,84.5 Z"/>
+
+    <!-- Star of Academic Excellence -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M60,14 L61.8,17.5 L65.5,18 L62.8,20.5 L63.5,24.2 L60,22.2 L56.5,24.2 L57.2,20.5 L54.5,18 L58.2,17.5 Z"/>
+</vector>

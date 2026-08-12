@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "GGC Mandi Bahauddin"
+rootProject.name = "GGC M.B.DIN"
 
 include(":app")

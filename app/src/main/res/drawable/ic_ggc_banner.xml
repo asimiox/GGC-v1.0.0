@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="200dp"
+    android:viewportWidth="400"
+    android:viewportHeight="200">
+
+    <!-- Background Gradient Base -->
+    <path
+        android:fillColor="#004D40"
+        android:pathData="M0,0h400v200h-400z"/>
+
+    <!-- Subtle Background Arch Sky Texture -->
+    <path
+        android:fillColor="#00352C"
+        android:pathData="M0,0 C120,40 280,40 400,0 L400,120 C280,150 120,150 0,120 Z"/>
+
+    <!-- Decorative Sun Rays / Rays of Knowledge -->
+    <path
+        android:fillColor="#1A5C52"
+        android:pathData="M200,80 L80,0 L120,0 Z M200,80 L280,0 L320,0 Z M200,80 L0,40 L0,70 Z M200,80 L400,40 L400,70 Z"/>
+
+    <!-- Central College Main Building Facade Silhouette -->
+    <!-- Dome -->
+    <path
+        android:fillColor="#80CBC4"
+        android:pathData="M185,50 C185,38 215,38 215,50 Z"/>
+
+    <!-- Spire/Crescent Gold Accent -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M198,30 L202,30 L202,38 L198,38 Z M197,32 L203,32 L200,26 Z"/>
+
+    <!-- Main Central Arch/Pediment -->
+    <path
+        android:fillColor="#E0F2F1"
+        android:pathData="M160,70 L200,50 L240,70 L240,140 L160,140 Z"/>
+
+    <!-- Pediment Columns -->
+    <path
+        android:fillColor="#004D40"
+        android:pathData="M172,85 h10 v55 h-10 z M195,85 h10 v55 h-10 z M218,85 h10 v55 h-10 z"/>
+
+    <!-- Main Entrance Door Arch -->
+    <path
+        android:fillColor="#00251A"
+        android:pathData="M188,140 V115 C188,108 212,108 212,115 V140 Z"/>
+
+    <!-- Left Wing -->
+    <path
+        android:fillColor="#B2DFDB"
+        android:pathData="M60,80 L160,80 L160,140 L60,140 Z"/>
+    <!-- Left Wing Windows -->
+    <path
+        android:fillColor="#004D40"
+        android:pathData="M75,95 h15 v20 h-15 z M105,95 h15 v20 h-15 z M135,95 h15 v20 h-15 z"/>
+
+    <!-- Right Wing -->
+    <path
+        android:fillColor="#B2DFDB"
+        android:pathData="M240,80 L340,80 L340,140 L240,140 Z"/>
+    <!-- Right Wing Windows -->
+    <path
+        android:fillColor="#004D40"
+        android:pathData="M250,95 h15 v20 h-15 z M280,95 h15 v20 h-15 z M310,95 h15 v20 h-15 z"/>
+
+    <!-- Ground Steps / Lawn Podium -->
+    <path
+        android:fillColor="#00251A"
+        android:pathData="M40,140 H360 V150 H40 Z M30,150 H370 V165 H30 Z"/>
+
+    <!-- Lush Campus Lawn Greenery Base -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M0,165 Q200,155 400,165 V200 H0 Z"/>
+
+    <!-- Gold Accent Ribbon at Bottom -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M0,195 H400 V200 H0 Z"/>
+</vector>

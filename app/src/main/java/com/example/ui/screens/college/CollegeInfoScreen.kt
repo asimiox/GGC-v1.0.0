@@ -75,8 +75,8 @@ fun CollegeInfoScreen() {
                 .height(180.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.img_hero_banner_1786452292065),
-                contentDescription = "GGC Mandi Bahauddin Campus",
+                painter = painterResource(id = R.drawable.ic_ggc_banner),
+                contentDescription = "GGC M.B.DIN Campus",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -103,7 +103,7 @@ fun CollegeInfoScreen() {
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_app_icon_1786452270438),
+                        painter = painterResource(id = R.drawable.ic_ggc_logo),
                         contentDescription = "College Emblem",
                         modifier = Modifier.fillMaxSize()
                     )

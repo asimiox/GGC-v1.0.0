@@ -63,7 +63,7 @@ fun OnboardingScreen(
         listOf(
             OnboardingPage(
                 title = "Academic Notes & Course Outlines",
-                description = "Access syllabus outlines, lecture notes, textbook PDFs, and past examination papers curated for GGC Mandi Bahauddin students.",
+                description = "Access syllabus outlines, lecture notes, textbook PDFs, and past examination papers curated for GGC M.B.DIN students.",
                 icon = Icons.Default.MenuBook,
                 badgeText = "ACADEMIC HUB"
             ),
@@ -100,7 +100,7 @@ fun OnboardingScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(id = R.drawable.img_app_icon_1786452270438),
+                    painter = painterResource(id = R.drawable.ic_ggc_logo),
                     contentDescription = "GGC Logo",
                     modifier = Modifier.size(28.dp)
                 )

@@ -89,8 +89,8 @@ fun SplashScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.img_app_icon_1786452270438),
-                    contentDescription = "GGC Mandi Bahauddin Crest",
+                    painter = painterResource(id = R.drawable.ic_ggc_logo),
+                    contentDescription = "GGC M.B.DIN Crest",
                     modifier = Modifier.fillMaxSize()
                 )
             }

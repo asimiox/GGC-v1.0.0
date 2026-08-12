@@ -26,7 +26,28 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Prepare Release Keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Using production keystore from GitHub Secrets"
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ runner.temp }}/release.keystore
+            echo "KEYSTORE_PASS=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS_NAME=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASS=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "Generating automated release keystore for build"
+            keytool -genkeypair -v -keystore ${{ runner.temp }}/release.keystore -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=GGC, OU=IT, O=GGC, L=M B Din, S=Punjab, C=PK"
+            echo "KEYSTORE_PASS=android" >> $GITHUB_ENV
+            echo "KEY_ALIAS_NAME=upload" >> $GITHUB_ENV
+            echo "KEY_PASS=android" >> $GITHUB_ENV
+          fi
+
       - name: Build Release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASS }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS_NAME }}
+          KEY_PASSWORD: ${{ env.KEY_PASS }}
         run: gradle assembleRelease --stacktrace
 
       - name: Upload Release APK

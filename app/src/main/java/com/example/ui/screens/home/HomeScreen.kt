@@ -122,8 +122,8 @@ fun HomeScreen(
                 .height(200.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.img_hero_banner_1786452292065),
-                contentDescription = "GGC Mandi Bahauddin Campus",
+                painter = painterResource(id = R.drawable.ic_ggc_banner),
+                contentDescription = "GGC M.B.DIN Campus",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -151,7 +151,7 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.img_app_icon_1786452270438),
+                            painter = painterResource(id = R.drawable.ic_ggc_logo),
                             contentDescription = "GGC Crest",
                             modifier = Modifier.size(32.dp)
                         )
@@ -481,7 +481,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "\"Welcome to GGC Mandi Bahauddin. Our institution stands dedicated to academic excellence, character building, and empowering youth with contemporary higher education since 1959.\"",
+                    text = "\"Welcome to GGC M.B.DIN. Our institution stands dedicated to academic excellence, character building, and empowering youth with contemporary higher education since 1959.\"",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = 19.sp

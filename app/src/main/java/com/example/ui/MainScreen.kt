@@ -29,7 +29,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             GgcTopAppBar(
-                title = "GGC Mandi Bahauddin",
+                title = "GGC M.B.DIN",
                 subtitle = when (currentTab) {
                     NavRoutes.HOME -> "Official Companion App"
                     NavRoutes.ACADEMICS -> "Academic Programs & Courses"

@@ -37,7 +37,7 @@ import com.example.ui.theme.GgcGoldTertiary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GgcTopAppBar(
-    title: String = "GGC Mandi Bahauddin",
+    title: String = "GGC M.B.DIN",
     subtitle: String = "Official College Companion",
     onNotificationClick: (() -> Unit)? = null,
     onAdminClick: (() -> Unit)? = null
@@ -63,7 +63,7 @@ fun GgcTopAppBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_app_icon_1786452270438),
+                        painter = painterResource(id = R.drawable.ic_ggc_logo),
                         contentDescription = "GGC Emblem",
                         modifier = Modifier
                             .size(36.dp)

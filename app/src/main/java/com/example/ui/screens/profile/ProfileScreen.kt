@@ -99,7 +99,7 @@ fun ProfileScreen() {
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.img_app_icon_1786452270438),
+                        painter = painterResource(id = R.drawable.ic_ggc_logo),
                         contentDescription = "User Avatar",
                         modifier = Modifier.fillMaxSize()
                     )
@@ -108,7 +108,7 @@ fun ProfileScreen() {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "GGC Mandi Bahauddin",
+                    text = "GGC M.B.DIN",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
