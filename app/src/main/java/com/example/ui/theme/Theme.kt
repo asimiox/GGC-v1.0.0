@@ -12,10 +12,10 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme =
   darkColorScheme(
-    primary = GgcGreenPrimaryDarkTheme,
-    onPrimary = GgcGreenPrimaryDark,
-    primaryContainer = GgcGreenContainerDarkTheme,
-    secondary = GgcNavySecondaryDarkTheme,
+    primary = GgcNavyPrimaryDarkTheme,
+    onPrimary = GgcNavyPrimaryDark,
+    primaryContainer = GgcNavyContainerDarkTheme,
+    secondary = GgcNavyPrimaryDarkTheme,
     tertiary = GgcGoldTertiary,
     background = GgcBackgroundDark,
     surface = GgcSurfaceDark,
@@ -25,11 +25,11 @@ private val DarkColorScheme =
 
 private val LightColorScheme =
   lightColorScheme(
-    primary = GgcGreenPrimary,
+    primary = GgcNavyPrimary,
     onPrimary = GgcSurfaceLight,
-    primaryContainer = GgcGreenContainer,
-    onPrimaryContainer = GgcGreenOnContainer,
-    secondary = GgcNavySecondary,
+    primaryContainer = GgcNavyContainer,
+    onPrimaryContainer = GgcNavyOnContainer,
+    secondary = GgcNavyPrimary,
     secondaryContainer = GgcNavyContainer,
     onSecondaryContainer = GgcNavyOnContainer,
     tertiary = GgcGoldTertiary,

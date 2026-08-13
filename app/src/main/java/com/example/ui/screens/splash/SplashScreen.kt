@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.ui.theme.GgcGoldTertiary
-import com.example.ui.theme.GgcGreenPrimary
+import com.example.ui.theme.GgcNavyPrimary
 import kotlinx.coroutines.delay
 
 @Composable
@@ -66,7 +66,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(GgcGreenPrimary)
+            .background(GgcNavyPrimary)
             .testTag("splash_screen_container"),
         contentAlignment = Alignment.Center
     ) {
@@ -121,7 +121,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Established 1959 • Affiliated with UOS",
+                text = "Established 1959 • Affiliated with Punjab University",
                 fontSize = 12.sp,
                 color = Color.White.copy(alpha = 0.85f),
                 fontWeight = FontWeight.Medium
@@ -138,7 +138,7 @@ fun SplashScreen(
 
         // Bottom Footer
         Text(
-            text = "Official Companion Mobile Application",
+            text = "GGC M.B.Din Official App",
             fontSize = 11.sp,
             color = Color.White.copy(alpha = 0.7f),
             modifier = Modifier

@@ -5,53 +5,49 @@
     android:viewportWidth="120"
     android:viewportHeight="120">
 
-    <!-- Background Badge Circle -->
-    <path
-        android:fillColor="#004D40"
-        android:pathData="M60,4 C29.07,4 4,29.07 4,60 C4,90.93 29.07,116 60,116 C90.93,116 116,90.93 116,60 C116,29.07 90.93,4 60,4 Z"/>
-
-    <!-- Inner Gold Ring -->
-    <path
-        android:fillColor="#FFC107"
-        android:pathData="M60,12 C33.49,12 12,33.49 12,60 C12,86.51 33.49,108 60,108 C86.51,108 108,86.51 108,60 C108,33.49 86.51,12 60,12 Z M60,18 C83.19,18 102,36.81 102,60 C102,83.19 83.19,102 60,102 C36.81,102 18,83.19 18,60 C18,36.81 36.81,18 60,18 Z"/>
-
-    <!-- Inner Dark Shield Backdrop -->
-    <path
-        android:fillColor="#00251A"
-        android:pathData="M60,22 C40,22 28,32 28,58 C28,82 48,94 60,98 C72,94 92,82 92,58 C92,32 80,22 60,22 Z"/>
-
-    <!-- Graduation Cap Top (Mortarboard - White) -->
+    <!-- Background Base White Container -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M60,32 L86,43 L60,54 L34,43 Z"/>
+        android:pathData="M0,0 h120 v120 h-120 Z"/>
 
-    <!-- Cap Skullcap -->
+    <!-- Main Shield Crest Body (#061B52 Navy) -->
     <path
-        android:fillColor="#E0E0E0"
-        android:pathData="M46,49.5 L46,58 C46,62 52,65 60,65 C68,65 74,62 74,58 L74,49.5 L60,56 Z"/>
+        android:fillColor="#061B52"
+        android:pathData="M30,12 Q60,8 90,12 C90,12 96,48 90,62 C82,78 60,90 60,90 C60,90 38,78 30,62 C24,48 30,12 30,12 Z"/>
 
-    <!-- Tassel (Gold) -->
-    <path
-        android:fillColor="#FFD54F"
-        android:pathData="M80,45.5 L80,60 C80,61.5 78.8,62.5 77.5,62.5 C76.2,62.5 75,61.5 75,60 L75,47.5 Z"/>
-
-    <!-- Open Book (Left Page - White) -->
+    <!-- White Crescent Moon Inside Shield -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M36,68 C44,66 54,67.5 59,71 L59,84 C54,81 44,79.5 36,81 Z"/>
+        android:pathData="M60,22 C46,22 38,34 38,48 C38,62 48,72 62,72 C52,72 44,64 44,48 C44,34 52,24 60,22 Z"/>
 
-    <!-- Open Book (Right Page - Light Grey) -->
+    <!-- White Minaret & Mosque Motif inside Crescent -->
     <path
-        android:fillColor="#ECEFF1"
-        android:pathData="M84,68 C76,66 66,67.5 61,71 L61,84 C66,81 76,79.5 84,81 Z"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M56,38 h4 v20 h-4 Z M58,32 l3,6 h-6 Z M64,46 h10 v12 h-10 Z M69,40 a5,5 0 0,1 5,6 h-10 a5,5 0 0,1 5,-6 Z"/>
 
-    <!-- Book Spine (Gold) -->
+    <!-- White Five-Pointed Crescent Star -->
     <path
-        android:fillColor="#FFC107"
-        android:pathData="M59,71 L61,71 L61,84.5 L59,84.5 Z"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,22 l1.8,3.6 4,0.6 -2.9,2.8 0.7,4 -3.6,-1.9 -3.6,1.9 0.7,-4 -2.9,-2.8 4,-0.6 Z"/>
 
-    <!-- Star of Academic Excellence -->
+    <!-- Official Motto Ribbon Banner (#061B52 Navy) -->
     <path
-        android:fillColor="#FFC107"
-        android:pathData="M60,14 L61.8,17.5 L65.5,18 L62.8,20.5 L63.5,24.2 L60,22.2 L56.5,24.2 L57.2,20.5 L54.5,18 L58.2,17.5 Z"/>
+        android:fillColor="#061B52"
+        android:pathData="M22,94 L30,86 L90,86 L98,94 L90,102 L30,102 Z"/>
+
+    <!-- Left Star on Ribbon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,94 l1.2,2.4 2.6,0.4 -1.9,1.8 0.5,2.6 -2.4,-1.2 -2.4,1.2 0.5,-2.6 -1.9,-1.8 2.6,-0.4 Z"/>
+
+    <!-- Right Star on Ribbon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M88,94 l1.2,2.4 2.6,0.4 -1.9,1.8 0.5,2.6 -2.4,-1.2 -2.4,1.2 0.5,-2.6 -1.9,-1.8 2.6,-0.4 Z"/>
+
+    <!-- Ribbon Fold Accent Cuts -->
+    <path
+        android:fillColor="#030D2B"
+        android:pathData="M22,94 L30,86 L30,94 Z M98,94 L90,86 L90,94 Z"/>
+
 </vector>

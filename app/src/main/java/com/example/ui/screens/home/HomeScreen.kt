@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.People
@@ -98,6 +99,13 @@ fun HomeScreen(
             icon = Icons.AutoMirrored.Filled.MenuBook,
             testTag = "home_service_programs",
             onClick = onNavigateToPrograms
+        ),
+        CoreServiceItem(
+            title = "Events & Activities",
+            subtitle = "Academic Seminars, Workshops & Sports",
+            icon = Icons.Default.Event,
+            testTag = "home_service_events",
+            onClick = onNavigateToEvents
         )
     )
 

@@ -38,8 +38,8 @@ import com.example.ui.theme.GgcGoldTertiary
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GgcTopAppBar(
-    title: String = "GGC M.B.DIN",
-    subtitle: String = "Official College Companion",
+    title: String = "GGC M.B.Din",
+    subtitle: String = "Official App",
     onBackClick: (() -> Unit)? = null,
     onNotificationClick: (() -> Unit)? = null,
     onAdminClick: (() -> Unit)? = null
@@ -69,12 +69,12 @@ fun GgcTopAppBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(vertical = 4.dp)
             ) {
-                // College Crest / Logo
+                // College Crest / Logo with official white background
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(GgcGoldTertiary)
+                        .background(Color.White)
                         .padding(2.dp),
                     contentAlignment = Alignment.Center
                 ) {

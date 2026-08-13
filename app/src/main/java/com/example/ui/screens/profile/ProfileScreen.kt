@@ -266,7 +266,7 @@ fun ProfileScreen() {
                     ProfileMenuRow(
                         icon = Icons.Default.Info,
                         title = "Version Information",
-                        subtitle = "v1.0.0 (Build 1) • Official Companion Release",
+                        subtitle = "v1.0.0 (Build 1) • GGC M.B.Din Official App",
                         tag = "menu_version",
                         onClick = { }
                     )

@@ -19,6 +19,7 @@ import com.example.ui.screens.academics.components.FacultyScreen
 import com.example.ui.screens.academics.components.ProgramsScreen
 import com.example.ui.screens.college.CollegeInfoScreen
 import com.example.ui.screens.common.ComingSoonScreen
+import com.example.ui.screens.events.EventsScreen
 import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.notices.NoticesScreen
 import com.example.ui.screens.profile.ProfileScreen
@@ -37,9 +38,9 @@ fun MainScreen(
     Scaffold(
         topBar = {
             GgcTopAppBar(
-                title = "GGC M.B.DIN",
+                title = "GGC M.B.Din",
                 subtitle = when (currentRoute) {
-                    NavRoutes.HOME -> "Official Companion App"
+                    NavRoutes.HOME -> "Official App"
                     NavRoutes.ACADEMICS, NavRoutes.DEPARTMENTS, NavRoutes.PROGRAMS -> "Academic Programs & Courses"
                     NavRoutes.NOTICES -> "Verified Official Notices"
                     NavRoutes.COLLEGE -> "College Information & History"
@@ -96,11 +97,8 @@ fun MainScreen(
                 NavRoutes.NOTICES -> NoticesScreen()
                 NavRoutes.COLLEGE -> CollegeInfoScreen()
                 NavRoutes.PROFILE -> ProfileScreen()
-                NavRoutes.EVENTS -> ComingSoonScreen(
-                    title = "College Events & Activities",
-                    description = "Official schedule for sports week, academic seminars, and cultural events at GGC M.B.DIN will be updated soon.",
-                    onNavigateBack = { currentRoute = NavRoutes.HOME },
-                    onNavigateToNotices = { currentRoute = NavRoutes.NOTICES }
+                NavRoutes.EVENTS -> EventsScreen(
+                    onBack = { currentRoute = NavRoutes.HOME }
                 )
                 NavRoutes.STUDENT_SECTION -> ComingSoonScreen(
                     title = "Student Section & Portal",
