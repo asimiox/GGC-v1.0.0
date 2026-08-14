@@ -1,7 +1,9 @@
 package com.example.ui.screens.academics.components
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,12 +47,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.screens.academics.data.AcademicData
+import com.example.ui.theme.GgcGoldTertiary
 
 @Composable
 fun FacultyScreen(
@@ -221,22 +227,26 @@ fun FacultyScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
+                                val photoDrawable = faculty.photoResId ?: R.drawable.ic_faculty_placeholder
                                 Box(
                                     modifier = Modifier
-                                        .size(48.dp)
+                                        .size(54.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .border(1.5.dp, GgcGoldTertiary, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = faculty.name,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(26.dp)
+                                    Image(
+                                        painter = painterResource(id = photoDrawable),
+                                        contentDescription = "Photo of ${faculty.name}",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(14.dp))
 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(

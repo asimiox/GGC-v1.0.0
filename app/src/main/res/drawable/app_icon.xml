@@ -1,27 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
 
-    <!-- Transparent canvas wrapper -->
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M0,0h108v108h-108z"/>
-
-    <!-- Scaled & Centered GGC Official Emblem within 66dp safe zone -->
-    <group
-        android:scaleX="0.48"
-        android:scaleY="0.48"
-        android:pivotX="100"
-        android:pivotY="100"
-        android:translateX="6.0"
-        android:translateY="3.0">
-
-        <!-- Shield Base Shadow / Glow -->
+    <!-- Group containing the complete official emblem -->
+    <group>
+        <!-- Shield Base Shadow / Outer Glow -->
         <path
-            android:fillColor="#030D2B"
+            android:fillColor="#0B132B"
             android:pathData="M100,16 C125,16 138,20 148,22 C154,23 158,28 156,36 C153,52 153,68 164,74 C168,76 168,82 165,86 C155,100 142,126 100,146 C58,126 45,100 35,86 C32,82 32,76 36,74 C47,68 47,52 44,36 C42,28 46,23 52,22 C62,20 75,16 100,16 Z" />
 
         <!-- Outer Shield Border (Gold Trim) -->
@@ -54,7 +42,7 @@
             android:fillColor="#FFFFFF"
             android:pathData="M117,45 L119,51 L125,51 L120,55 L122,61 L117,57 L112,61 L114,55 L109,51 L115,51 Z" />
 
-        <!-- Architectural College Minaret / Tower Silhouette -->
+        <!-- Architectural College Minaret / Tower Silhouette (Inside Crescent - White) -->
         <path
             android:fillColor="#FFFFFF"
             android:pathData="M100,50 C98,50 96,52 96,54 L104,54 C104,52 102,50 100,50 Z M99.5,46 L100.5,46 L100.5,50 L99.5,50 Z M100,44.5 L101,46 L99,46 Z" />
@@ -68,7 +56,7 @@
             android:fillColor="#061B52"
             android:pathData="M98,60 C98,59 102,59 102,60 L102,64 L98,64 Z M98,66 C98,65 102,65 102,66 L102,70 L98,70 Z" />
 
-        <!-- Open Book of Knowledge -->
+        <!-- Open Book of Knowledge at Base of Minaret (White & Gold) -->
         <path
             android:fillColor="#FFFFFF"
             android:pathData="M88,80 C93,78 98,79 100,81 C102,79 107,78 112,80 L112,87 C107,85 102,86 100,88 C98,86 93,85 88,87 Z" />
@@ -76,7 +64,7 @@
             android:fillColor="#C59B27"
             android:pathData="M99.5,81 L100.5,81 L100.5,88 L99.5,88 Z" />
 
-        <!-- Motto Ribbon Banner at Bottom -->
+        <!-- Official Institutional Motto Ribbon Banner at Bottom -->
         <path
             android:fillColor="#030D2B"
             android:pathData="M22,142 L42,130 L42,154 L22,166 L30,154 Z M178,142 L158,130 L158,154 L178,166 L170,154 Z" />
@@ -87,7 +75,7 @@
             android:fillColor="#061B52"
             android:pathData="M40,138 C60,149 140,149 160,138 L162,152 C140,163 60,163 38,152 Z" />
 
-        <!-- Stars on Ribbon -->
+        <!-- Stars on Ribbon (White) -->
         <path
             android:fillColor="#FFFFFF"
             android:pathData="M48,143 L49.2,146 L52.5,146 L49.8,148 L50.8,151 L48,149 L45.2,151 L46.2,148 L43.5,146 L46.8,146 Z" />

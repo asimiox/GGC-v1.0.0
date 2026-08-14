@@ -72,10 +72,10 @@ fun CollegeInfoScreen() {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp)
+                .height(190.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_ggc_banner),
+                painter = painterResource(id = R.drawable.img_hero_main_academic),
                 contentDescription = "GGC M.B.DIN Campus",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
@@ -83,7 +83,15 @@ fun CollegeInfoScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0x66061B52),
+                                Color(0xCC061B52),
+                                Color(0xF0030D2B)
+                            )
+                        )
+                    )
             )
 
             Column(

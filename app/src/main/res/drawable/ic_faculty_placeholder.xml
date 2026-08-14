@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Circle Background -->
+    <path
+        android:fillColor="#E2E7F3"
+        android:pathData="M48,48 m -48,0 a 48,48 0 1,0 96,0 a 48,48 0 1,0 -96,0"/>
+
+    <!-- Subtle Gold Ring -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M48,4 C23.7,4 4,23.7 4,48 C4,72.3 23.7,92 48,92 C72.3,92 92,72.3 92,48 C92,23.7 72.3,4 48,4 Z M48,6 C71.2,6 90,24.8 90,48 C90,71.2 71.2,90 48,90 C24.8,90 6,71.2 6,48 C6,24.8 24.8,6 48,6 Z"/>
+
+    <!-- Academic Faculty Silhouette (Head) -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M48,24 C55.7,24 62,30.3 62,38 C62,45.7 55.7,52 48,52 C40.3,52 34,45.7 34,38 C34,30.3 40.3,24 48,24 Z"/>
+
+    <!-- Academic Faculty Silhouette (Suit / Robe Shoulders) -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M48,56 C33.6,56 20,64.2 18,78 C25.8,85.6 36.3,90 48,90 C59.7,90 70.2,85.6 78,78 C76,64.2 62.4,56 48,56 Z"/>
+
+    <!-- Academic Collar / Tie Accent (Gold & Off-White) -->
+    <path
+        android:fillColor="#F6F6F6"
+        android:pathData="M48,56 L42,66 L48,74 L54,66 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M46.5,66 L49.5,66 L50,76 L46,76 Z"/>
+</vector>

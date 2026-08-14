@@ -76,5 +76,6 @@ data class FacultyMember(
     val qualification: String, // e.g., "Ph.D. Computer Science (PU)"
     val specialization: String,
     val email: String,
-    val phone: String = "+92 (546) 920000"
+    val phone: String = "+92 (546) 920000",
+    val photoResId: Int? = null
 )

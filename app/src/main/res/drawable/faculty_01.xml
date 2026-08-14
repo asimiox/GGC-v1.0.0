@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Circle Background -->
+    <path
+        android:fillColor="#E2E7F3"
+        android:pathData="M48,48 m -48,0 a 48,48 0 1,0 96,0 a 48,48 0 1,0 -96,0"/>
+
+    <!-- Subtle Gold Ring -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M48,4 C23.7,4 4,23.7 4,48 C4,72.3 23.7,92 48,92 C72.3,92 92,72.3 92,48 C92,23.7 72.3,4 48,4 Z"/>
+
+    <!-- Head -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M48,22 C55.2,22 61,27.8 61,35 C61,42.2 55.2,48 48,48 C40.8,48 35,42.2 35,35 C35,27.8 40.8,22 48,22 Z"/>
+
+    <!-- Eyeglasses (Distinguished Academic Accent) -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M42,32 C44,32 45,34 45,36 C45,38 44,40 42,40 C40,40 39,38 39,36 C39,34 40,32 42,32 Z M54,32 C56,32 57,34 57,36 C57,38 56,40 54,40 C52,40 51,38 51,36 C51,34 52,32 54,32 Z M45,35 H51 V37 H45 Z"/>
+
+    <!-- Suit & Tie Shoulders -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M48,52 C33.6,52 20,60.2 18,74 C25.8,82.6 36.3,88 48,88 C59.7,88 70.2,82.6 78,74 C76,60.2 62.4,52 48,52 Z"/>
+    <path
+        android:fillColor="#F6F6F6"
+        android:pathData="M48,52 L42,64 L48,72 L54,64 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M46.5,64 L49.5,64 L50,74 L46,74 Z"/>
+</vector>

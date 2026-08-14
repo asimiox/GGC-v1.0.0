@@ -1,5 +1,6 @@
 package com.example.ui.screens.academics.data
 
+import com.example.R
 import com.example.ui.screens.academics.models.AcademicResource
 import com.example.ui.screens.academics.models.Department
 import com.example.ui.screens.academics.models.FacultyMember
@@ -18,7 +19,8 @@ object AcademicData {
             designation = "Associate Professor & HOD",
             qualification = "Ph.D. Computer Science (PU), PostDoc (UK)",
             specialization = "Artificial Intelligence & Data Mining",
-            email = "cs.hod@ggcmbdin.edu.pk"
+            email = "cs.hod@ggcmbdin.edu.pk",
+            photoResId = R.drawable.faculty_01
         ),
         FacultyMember(
             id = "f2",
@@ -27,7 +29,8 @@ object AcademicData {
             designation = "Assistant Professor",
             qualification = "M.Phil Computer Science (QAU)",
             specialization = "Software Engineering & Mobile Development",
-            email = "tariq.cs@ggcmbdin.edu.pk"
+            email = "tariq.cs@ggcmbdin.edu.pk",
+            photoResId = R.drawable.faculty_02
         ),
         FacultyMember(
             id = "f3",
@@ -36,7 +39,8 @@ object AcademicData {
             designation = "Lecturer",
             qualification = "M.S. Information Technology (UET)",
             specialization = "Database Systems & Web Development",
-            email = "usman.cs@ggcmbdin.edu.pk"
+            email = "usman.cs@ggcmbdin.edu.pk",
+            photoResId = R.drawable.faculty_03
         ),
         FacultyMember(
             id = "f4",
@@ -45,7 +49,8 @@ object AcademicData {
             designation = "Associate Professor & HOD",
             qualification = "Ph.D. Physics (QAU)",
             specialization = "Condensed Matter Physics & Nanotechnology",
-            email = "physics.hod@ggcmbdin.edu.pk"
+            email = "physics.hod@ggcmbdin.edu.pk",
+            photoResId = R.drawable.faculty_01
         ),
         FacultyMember(
             id = "f5",
@@ -54,7 +59,8 @@ object AcademicData {
             designation = "Assistant Professor & HOD",
             qualification = "Ph.D. Organic Chemistry (UAF)",
             specialization = "Medicinal & Organic Synthesis",
-            email = "chemistry.hod@ggcmbdin.edu.pk"
+            email = "chemistry.hod@ggcmbdin.edu.pk",
+            photoResId = R.drawable.faculty_02
         ),
         FacultyMember(
             id = "f6",
@@ -63,7 +69,8 @@ object AcademicData {
             designation = "Assistant Professor & HOD",
             qualification = "M.Phil English Literature (GCU)",
             specialization = "Postcolonial Literature & Linguistics",
-            email = "english.hod@ggcmbdin.edu.pk"
+            email = "english.hod@ggcmbdin.edu.pk",
+            photoResId = R.drawable.faculty_03
         )
     )
 
