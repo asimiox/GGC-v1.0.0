@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Group containing the complete official emblem -->
+    <group>
+        <!-- Shield Base Shadow / Outer Glow -->
+        <path
+            android:fillColor="#0B132B"
+            android:pathData="M100,16 C125,16 138,20 148,22 C154,23 158,28 156,36 C153,52 153,68 164,74 C168,76 168,82 165,86 C155,100 142,126 100,146 C58,126 45,100 35,86 C32,82 32,76 36,74 C47,68 47,52 44,36 C42,28 46,23 52,22 C62,20 75,16 100,16 Z" />
+
+        <!-- Outer Shield Border (Gold Trim) -->
+        <path
+            android:fillColor="#C59B27"
+            android:pathData="M100,18 C124,18 136,22 146,24 C152,25 155,30 153,37 C150,52 150,67 161,73 C164,74 165,79 162,83 C153,97 140,122 100,142 C60,122 47,97 38,83 C35,79 36,74 39,73 C50,67 50,52 47,37 C45,30 48,25 54,24 C64,22 76,18 100,18 Z" />
+
+        <!-- Inner Shield Navy Body -->
+        <path
+            android:fillColor="#061B52"
+            android:pathData="M100,23 C122,23 133,27 142,29 C146,30 148,34 147,40 C144,54 144,68 154,74 C157,75 157,78 155,81 C147,93 135,116 100,135 C65,116 53,93 45,81 C43,78 43,75 46,74 C56,68 56,54 53,40 C52,34 54,30 58,29 C67,27 78,23 100,23 Z" />
+
+        <!-- Inner Gold Border Ring inside Shield -->
+        <path
+            android:fillColor="#C59B27"
+            android:pathData="M100,28 C119,28 129,31 137,33 C140,34 141,37 140,42 C138,54 138,66 146,72 C148,73 148,76 146,78 C139,88 129,108 100,125 C71,108 61,88 54,78 C52,76 52,73 54,72 C62,66 62,54 60,42 C59,37 60,34 63,33 C71,31 81,28 100,28 Z" />
+
+        <!-- Deep Shield Core Canvas -->
+        <path
+            android:fillColor="#061B52"
+            android:pathData="M100,31 C117,31 126,34 133,36 C136,37 137,40 136,44 C134,55 134,65 141,71 C143,72 143,74 141,76 C135,85 126,103 100,119 C74,103 65,85 59,76 C57,74 57,72 59,71 C66,65 66,55 64,44 C63,40 64,37 67,36 C74,34 83,31 100,31 Z" />
+
+        <!-- Central Crescent Moon (White) -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M106,47 C93,47 82,57 82,71 C82,85 93,95 106,95 C113,95 119,92 124,87 C118,90 111,90 104,86 C94,80 91,67 97,57 C100,53 103,50 108,48 C107,47 106,47 106,47 Z" />
+
+        <!-- Central Islamic Five-Pointed Star (White) -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M117,45 L119,51 L125,51 L120,55 L122,61 L117,57 L112,61 L114,55 L109,51 L115,51 Z" />
+
+        <!-- Architectural College Minaret / Tower Silhouette (Inside Crescent - White) -->
+        <!-- Minaret Dome & Spire -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M100,50 C98,50 96,52 96,54 L104,54 C104,52 102,50 100,50 Z M99.5,46 L100.5,46 L100.5,50 L99.5,50 Z M100,44.5 L101,46 L99,46 Z" />
+
+        <!-- Minaret Balcony / Gallery -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M94,55 L106,55 L105,57 L95,57 Z" />
+
+        <!-- Minaret Shaft & Arches -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M95.5,58 L104.5,58 L104.5,76 L95.5,76 Z" />
+
+        <!-- Minaret Windows / Cutouts (Navy) -->
+        <path
+            android:fillColor="#061B52"
+            android:pathData="M98,60 C98,59 102,59 102,60 L102,64 L98,64 Z M98,66 C98,65 102,65 102,66 L102,70 L98,70 Z" />
+
+        <!-- Open Book of Knowledge at Base of Minaret (White & Gold) -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M88,80 C93,78 98,79 100,81 C102,79 107,78 112,80 L112,87 C107,85 102,86 100,88 C98,86 93,85 88,87 Z" />
+        <path
+            android:fillColor="#C59B27"
+            android:pathData="M99.5,81 L100.5,81 L100.5,88 L99.5,88 Z" />
+
+        <!-- Official Institutional Motto Ribbon Banner at Bottom -->
+        <!-- Ribbon Shadow / Fold Ends -->
+        <path
+            android:fillColor="#030D2B"
+            android:pathData="M22,142 L42,130 L42,154 L22,166 L30,154 Z M178,142 L158,130 L158,154 L178,166 L170,154 Z" />
+
+        <!-- Ribbon Gold Trim Outline -->
+        <path
+            android:fillColor="#C59B27"
+            android:pathData="M38,136 C60,147 140,147 162,136 L164,154 C140,165 60,165 36,154 Z" />
+
+        <!-- Ribbon Main Navy Body -->
+        <path
+            android:fillColor="#061B52"
+            android:pathData="M40,138 C60,149 140,149 160,138 L162,152 C140,163 60,163 38,152 Z" />
+
+        <!-- Stars on Ribbon (White) -->
+        <!-- Left Star -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M48,143 L49.2,146 L52.5,146 L49.8,148 L50.8,151 L48,149 L45.2,151 L46.2,148 L43.5,146 L46.8,146 Z" />
+        <!-- Right Star -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M152,143 L153.2,146 L156.5,146 L153.8,148 L154.8,151 L152,149 L149.2,151 L150.2,148 L147.5,146 L150.8,146 Z" />
+
+        <!-- MOTTO: "DUTY &amp; DISCIPLINE" Typography Representation in Clean Vector (White) -->
+        <!-- D -->
+        <path android:fillColor="#FFFFFF" android:pathData="M60,143 H63 C65,143 66,144 66,146 C66,148 65,149 63,149 H60 Z M61.5,144.5 V147.5 H63 C63.8,147.5 64.5,147 64.5,146 C64.5,145 63.8,144.5 63,144.5 Z" />
+        <!-- U -->
+        <path android:fillColor="#FFFFFF" android:pathData="M68,143 H69.5 V147 C69.5,148 70,148.5 71,148.5 C72,148.5 72.5,148 72.5,147 V143 H74 V147 C74,149 73,150 71,150 C69,150 68,149 68,147 Z" />
+        <!-- T -->
+        <path android:fillColor="#FFFFFF" android:pathData="M76,143 H81 V144.5 H79 V150 H77.5 V144.5 H76 Z" />
+        <!-- Y -->
+        <path android:fillColor="#FFFFFF" android:pathData="M83,143 L85,146.5 V150 H86.5 V146.5 L88.5,143 H86.8 L85.7,145.2 L84.7,143 Z" />
+
+        <!-- & -->
+        <path android:fillColor="#C59B27" android:pathData="M92,146 C91.5,145 92,144 93,144 C93.8,144 94.2,144.5 94,145.2 C93.8,146 92.5,146.8 92,147.5 C91.5,148.2 91.5,149 92.2,149.6 C93,150.2 94.5,149.8 95.2,149 L96,149.8 C95,150.8 93,151 91.5,150 C90.5,149 90.5,147.5 91.2,146.5 C91.8,145.8 92.5,145.2 92.8,144.8 C92.8,144.5 92.5,144.2 92.2,144.5 C91.5,145 91.5,146 91.5,146 Z" />
+
+        <!-- D -->
+        <path android:fillColor="#FFFFFF" android:pathData="M98,144 H101 C103,144 104,145 104,147 C104,149 103,150 101,150 H98 Z M99.5,145.5 V148.5 H101 C101.8,148.5 102.5,148 102.5,147 C102.5,146 101.8,145.5 101,145.5 Z" />
+        <!-- I -->
+        <path android:fillColor="#FFFFFF" android:pathData="M106,144 H107.5 V150 H106 Z" />
+        <!-- S -->
+        <path android:fillColor="#FFFFFF" android:pathData="M110,145 C110,144.2 111,144 112,144 C113.2,144 114,144.5 114,145.5 C114,147 111.5,146.8 111.5,148 C111.5,148.5 112,149 113,149 C113.8,149 114.2,148.5 114.2,148.5 L115,149.5 C114.5,150.2 113.8,150.5 113,150.5 C111.2,150.5 110,149.5 110,148 C110,146.5 112.5,146.8 112.5,145.5 C112.5,145.2 112.2,145 111.8,145 C111.2,145 110.8,145.2 110.8,145.2 Z" />
+        <!-- C -->
+        <path android:fillColor="#FFFFFF" android:pathData="M117.5,147 C117.5,145.5 118.5,144 120.2,144 C121.5,144 122.2,144.8 122.5,145.2 L121.2,146 C121,145.8 120.5,145.2 119.8,145.2 C119,145.2 118.5,146 118.5,147 C118.5,148 119,148.8 119.8,148.8 C120.5,148.8 121,148.2 121.2,148 L122.5,148.8 C122.2,149.2 121.5,150 120.2,150 C118.5,150 117.5,148.5 117.5,147 Z" />
+        <!-- I -->
+        <path android:fillColor="#FFFFFF" android:pathData="M124.5,144 H126 V150 H124.5 Z" />
+        <!-- P -->
+        <path android:fillColor="#FFFFFF" android:pathData="M128,144 H131 C132.5,144 133.5,144.8 133.5,146 C133.5,147.2 132.5,148 131,148 H129.5 V150 H128 Z M129.5,145.2 V146.8 H131 C131.5,146.8 132,146.5 132,146 C132,145.5 131.5,145.2 131,145.2 Z" />
+        <!-- L -->
+        <path android:fillColor="#FFFFFF" android:pathData="M135.5,144 H137 V148.5 H139.5 V150 H135.5 Z" />
+        <!-- I -->
+        <path android:fillColor="#FFFFFF" android:pathData="M141,144 H142.5 V150 H141 Z" />
+        <!-- N -->
+        <path android:fillColor="#FFFFFF" android:pathData="M144,144 H145.5 L147.5,148 V144 H149 V150 H147.5 L145.5,146 V150 H144 Z" />
+        <!-- E -->
+        <path android:fillColor="#FFFFFF" android:pathData="M151,144 H155 V145.2 H152.5 V146.5 H154.5 V147.7 H152.5 V148.8 H155 V150 H151 Z" />
+    </group>
+</vector>

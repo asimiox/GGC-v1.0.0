@@ -75,7 +75,7 @@ fun CollegeInfoScreen() {
                 .height(190.dp)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.img_hero_main_academic),
+                painter = painterResource(id = R.drawable.img_hero_01),
                 contentDescription = "GGC M.B.DIN Campus",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

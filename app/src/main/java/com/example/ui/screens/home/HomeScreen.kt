@@ -85,19 +85,19 @@ fun HomeScreen(
 
     val heroSlides = listOf(
         HeroSlide(
-            imageRes = R.drawable.img_hero_main_academic,
+            imageRes = R.drawable.img_hero_01,
             title = "Main Academic Complex",
             subtitle = "Govt Graduate College Mandi Bahauddin • Est. 1959",
             badge = "MAIN CAMPUS"
         ),
         HeroSlide(
-            imageRes = R.drawable.img_hero_english_block,
+            imageRes = R.drawable.img_hero_02,
             title = "Post Graduate Block",
             subtitle = "Dept. of English Language & Literature • Islamic Studies",
             badge = "POST GRADUATE"
         ),
         HeroSlide(
-            imageRes = R.drawable.img_hero_campus_courtyard,
+            imageRes = R.drawable.img_hero_03,
             title = "Historic Campus Courtyard",
             subtitle = "Sprawling Green Quadrangle & Academic Corridors",
             badge = "CAMPUS GROUNDS"
