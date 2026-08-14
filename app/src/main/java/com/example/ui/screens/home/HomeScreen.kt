@@ -1,5 +1,8 @@
 package com.example.ui.screens.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,417 +17,616 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Event
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.NewReleases
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.outlined.Campaign
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.theme.GgcGoldTertiary
-import kotlinx.coroutines.delay
+import com.example.data.UserProfileManager
+import com.example.ui.screens.courses.CoursesOutlineScreen
 
-data class CoreServiceItem(
-    val title: String,
-    val subtitle: String,
-    val icon: ImageVector,
-    val testTag: String,
-    val onClick: () -> Unit
-)
+private val BrandNavy = Color(0xFF061B52)
+private val BrandBackground = Color(0xFFF6F6F6)
+private val BrandTextMuted = Color(0xFF7A879D)
+private val BrandIconBadgeBg = Color(0xFFEEF3FF)
 
-data class HeroSlide(
-    val imageRes: Int,
-    val title: String,
-    val subtitle: String,
-    val badge: String
-)
+enum class HomeSubScreen {
+    NONE,
+    FEE_STRUCTURE,
+    ANNOUNCEMENT,
+    PROSPECTUS,
+    COURSES_OUTLINE
+}
 
 @Composable
 fun HomeScreen(
-    onNavigateToAcademics: () -> Unit,
-    onNavigateToNotices: () -> Unit,
-    onNavigateToCollege: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToDepartments: () -> Unit = onNavigateToAcademics,
-    onNavigateToFaculty: () -> Unit = {},
-    onNavigateToPrograms: () -> Unit = onNavigateToAcademics,
-    onNavigateToEvents: () -> Unit = {},
-    onNavigateToStudentSection: () -> Unit = onNavigateToProfile,
-    onNavigateToResources: () -> Unit = onNavigateToAcademics
+    onNavigateToPrograms: () -> Unit = {},
+    onNavigateToCoursesOutline: () -> Unit = {}
 ) {
+    val userProfile by UserProfileManager.userProfile.collectAsState()
+    var activeSubScreen by remember { mutableStateOf(HomeSubScreen.NONE) }
     val scrollState = rememberScrollState()
 
-    val heroSlides = listOf(
-        HeroSlide(
-            imageRes = R.drawable.img_hero_01,
-            title = "Main Academic Complex",
-            subtitle = "Govt Graduate College Mandi Bahauddin • Est. 1959",
-            badge = "MAIN CAMPUS"
-        ),
-        HeroSlide(
-            imageRes = R.drawable.img_hero_02,
-            title = "Post Graduate Block",
-            subtitle = "Dept. of English Language & Literature • Islamic Studies",
-            badge = "POST GRADUATE"
-        ),
-        HeroSlide(
-            imageRes = R.drawable.img_hero_03,
-            title = "Historic Campus Courtyard",
-            subtitle = "Sprawling Green Quadrangle & Academic Corridors",
-            badge = "CAMPUS GROUNDS"
-        )
-    )
-
-    val pagerState = rememberPagerState(pageCount = { heroSlides.size })
-
-    // Auto-advance hero slides smoothly
-    LaunchedEffect(pagerState) {
-        while (true) {
-            delay(4000)
-            val nextPage = (pagerState.currentPage + 1) % heroSlides.size
-            pagerState.animateScrollToPage(nextPage)
+    if (activeSubScreen != HomeSubScreen.NONE) {
+        when (activeSubScreen) {
+            HomeSubScreen.FEE_STRUCTURE -> FeeStructureView(onBack = { activeSubScreen = HomeSubScreen.NONE })
+            HomeSubScreen.ANNOUNCEMENT -> AnnouncementView(onBack = { activeSubScreen = HomeSubScreen.NONE })
+            HomeSubScreen.PROSPECTUS -> ProspectusView(onBack = { activeSubScreen = HomeSubScreen.NONE })
+            HomeSubScreen.COURSES_OUTLINE -> CoursesOutlineScreen(onBack = { activeSubScreen = HomeSubScreen.NONE })
+            HomeSubScreen.NONE -> {}
         }
+        return
     }
-
-    val coreServices = listOf(
-        CoreServiceItem(
-            title = "College Information",
-            subtitle = "History, Administration & Vision",
-            icon = Icons.Default.Info,
-            testTag = "home_service_college_info",
-            onClick = onNavigateToCollege
-        ),
-        CoreServiceItem(
-            title = "Academic Departments",
-            subtitle = "Faculties & Department Details",
-            icon = Icons.Default.Business,
-            testTag = "home_service_departments",
-            onClick = onNavigateToDepartments
-        ),
-        CoreServiceItem(
-            title = "Faculty & Staff",
-            subtitle = "Academic Directory & Staff Profiles",
-            icon = Icons.Default.People,
-            testTag = "home_service_faculty",
-            onClick = onNavigateToFaculty
-        ),
-        CoreServiceItem(
-            title = "Programs & Courses",
-            subtitle = "4-Year BS Honors Degree Programs",
-            icon = Icons.AutoMirrored.Filled.MenuBook,
-            testTag = "home_service_programs",
-            onClick = onNavigateToPrograms
-        ),
-        CoreServiceItem(
-            title = "Events & Activities",
-            subtitle = "Academic Seminars, Workshops & Sports",
-            icon = Icons.Default.Event,
-            testTag = "home_service_events",
-            onClick = onNavigateToEvents
-        )
-    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(BrandBackground)
             .verticalScroll(scrollState)
-            .testTag("home_screen_container"),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .testTag("home_screen_container")
     ) {
-        // Hero / Official College Banner Slider
-        Box(
+        // 1. Official App Header (Reference Image Screen 8)
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(205.dp)
-                .testTag("home_hero_slider")
+                .background(Color.White)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize()
-            ) { page ->
-                val slide = heroSlides[page]
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Image(
-                        painter = painterResource(id = slide.imageRes),
-                        contentDescription = slide.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_ggc_logo),
+                    contentDescription = "GGC Logo",
+                    modifier = Modifier
+                        .size(38.dp)
+                        .testTag("home_official_logo")
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "GGC M.B.Din",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Text(
+                        text = "Official App",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = BrandTextMuted
+                    )
+                }
+            }
+
+            IconButton(
+                onClick = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT },
+                modifier = Modifier.testTag("home_notifications_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.NotificationsNone,
+                    contentDescription = "Notifications",
+                    tint = BrandNavy,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 2. Personalized Student Bento Card (Solid Navy background)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("home_user_bento_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavy),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 22.dp, vertical = 24.dp)
+                ) {
+                    Text(
+                        text = userProfile.name,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.testTag("home_user_name")
                     )
 
-                    // Institutional Dark Navy Gradient Scrim
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0x66061B52),
-                                        Color(0xCC061B52),
-                                        Color(0xF0030D2B)
-                                    )
-                                )
-                            )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = userProfile.programName,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier.testTag("home_user_program")
                     )
 
-                    // Slide Information Content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 20.dp, vertical = 18.dp),
-                        verticalArrangement = Arrangement.Bottom
-                    ) {
-                        // Badge Tag
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(GgcGoldTertiary)
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = slide.badge,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF061B52),
-                                letterSpacing = 0.5.sp
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_ggc_logo),
-                                    contentDescription = "GGC Crest",
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = slide.title,
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.Verified,
-                                        contentDescription = "Verified Institution",
-                                        tint = GgcGoldTertiary,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-
-                                Text(
-                                    text = slide.subtitle,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                            }
-                        }
+                    // Semester is shown ONLY for BS students, strictly omitted for Intermediate
+                    if (userProfile.programLevel == "BS" && !userProfile.semester.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = userProfile.semester ?: "",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White.copy(alpha = 0.70f),
+                            modifier = Modifier.testTag("home_user_semester")
+                        )
                     }
                 }
             }
 
-            // Slider Indicator Dots
+            // 3. Bento Grid: Exactly 4 Items (Programs, Fee Structure, Announcement, Prospectus)
             Row(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                repeat(heroSlides.size) { index ->
-                    val isSelected = pagerState.currentPage == index
-                    Box(
-                        modifier = Modifier
-                            .height(4.dp)
-                            .width(if (isSelected) 18.dp else 6.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(if (isSelected) GgcGoldTertiary else Color.White.copy(alpha = 0.4f))
-                    )
-                }
-            }
-        }
+                // Item 1: Programs
+                BentoActionCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Programs",
+                    icon = Icons.Outlined.MenuBook,
+                    testTag = "bento_btn_programs",
+                    onClick = onNavigateToPrograms
+                )
 
-        // Primary Sections Container
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Latest Official Notice Highlight Card
+                // Item 2: Fee Structure
+                BentoActionCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Fee Structure",
+                    icon = Icons.Outlined.ReceiptLong,
+                    testTag = "bento_btn_fee_structure",
+                    onClick = { activeSubScreen = HomeSubScreen.FEE_STRUCTURE }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Item 3: Announcement
+                BentoActionCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Announcement",
+                    icon = Icons.Outlined.Campaign,
+                    testTag = "bento_btn_announcement",
+                    onClick = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT }
+                )
+
+                // Item 4: Prospectus
+                BentoActionCard(
+                    modifier = Modifier.weight(1f),
+                    title = "Prospectus",
+                    icon = Icons.Outlined.Description,
+                    testTag = "bento_btn_prospectus",
+                    onClick = { activeSubScreen = HomeSubScreen.PROSPECTUS }
+                )
+            }
+
+            // New Bento Card: Courses Outline (Full-width dark navy blue rectangular Bento card)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onNavigateToNotices() }
-                    .testTag("home_latest_notice_card"),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable {
+                        onNavigateToCoursesOutline()
+                        activeSubScreen = HomeSubScreen.COURSES_OUTLINE
+                    }
+                    .testTag("bento_btn_courses_outline"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavy),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 20.dp, vertical = 22.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.NewReleases,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Layers,
+                                contentDescription = "Courses Outline",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Latest Notice & Circulars",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Official Academic & Administrative Announcements",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Column {
+                            Text(
+                                text = "Courses Outline",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                text = "Semester-wise syllabi & course codes",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.White.copy(alpha = 0.75f)
+                            )
+                        }
                     }
 
                     Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = "View Notices",
-                        tint = MaterialTheme.colorScheme.primary,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Open Courses Outline",
+                        tint = Color.White.copy(alpha = 0.85f),
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
+        }
+    }
+}
 
-            // Academic Sections Title
-            Text(
-                text = "Academic & Institutional Services",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 4.dp)
+@Composable
+private fun BentoActionCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    testTag: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .clickable { onClick() }
+            .testTag(testTag),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 28.dp, horizontal = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = BrandNavy,
+                modifier = Modifier.size(34.dp)
             )
 
-            // Primary Services Column
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// FEE STRUCTURE VIEW (Reference Image: Screen 11)
+// -------------------------------------------------------------
+@Composable
+private fun FeeStructureView(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .testTag("fee_structure_screen")
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.testTag("fee_back_btn")) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BrandNavy
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "Fee Structure",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            )
+        }
+
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(110.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(BrandIconBadgeBg),
+                contentAlignment = Alignment.Center
             ) {
-                coreServices.forEach { service ->
-                    OutlinedCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { service.onClick() }
-                            .testTag(service.testTag),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = service.icon,
-                                    contentDescription = service.title,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                Icon(
+                    imageVector = Icons.Outlined.ReceiptLong,
+                    contentDescription = null,
+                    tint = BrandNavy,
+                    modifier = Modifier.size(54.dp)
+                )
+            }
 
-                            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = service.title,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = service.subtitle,
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+            Text(
+                text = "Fee Structure",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy,
+                textAlign = TextAlign.Center
+            )
 
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Official fee details will be available here.",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandTextMuted,
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Government Subsidized Rates",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "All fees are regulated in accordance with the Government of the Punjab Higher Education Department policies and University of the Punjab affiliations.",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = BrandTextMuted,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// ANNOUNCEMENT VIEW
+// -------------------------------------------------------------
+@Composable
+private fun AnnouncementView(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .testTag("announcement_screen")
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.testTag("announcement_back_btn")) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BrandNavy
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "Announcements",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            )
+        }
+
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Fall Admissions Open",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Admissions for BS and Intermediate morning/evening programs are currently open. Visit the Admission desk for application submission.",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = BrandTextMuted,
+                        lineHeight = 18.sp
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Merit Lists Schedule",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "The 1st Merit List will be published on the college notice board and updated in the official app as per the academic calendar.",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = BrandTextMuted,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// PROSPECTUS VIEW
+// -------------------------------------------------------------
+@Composable
+private fun ProspectusView(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .testTag("prospectus_screen")
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.testTag("prospectus_back_btn")) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BrandNavy
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "Prospectus",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            )
+        }
+
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Academic Prospectus & Code of Conduct",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Contains complete institutional guidelines, academic regulations, examination criteria, attendance policies, and code of conduct for all enrolled students.",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = BrandTextMuted,
+                        lineHeight = 19.sp
+                    )
+                }
+            }
         }
     }
 }

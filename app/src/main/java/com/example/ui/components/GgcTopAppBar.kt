@@ -46,9 +46,10 @@ fun GgcTopAppBar(
 ) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-            actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = Color.White,
+            titleContentColor = Color(0xFF061B52),
+            navigationIconContentColor = Color(0xFF061B52),
+            actionIconContentColor = Color(0xFF061B52)
         ),
         navigationIcon = {
             if (onBackClick != null) {
@@ -59,7 +60,7 @@ fun GgcTopAppBar(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = Color(0xFF061B52)
                     )
                 }
             }
@@ -69,10 +70,10 @@ fun GgcTopAppBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(vertical = 4.dp)
             ) {
-                // College Crest / Logo with official white background
+                // College Crest / Logo with official white background and subtle border
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(42.dp)
                         .clip(CircleShape)
                         .background(Color.White)
                         .padding(2.dp),
@@ -82,8 +83,7 @@ fun GgcTopAppBar(
                         painter = painterResource(id = R.drawable.ic_ggc_logo),
                         contentDescription = "GGC Emblem",
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
+                            .size(38.dp)
                     )
                 }
 
@@ -94,12 +94,13 @@ fun GgcTopAppBar(
                         text = title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = Color(0xFF061B52)
                     )
                     Text(
                         text = subtitle,
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF5A6A85)
                     )
                 }
             }
@@ -113,7 +114,7 @@ fun GgcTopAppBar(
                     Icon(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = "Notifications",
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = Color(0xFF061B52)
                     )
                 }
             }

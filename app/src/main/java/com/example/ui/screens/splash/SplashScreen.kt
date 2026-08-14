@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -37,9 +32,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.theme.GgcGoldTertiary
-import com.example.ui.theme.GgcNavyPrimary
 import kotlinx.coroutines.delay
+
+private val BrandNavy = Color(0xFF061B52)
+private val BrandTextMuted = Color(0xFF7A879D)
 
 @Composable
 fun SplashScreen(
@@ -48,25 +44,25 @@ fun SplashScreen(
     var startAnimation by remember { mutableStateOf(false) }
     val alphaAnim by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
         label = "splash_alpha"
     )
     val scaleAnim by animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0.8f,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        targetValue = if (startAnimation) 1f else 0.92f,
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
         label = "splash_scale"
     )
 
     LaunchedEffect(key1 = true) {
         startAnimation = true
-        delay(2200)
+        delay(1800)
         onSplashFinished()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(GgcNavyPrimary)
+            .background(Color.White)
             .testTag("splash_screen_container"),
         contentAlignment = Alignment.Center
     ) {
@@ -78,72 +74,36 @@ fun SplashScreen(
                 .alpha(alphaAnim)
                 .scale(scaleAnim)
         ) {
-            // Emblem Badge
-            Box(
+            // Large official App Logo
+            Image(
+                painter = painterResource(id = R.drawable.ic_ggc_logo),
+                contentDescription = "GGC M.B.Din Official Logo",
                 modifier = Modifier
-                    .size(130.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .border(3.dp, GgcGoldTertiary, CircleShape)
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_ggc_logo),
-                    contentDescription = "GGC M.B.DIN Crest",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+                    .size(170.dp)
+                    .testTag("splash_official_logo")
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Urdu Title
+            // App Name
             Text(
-                text = "گورنمنٹ گریجویٹ کالج منڈی بہاؤالدین",
-                fontSize = 20.sp,
+                text = "GGC M.B.Din",
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = GgcGoldTertiary,
+                color = BrandNavy,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // English Title
+            // App Identity Subtitle
             Text(
-                text = "Govt Graduate College\nMandi Bahauddin",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                lineHeight = 28.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Established 1959 • Affiliated with Punjab University",
-                fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.85f),
-                fontWeight = FontWeight.Medium
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            CircularProgressIndicator(
-                color = GgcGoldTertiary,
-                strokeWidth = 3.dp,
-                modifier = Modifier.size(32.dp)
+                text = "Official App",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = BrandTextMuted,
+                textAlign = TextAlign.Center
             )
         }
-
-        // Bottom Footer
-        Text(
-            text = "GGC M.B.Din Official App",
-            fontSize = 11.sp,
-            color = Color.White.copy(alpha = 0.7f),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
-        )
     }
 }

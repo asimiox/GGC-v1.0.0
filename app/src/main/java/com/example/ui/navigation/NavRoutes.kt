@@ -1,15 +1,15 @@
 package com.example.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Announcement
-import androidx.compose.material.icons.automirrored.outlined.Announcement
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -17,28 +17,17 @@ object NavRoutes {
     const val SPLASH = "splash"
     const val ONBOARDING = "onboarding"
     const val MAIN = "main"
-    
-    // Bottom Bar Destinations
+
+    // Bottom Bar Destinations (Exact required 4 main screens)
     const val HOME = "home_tab"
-    const val ACADEMICS = "academics_tab"
-    const val NOTICES = "notices_tab"
-    const val COLLEGE = "college_tab"
-    const val PROFILE = "profile_tab"
+    const val ADMISSION = "admission_tab"
+    const val ALUMNI = "alumni_tab"
+    const val ABOUT = "about_tab"
 
-    // Major College Feature Routes
-    const val DEPARTMENTS = "departments"
-    const val DEPARTMENT_DETAIL = "department_detail"
-    const val FACULTY = "faculty"
+    // Sub routes
     const val PROGRAMS = "programs"
-    const val EVENTS = "events"
-    const val STUDENT_SECTION = "student_section"
-    const val ACADEMIC_RESOURCES = "academic_resources"
-
-    // Detail Screens
-    const val COLLEGE_HISTORY = "college_history"
-    const val PRINCIPAL_MESSAGE = "principal_message"
-    const val VISION_MISSION = "vision_mission"
-    const val CONTACT_INFO = "contact_info"
+    const val FACULTY = "faculty"
+    const val COURSES_OUTLINE = "courses_outline"
 }
 
 sealed class BottomNavItem(
@@ -56,35 +45,28 @@ sealed class BottomNavItem(
         testTag = "nav_home"
     )
 
-    object Academics : BottomNavItem(
-        route = NavRoutes.ACADEMICS,
-        title = "Academics",
-        selectedIcon = Icons.Filled.Book,
-        unselectedIcon = Icons.Outlined.Book,
-        testTag = "nav_academics"
-    )
-
-    object Notices : BottomNavItem(
-        route = NavRoutes.NOTICES,
-        title = "Notices",
-        selectedIcon = Icons.AutoMirrored.Filled.Announcement,
-        unselectedIcon = Icons.AutoMirrored.Outlined.Announcement,
-        testTag = "nav_notices"
-    )
-
-    object College : BottomNavItem(
-        route = NavRoutes.COLLEGE,
-        title = "College",
+    object Admission : BottomNavItem(
+        route = NavRoutes.ADMISSION,
+        title = "Admission",
         selectedIcon = Icons.Filled.School,
         unselectedIcon = Icons.Outlined.School,
-        testTag = "nav_college"
+        testTag = "nav_admission"
     )
 
-    object Profile : BottomNavItem(
-        route = NavRoutes.PROFILE,
-        title = "Profile",
-        selectedIcon = Icons.Filled.AccountCircle,
-        unselectedIcon = Icons.Outlined.AccountCircle,
-        testTag = "nav_profile"
+    object Alumni : BottomNavItem(
+        route = NavRoutes.ALUMNI,
+        title = "Alumni",
+        selectedIcon = Icons.Filled.Groups,
+        unselectedIcon = Icons.Outlined.Groups,
+        testTag = "nav_alumni"
+    )
+
+    object About : BottomNavItem(
+        route = NavRoutes.ABOUT,
+        title = "About",
+        selectedIcon = Icons.Filled.Info,
+        unselectedIcon = Icons.Outlined.Info,
+        testTag = "nav_about"
     )
 }
+

@@ -12,59 +12,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import com.example.ui.components.GgcBottomBar
-import com.example.ui.components.GgcTopAppBar
 import com.example.ui.navigation.NavRoutes
-import com.example.ui.screens.academics.AcademicsScreen
-import com.example.ui.screens.academics.components.FacultyScreen
-import com.example.ui.screens.academics.components.ProgramsScreen
-import com.example.ui.screens.college.CollegeInfoScreen
-import com.example.ui.screens.common.ComingSoonScreen
-import com.example.ui.screens.events.EventsScreen
+import com.example.ui.screens.about.AboutScreen
+import com.example.ui.screens.admission.AdmissionScreen
+import com.example.ui.screens.alumni.AlumniScreen
+import com.example.ui.screens.courses.CoursesOutlineScreen
+import com.example.ui.screens.faculty.FacultyTabScreen
 import com.example.ui.screens.home.HomeScreen
-import com.example.ui.screens.notices.NoticesScreen
-import com.example.ui.screens.profile.ProfileScreen
+import com.example.ui.screens.programs.ProgramsScreen
 
 @Composable
-fun MainScreen(
-    onNavigateToAdminLogin: () -> Unit = {}
-) {
+fun MainScreen() {
     var currentRoute by remember { mutableStateOf(NavRoutes.HOME) }
-
-    val isMainTab = when (currentRoute) {
-        NavRoutes.HOME, NavRoutes.ACADEMICS, NavRoutes.NOTICES, NavRoutes.COLLEGE, NavRoutes.PROFILE -> true
-        else -> false
-    }
+    var previousRoute by remember { mutableStateOf(NavRoutes.HOME) }
 
     Scaffold(
-        topBar = {
-            GgcTopAppBar(
-                title = "GGC M.B.Din",
-                subtitle = when (currentRoute) {
-                    NavRoutes.HOME -> "Official App"
-                    NavRoutes.ACADEMICS, NavRoutes.DEPARTMENTS, NavRoutes.PROGRAMS -> "Academic Programs & Courses"
-                    NavRoutes.NOTICES -> "Verified Official Notices"
-                    NavRoutes.COLLEGE -> "College Information & History"
-                    NavRoutes.PROFILE -> "Student & Portal Services"
-                    NavRoutes.FACULTY -> "Faculty & Academic Staff"
-                    NavRoutes.EVENTS -> "College Events & Activities"
-                    NavRoutes.STUDENT_SECTION -> "Student Section & Portal"
-                    NavRoutes.ACADEMIC_RESOURCES -> "Academic Resources & Notes"
-                    else -> "Government Graduate College"
-                },
-                onBackClick = if (!isMainTab) { { currentRoute = NavRoutes.HOME } } else null,
-                onNotificationClick = { currentRoute = NavRoutes.NOTICES },
-                onAdminClick = onNavigateToAdminLogin
-            )
-        },
         bottomBar = {
             val activeBottomRoute = when (currentRoute) {
-                NavRoutes.DEPARTMENTS, NavRoutes.PROGRAMS -> NavRoutes.ACADEMICS
-                NavRoutes.FACULTY, NavRoutes.EVENTS, NavRoutes.STUDENT_SECTION, NavRoutes.ACADEMIC_RESOURCES -> NavRoutes.HOME
+                NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE -> previousRoute
                 else -> currentRoute
             }
             GgcBottomBar(
                 currentRoute = activeBottomRoute,
-                onNavigateToRoute = { route -> currentRoute = route }
+                onNavigateToRoute = { route ->
+                    previousRoute = currentRoute
+                    currentRoute = route
+                }
             )
         },
         modifier = Modifier.testTag("main_screen_container")
@@ -76,44 +49,60 @@ fun MainScreen(
         ) {
             when (currentRoute) {
                 NavRoutes.HOME -> HomeScreen(
-                    onNavigateToAcademics = { currentRoute = NavRoutes.ACADEMICS },
-                    onNavigateToNotices = { currentRoute = NavRoutes.NOTICES },
-                    onNavigateToCollege = { currentRoute = NavRoutes.COLLEGE },
-                    onNavigateToProfile = { currentRoute = NavRoutes.PROFILE },
-                    onNavigateToDepartments = { currentRoute = NavRoutes.ACADEMICS },
-                    onNavigateToFaculty = { currentRoute = NavRoutes.FACULTY },
-                    onNavigateToPrograms = { currentRoute = NavRoutes.PROGRAMS },
-                    onNavigateToEvents = { currentRoute = NavRoutes.EVENTS },
-                    onNavigateToStudentSection = { currentRoute = NavRoutes.STUDENT_SECTION },
-                    onNavigateToResources = { currentRoute = NavRoutes.ACADEMIC_RESOURCES }
+                    onNavigateToPrograms = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.PROGRAMS
+                    },
+                    onNavigateToCoursesOutline = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.COURSES_OUTLINE
+                    }
                 )
-                NavRoutes.ACADEMICS, NavRoutes.DEPARTMENTS -> AcademicsScreen()
+                NavRoutes.ADMISSION -> AdmissionScreen(
+                    onNavigateToPrograms = {
+                        previousRoute = NavRoutes.ADMISSION
+                        currentRoute = NavRoutes.PROGRAMS
+                    },
+                    onNavigateToFaculty = {
+                        previousRoute = NavRoutes.ADMISSION
+                        currentRoute = NavRoutes.FACULTY
+                    }
+                )
+                NavRoutes.ALUMNI -> AlumniScreen()
+                NavRoutes.ABOUT -> AboutScreen(
+                    onNavigateToFaculty = {
+                        previousRoute = NavRoutes.ABOUT
+                        currentRoute = NavRoutes.FACULTY
+                    }
+                )
                 NavRoutes.PROGRAMS -> ProgramsScreen(
-                    onBack = { currentRoute = NavRoutes.HOME }
+                    onBack = { currentRoute = previousRoute },
+                    onNavigateToFaculty = {
+                        previousRoute = NavRoutes.PROGRAMS
+                        currentRoute = NavRoutes.FACULTY
+                    },
+                    onNavigateToCoursesOutline = {
+                        previousRoute = NavRoutes.PROGRAMS
+                        currentRoute = NavRoutes.COURSES_OUTLINE
+                    }
                 )
-                NavRoutes.FACULTY -> FacultyScreen(
-                    onBack = { currentRoute = NavRoutes.HOME }
+                NavRoutes.FACULTY -> FacultyTabScreen(
+                    onBack = { currentRoute = previousRoute }
                 )
-                NavRoutes.NOTICES -> NoticesScreen()
-                NavRoutes.COLLEGE -> CollegeInfoScreen()
-                NavRoutes.PROFILE -> ProfileScreen()
-                NavRoutes.EVENTS -> EventsScreen(
-                    onBack = { currentRoute = NavRoutes.HOME }
+                NavRoutes.COURSES_OUTLINE -> CoursesOutlineScreen(
+                    onBack = { currentRoute = previousRoute }
                 )
-                NavRoutes.STUDENT_SECTION -> ComingSoonScreen(
-                    title = "Student Section & Portal",
-                    description = "Student portal services, fee schedules, code of conduct, and campus guidelines are under active preparation.",
-                    onNavigateBack = { currentRoute = NavRoutes.HOME },
-                    onNavigateToNotices = { currentRoute = NavRoutes.NOTICES }
-                )
-                NavRoutes.ACADEMIC_RESOURCES -> ComingSoonScreen(
-                    title = "Academic Resources & Notes",
-                    description = "Verified course outlines, lecture notes, and past paper repositories will be available in upcoming updates.",
-                    onNavigateBack = { currentRoute = NavRoutes.HOME },
-                    onNavigateToNotices = { currentRoute = NavRoutes.NOTICES }
+                else -> HomeScreen(
+                    onNavigateToPrograms = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.PROGRAMS
+                    },
+                    onNavigateToCoursesOutline = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.COURSES_OUTLINE
+                    }
                 )
             }
         }
     }
 }
-

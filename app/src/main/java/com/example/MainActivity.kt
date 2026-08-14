@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.data.UserProfileManager
 import com.example.ui.MainScreen
 import com.example.ui.navigation.NavRoutes
 import com.example.ui.screens.onboarding.OnboardingScreen
@@ -17,6 +18,7 @@ import com.example.ui.theme.MyApplicationTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        UserProfileManager.init(this)
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
@@ -55,11 +57,7 @@ fun GgcAppNavigation() {
         }
 
         composable(NavRoutes.MAIN) {
-            MainScreen(
-                onNavigateToAdminLogin = {
-                    // Prepares for Phase 5 Admin Login
-                }
-            )
+            MainScreen()
         }
     }
 }

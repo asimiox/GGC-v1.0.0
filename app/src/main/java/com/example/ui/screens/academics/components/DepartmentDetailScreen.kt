@@ -54,6 +54,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.AccountBalance
+import com.example.data.datasource.OfficialFacultyData
 import com.example.ui.screens.academics.models.Department
 import com.example.ui.screens.academics.models.FacultyMember
 import com.example.ui.screens.academics.models.Program
@@ -68,6 +71,9 @@ fun DepartmentDetailScreen(
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Programs Offered", "Faculty Directory", "Overview")
+    val officialList = remember(department.name) {
+        OfficialFacultyData.getFacultyByDepartment(department.name)
+    }
 
     val deptIcon: ImageVector = when (department.iconName) {
         "Computer" -> Icons.Default.Computer
@@ -366,22 +372,78 @@ fun DepartmentDetailScreen(
                 1 -> { // Faculty Directory
                     item {
                         Text(
-                            text = "Department Faculty Directory (${facultyList.size} Professors)",
+                            text = "Department Faculty Directory (${if (officialList.isNotEmpty()) officialList.size else facultyList.size} Members)",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
-                    if (facultyList.isEmpty()) {
-                        item {
-                            Text(
-                                text = "Faculty directory information loaded from college registrar.",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    if (officialList.isNotEmpty()) {
+                        items(officialList) { faculty ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("faculty_card_${faculty.id}"),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val iconVector = when {
+                                        faculty.isPrincipal -> Icons.Default.AccountBalance
+                                        faculty.isVicePrincipal -> Icons.Default.School
+                                        faculty.isHod -> Icons.Default.Verified
+                                        else -> Icons.Default.Person
+                                    }
+                                    val iconBoxSize = if (faculty.isLeadership) 48.dp else 42.dp
+                                    val iconSize = if (faculty.isLeadership) 24.dp else 20.dp
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(iconBoxSize)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = iconVector,
+                                            contentDescription = faculty.name,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(iconSize)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = faculty.name,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = faculty.designation,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (faculty.isLeadership) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = faculty.qualification,
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
-                    } else {
+                    } else if (facultyList.isNotEmpty()) {
                         items(facultyList) { faculty ->
                             Card(
                                 modifier = Modifier
@@ -399,7 +461,7 @@ fun DepartmentDetailScreen(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(46.dp)
+                                            .size(42.dp)
                                             .clip(CircleShape)
                                             .background(MaterialTheme.colorScheme.primaryContainer),
                                         contentAlignment = Alignment.Center
@@ -408,7 +470,7 @@ fun DepartmentDetailScreen(
                                             imageVector = Icons.Default.Person,
                                             contentDescription = faculty.name,
                                             tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(24.dp)
+                                            modifier = Modifier.size(20.dp)
                                         )
                                     }
 
@@ -442,6 +504,14 @@ fun DepartmentDetailScreen(
                                     }
                                 }
                             }
+                        }
+                    } else {
+                        item {
+                            Text(
+                                text = "Faculty directory information loaded from college registrar.",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }

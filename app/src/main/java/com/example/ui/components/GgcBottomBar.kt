@@ -8,11 +8,16 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.navigation.BottomNavItem
+
+private val BrandNavy = Color(0xFF061B52)
+private val BrandSelectedBg = Color(0xFFEEF3FF)
+private val BrandTextMuted = Color(0xFF5A6A85)
 
 @Composable
 fun GgcBottomBar(
@@ -21,16 +26,15 @@ fun GgcBottomBar(
 ) {
     val items = listOf(
         BottomNavItem.Home,
-        BottomNavItem.Academics,
-        BottomNavItem.Notices,
-        BottomNavItem.College,
-        BottomNavItem.Profile
+        BottomNavItem.Admission,
+        BottomNavItem.Alumni,
+        BottomNavItem.About
     )
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 8.dp
+        containerColor = Color.White,
+        contentColor = BrandNavy,
+        tonalElevation = 2.dp
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route
@@ -52,15 +56,15 @@ fun GgcBottomBar(
                     Text(
                         text = item.title,
                         fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    selectedIconColor = BrandNavy,
+                    selectedTextColor = BrandNavy,
+                    indicatorColor = BrandSelectedBg,
+                    unselectedIconColor = BrandTextMuted,
+                    unselectedTextColor = BrandTextMuted
                 )
             )
         }

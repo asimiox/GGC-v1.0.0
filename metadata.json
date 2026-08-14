@@ -1,6 +1,6 @@
 {
-  "name": "GGC M.B.Din Official App",
-  "description": "Official mobile application of Government Graduate College Mandi Bahauddin",
+  "name": "GGC M.B.Din",
+  "description": "Official App for Government Graduate College Mandi Bahauddin",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
