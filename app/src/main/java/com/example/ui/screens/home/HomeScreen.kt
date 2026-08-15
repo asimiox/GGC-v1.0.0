@@ -58,6 +58,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import com.example.R
 import com.example.data.UserProfileManager
 import com.example.ui.screens.courses.CoursesOutlineScreen
@@ -159,7 +163,22 @@ fun HomeScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 2. Personalized Student Bento Card (Solid Navy background)
+            // Compute live greeting, day, and date
+            val currentTime = remember { Calendar.getInstance() }
+            val hourOfDay = currentTime.get(Calendar.HOUR_OF_DAY)
+            val liveGreeting = when {
+                hourOfDay in 4..11 -> "Good Morning"
+                hourOfDay in 12..16 -> "Good Afternoon"
+                hourOfDay in 17..21 -> "Good Evening"
+                else -> "Good Night"
+            }
+            val liveDayFormat = remember { SimpleDateFormat("EEEE", Locale.ENGLISH) }
+            val liveDateFormat = remember { SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH) }
+            val todayDate = remember { Date() }
+            val currentDayName = remember { liveDayFormat.format(todayDate) }
+            val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
+
+            // 2. Personalized Student Bento Card (Solid Navy background with live date/greeting)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,8 +190,46 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 22.dp, vertical = 24.dp)
+                        .padding(horizontal = 20.dp, vertical = 20.dp)
                 ) {
+                    // Top Row: Live Greeting (e.g., Good Morning / Good Evening) & Live Date Badge
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Live greeting text
+                        Text(
+                            text = liveGreeting,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.75f),
+                            modifier = Modifier.testTag("home_live_greeting")
+                        )
+
+                        // Live Day & Date badge
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .background(
+                                    color = Color.White.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                .testTag("home_live_date_badge")
+                        ) {
+                            Text(
+                                text = "$currentDayName, $currentDateFormatted",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White.copy(alpha = 0.95f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Student Name
                     Text(
                         text = userProfile.name,
                         fontSize = 22.sp,
@@ -183,6 +240,7 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
+                    // Program Name
                     Text(
                         text = userProfile.programName,
                         fontSize = 14.sp,
