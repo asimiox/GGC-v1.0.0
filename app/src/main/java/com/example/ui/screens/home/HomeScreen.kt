@@ -388,6 +388,9 @@ fun HomeScreen(
                     )
                 }
             }
+
+            // Bottom space for comfortable scroll above the floating bottom bar
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
