@@ -430,7 +430,7 @@ private fun EnterNameStepScreen(
                 onValueChange = onNameChange,
                 placeholder = {
                     Text(
-                        text = "Your full name",
+                        text = "e.g: Asim",
                         color = BrandTextMuted,
                         fontSize = 14.sp
                     )
@@ -443,6 +443,10 @@ private fun EnterNameStepScreen(
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 shape = RoundedCornerShape(14.dp),
                 colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = BrandNavy,
+                    unfocusedTextColor = BrandNavy,
+                    focusedPlaceholderColor = BrandTextMuted,
+                    unfocusedPlaceholderColor = BrandTextMuted,
                     focusedBorderColor = BrandNavy,
                     unfocusedBorderColor = Color(0xFFE2E6EE),
                     focusedContainerColor = Color.White,
