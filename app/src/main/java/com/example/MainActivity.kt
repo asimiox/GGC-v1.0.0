@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -30,6 +31,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun GgcAppNavigation() {
+    val context = LocalContext.current
     val navController = rememberNavController()
 
     NavHost(
@@ -39,7 +41,12 @@ fun GgcAppNavigation() {
         composable(NavRoutes.SPLASH) {
             SplashScreen(
                 onSplashFinished = {
-                    navController.navigate(NavRoutes.ONBOARDING) {
+                    val destination = if (UserProfileManager.isOnboarded(context)) {
+                        NavRoutes.MAIN
+                    } else {
+                        NavRoutes.ONBOARDING
+                    }
+                    navController.navigate(destination) {
                         popUpTo(NavRoutes.SPLASH) { inclusive = true }
                     }
                 }

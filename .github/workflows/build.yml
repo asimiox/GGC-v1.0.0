@@ -52,8 +52,7 @@ jobs:
           KEY_PASSWORD: ${{ env.KEY_PASS }}
         run: |
           touch .env
-          chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace
+          gradle assembleRelease --stacktrace
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
