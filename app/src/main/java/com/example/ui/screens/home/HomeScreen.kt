@@ -205,118 +205,61 @@ fun HomeScreen(
                 }
             }
 
-            // 3. Bento Grid: Connected Programs & Prospectus with Fee Structure & Announcement
-            Box(modifier = Modifier.fillMaxWidth()) {
-                // Seamless Solid Connecting Neck / Bridge between Programs and Prospectus
-                // Drawn beneath the cards with filled polygon and smooth stroke to look like a thick connecting bridge
-                Canvas(
-                    modifier = Modifier.matchParentSize()
+            // 3. Bento Grid: Programs, Fee Structure, Announcement & Prospectus
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Row 1: Programs (Left) & Fee Structure (Right)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    val gapH = 10.dp.toPx()
-                    val gapV = 10.dp.toPx()
-                    val cardW = (size.width - gapH) / 2f
-                    val cardH = (size.height - gapV) / 2f
-
-                    // Neck dimensions and positions
-                    val neckWidth = 24.dp.toPx()
-
-                    // Center of the gap between the two cards
-                    val centerBridgeX = cardW + (gapH / 2f)
-                    val centerBridgeY = cardH + (gapV / 2f)
-
-                    // Programs card bottom edge connection point
-                    val pBottomX = cardW - 16.dp.toPx()
-                    val pBottomY = cardH
-
-                    // Prospectus card top edge connection point
-                    val prTopX = cardW + gapH + 16.dp.toPx()
-                    val prTopY = cardH + gapV
-
-                    val neckPath = Path().apply {
-                        // Top-left of neck (inside Programs card)
-                        moveTo(pBottomX - (neckWidth / 2f), pBottomY - 8.dp.toPx())
-                        // Top-right of neck
-                        lineTo(pBottomX + (neckWidth / 2f), pBottomY - 8.dp.toPx())
-                        // Bottom-right of neck (inside Prospectus card)
-                        lineTo(prTopX + (neckWidth / 2f), prTopY + 8.dp.toPx())
-                        // Bottom-left of neck
-                        lineTo(prTopX - (neckWidth / 2f), prTopY + 8.dp.toPx())
-                        close()
-                    }
-
-                    // Fill the connecting neck solid
-                    drawPath(
-                        path = neckPath,
-                        color = BrandNavy
+                    // Item 1: Programs (Dark Navy)
+                    BentoActionCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Programs",
+                        icon = Icons.AutoMirrored.Outlined.MenuBook,
+                        testTag = "bento_btn_programs",
+                        containerColor = BrandNavy,
+                        contentColor = Color.White,
+                        onClick = onNavigateToPrograms
                     )
 
-                    // Soft smooth rounded stroke for seamless contouring
-                    drawPath(
-                        path = neckPath,
-                        color = BrandNavy,
-                        style = Stroke(
-                            width = 6.dp.toPx(),
-                            cap = StrokeCap.Round,
-                            join = StrokeJoin.Round
-                        )
+                    // Item 2: Fee Structure
+                    BentoActionCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Fee Structure",
+                        icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                        testTag = "bento_btn_fee_structure",
+                        onClick = { activeSubScreen = HomeSubScreen.FEE_STRUCTURE }
                     )
                 }
 
-                Column(
+                // Row 2: Announcement (Left) & Prospectus (Right)
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Row 1: Programs (Left) & Fee Structure (Right)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Item 1: Programs (Connected Bento Card - Dark Navy)
-                        BentoActionCard(
-                            modifier = Modifier.weight(1f),
-                            title = "Programs",
-                            icon = Icons.AutoMirrored.Outlined.MenuBook,
-                            testTag = "bento_btn_programs",
-                            containerColor = BrandNavy,
-                            contentColor = Color.White,
-                            onClick = onNavigateToPrograms
-                        )
+                    // Item 3: Announcement
+                    BentoActionCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Announcement",
+                        icon = Icons.Outlined.Campaign,
+                        testTag = "bento_btn_announcement",
+                        onClick = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT }
+                    )
 
-                        // Item 2: Fee Structure
-                        BentoActionCard(
-                            modifier = Modifier.weight(1f),
-                            title = "Fee Structure",
-                            icon = Icons.AutoMirrored.Outlined.ReceiptLong,
-                            testTag = "bento_btn_fee_structure",
-                            onClick = { activeSubScreen = HomeSubScreen.FEE_STRUCTURE }
-                        )
-                    }
-
-                    // Row 2: Announcement (Left) & Prospectus (Right)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Item 3: Announcement
-                        BentoActionCard(
-                            modifier = Modifier.weight(1f),
-                            title = "Announcement",
-                            icon = Icons.Outlined.Campaign,
-                            testTag = "bento_btn_announcement",
-                            onClick = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT }
-                        )
-
-                        // Item 4: Prospectus (Connected Bento Card - Dark Navy)
-                        BentoActionCard(
-                            modifier = Modifier.weight(1f),
-                            title = "Prospectus",
-                            icon = Icons.Outlined.Description,
-                            testTag = "bento_btn_prospectus",
-                            containerColor = BrandNavy,
-                            contentColor = Color.White,
-                            onClick = { activeSubScreen = HomeSubScreen.PROSPECTUS }
-                        )
-                    }
+                    // Item 4: Prospectus (Dark Navy)
+                    BentoActionCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Prospectus",
+                        icon = Icons.Outlined.Description,
+                        testTag = "bento_btn_prospectus",
+                        containerColor = BrandNavy,
+                        contentColor = Color.White,
+                        onClick = { activeSubScreen = HomeSubScreen.PROSPECTUS }
+                    )
                 }
             }
 
