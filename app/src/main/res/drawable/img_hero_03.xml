@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="240dp"
+    android:viewportWidth="400"
+    android:viewportHeight="240">
+
+    <!-- Sky / Sunset Atmosphere -->
+    <path
+        android:fillColor="#0D2561"
+        android:pathData="M0,0h400v240h-400z"/>
+    <path
+        android:fillColor="#1B3A82"
+        android:pathData="M0,0 C120,45 280,45 400,0 L400,130 C280,150 120,150 0,130 Z"/>
+
+    <!-- Background Campus Arcades & Quadrangle Corridor -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M20,70 H380 V145 H20 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M15,67 H385 V71 H15 Z"/>
+
+    <!-- Arched Cloisters / Covered Walkway -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M35,95 H55 V145 H35 Z M70,95 H90 V145 H70 Z M105,95 H125 V145 H105 Z M140,95 H160 V145 H140 Z M175,95 H195 V145 H175 Z M210,95 H230 V145 H210 Z M245,95 H265 V145 H245 Z M280,95 H300 V145 H280 Z M315,95 H335 V145 H315 Z M350,95 H370 V145 H350 Z"/>
+
+    <!-- Cloister Arch Crowns -->
+    <path
+        android:fillColor="#E8BE48"
+        android:pathData="M35,95 C35,85 55,85 55,95 Z M70,95 C70,85 90,85 90,95 Z M105,95 C105,85 125,85 125,95 Z M140,95 C140,85 160,85 160,95 Z M175,95 C175,85 195,85 195,95 Z M210,95 C210,85 230,85 230,95 Z M245,95 C245,85 265,85 265,95 Z M280,95 C280,85 300,85 300,95 Z M315,95 C315,85 335,85 335,95 Z M350,95 C350,85 370,85 370,95 Z"/>
+
+    <!-- Courtyard Brick Floor -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M0,145 H400 V165 H0 Z"/>
+
+    <!-- Central Lush Courtyard Grass Beds -->
+    <path
+        android:fillColor="#1E5E3A"
+        android:pathData="M0,165 H400 V240 H0 Z"/>
+
+    <!-- Geometric Symmetrical Garden Paths -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M0,200 H400 V205 H0 Z M197,145 H203 V240 H197 Z"/>
+
+    <!-- Central Fountain Tiered Monument -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M165,190 H235 V215 H165 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M160,188 H240 V192 H160 Z"/>
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M175,175 H225 V188 H175 Z"/>
+    <path
+        android:fillColor="#4CA3E8"
+        android:pathData="M185,160 C185,150 215,150 215,160 L220,175 H180 Z"/>
+    <!-- Water Jet / Fountain Droplets -->
+    <path
+        android:fillColor="#8FD3FE"
+        android:pathData="M198,140 H202 V160 H198 Z M195,145 Q192,152 190,160 M205,145 Q208,152 210,160"/>
+
+    <!-- Flower Bed Edges / Shrubbery -->
+    <path
+        android:fillColor="#2D8A4E"
+        android:pathData="M30,175 Q60,168 90,175 Q120,168 150,175 L150,195 L30,195 Z M250,175 Q280,168 310,175 Q340,168 370,175 L370,195 L250,195 Z"/>
+
+</vector>

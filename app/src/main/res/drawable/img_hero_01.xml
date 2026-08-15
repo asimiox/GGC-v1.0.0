@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="240dp"
+    android:viewportWidth="400"
+    android:viewportHeight="240">
+
+    <!-- Sky Background Gradient Layer -->
+    <path
+        android:fillColor="#0D2561"
+        android:pathData="M0,0h400v240h-400z"/>
+    <path
+        android:fillColor="#153685"
+        android:pathData="M0,0 C130,40 270,40 400,0 L400,160 C270,180 130,180 0,160 Z"/>
+
+    <!-- Subtle Morning Sun / Radiance -->
+    <path
+        android:fillColor="#E5B942"
+        android:pathData="M200,90 m-40,0 a40,40 0 1,0 80,0 a40,40 0 1,0 -80,0"/>
+    <path
+        android:fillColor="#0D2561"
+        android:pathData="M200,90 m-36,0 a36,36 0 1,0 72,0 a36,36 0 1,0 -72,0"/>
+
+    <!-- Distant Campus Trees Silhouette -->
+    <path
+        android:fillColor="#091A42"
+        android:pathData="M0,170 Q40,140 80,170 Q120,135 160,170 Q240,135 280,170 Q320,140 360,170 Q385,150 400,170 L400,200 L0,200 Z"/>
+
+    <!-- Main Academic Building - Central Dome -->
+    <path
+        android:fillColor="#E8BE48"
+        android:pathData="M185,65 C185,50 215,50 215,65 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M198,38 L202,38 L202,50 L198,50 Z M196,42 L204,42 L200,32 Z"/>
+    <path
+        android:fillColor="#F0F4FA"
+        android:pathData="M182,65 H218 V78 H182 Z"/>
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M188,70 H192 V76 H188 Z M198,70 H202 V76 H198 Z M208,70 H212 V76 H208 Z"/>
+
+    <!-- Central Classical Pediment & Portico -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M150,90 L200,68 L250,90 L250,180 L150,180 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M150,90 L200,68 L250,90 L246,94 L200,74 L154,94 Z"/>
+
+    <!-- Central Portico Columns (Collegiate Navy) -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M165,105 H174 V175 H165 Z M183,105 H192 V175 H183 Z M208,105 H217 V175 H208 Z M226,105 H235 V175 H226 Z"/>
+    <!-- Column Capitals (Gold) -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M163,102 H176 V105 H163 Z M181,102 H194 V105 H181 Z M206,102 H219 V105 H206 Z M224,102 H237 V105 H224 Z"/>
+
+    <!-- Grand Entrance Archway -->
+    <path
+        android:fillColor="#030D2B"
+        android:pathData="M190,175 V140 C190,132 210,132 210,140 V175 Z"/>
+    <path
+        android:fillColor="#E8BE48"
+        android:pathData="M188,140 C188,130 212,130 212,140"
+        android:strokeColor="#E8BE48"
+        android:strokeWidth="2"/>
+
+    <!-- Left Academic Block Wing -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M30,105 L150,105 L150,180 L30,180 Z"/>
+    <!-- Left Wing Roof Cornice -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M25,102 H150 V106 H25 Z"/>
+    <!-- Left Wing Windows -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M45,118 H60 V140 H45 Z M75,118 H90 V140 H75 Z M105,118 H120 V140 H105 Z M45,150 H60 V172 H45 Z M75,150 H90 V172 H75 Z M105,150 H120 V172 H105 Z"/>
+
+    <!-- Right Academic Block Wing -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M250,105 L370,105 L370,180 L250,180 Z"/>
+    <!-- Right Wing Roof Cornice -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M250,102 H375 V106 H250 Z"/>
+    <!-- Right Wing Windows -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M280,118 H295 V140 H280 Z M310,118 H325 V140 H310 Z M340,118 H355 V140 H340 Z M280,150 H295 V172 H280 Z M310,150 H325 V172 H310 Z M340,150 H355 V172 H340 Z"/>
+
+    <!-- Grand Front Steps & Plinth -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M15,180 H385 V190 H15 Z M5,190 H395 V200 H5 Z"/>
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M0,200 H400 V240 H0 Z"/>
+
+    <!-- Campus Front Lawn / Greenery -->
+    <path
+        android:fillColor="#1E5E3A"
+        android:pathData="M0,205 Q200,195 400,205 V240 H0 Z"/>
+    <path
+        android:fillColor="#28784B"
+        android:pathData="M0,215 Q200,205 400,215 V240 H0 Z"/>
+
+    <!-- Foreground Campus Brick Pathway -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M160,240 L185,205 L215,205 L240,240 Z"/>
+
+</vector>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="240dp"
+    android:viewportWidth="400"
+    android:viewportHeight="240">
+
+    <!-- Sky Background -->
+    <path
+        android:fillColor="#0A1F52"
+        android:pathData="M0,0h400v240h-400z"/>
+    <path
+        android:fillColor="#153685"
+        android:pathData="M0,0 C150,50 250,50 400,0 L400,150 C250,170 150,170 0,150 Z"/>
+
+    <!-- Library & Postgraduate Tower -->
+    <path
+        android:fillColor="#F1F5F9"
+        android:pathData="M60,60 H140 V180 H60 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M55,56 H145 V61 H55 Z"/>
+    <!-- Clock on Tower -->
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M100,85 m-15,0 a15,15 0 1,0 30,0 a15,15 0 1,0 -30,0"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M100,85 m-12,0 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0"/>
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M99,77 H101 V86 H99 Z M100,85 H108 V87 H100 Z"/>
+
+    <!-- Tower Windows -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M78,115 H90 V140 H78 Z M110,115 H122 V140 H110 Z M78,150 H90 V175 H78 Z M110,150 H122 V175 H110 Z"/>
+
+    <!-- English Block & Department Wing -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M140,85 H360 V180 H140 Z"/>
+    <path
+        android:fillColor="#C59B27"
+        android:pathData="M140,82 H365 V86 H140 Z"/>
+
+    <!-- Department Hall Arches & Large Windows -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M160,105 H190 V145 H160 Z M210,105 H240 V145 H210 Z M260,105 H290 V145 H260 Z M310,105 H340 V145 H310 Z"/>
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M160,155 H190 V180 H160 Z M210,155 H240 V180 H210 Z M260,155 H290 V180 H260 Z M310,155 H340 V180 H310 Z"/>
+
+    <!-- Arch Headers on First Floor Windows -->
+    <path
+        android:fillColor="#E8BE48"
+        android:pathData="M160,105 C160,95 190,95 190,105 Z M210,105 C210,95 240,95 240,105 Z M260,105 C260,95 290,95 290,105 Z M310,105 C310,95 340,95 340,105 Z"/>
+
+    <!-- Plinth / Base Steps -->
+    <path
+        android:fillColor="#CBD5E1"
+        android:pathData="M40,180 H380 V192 H40 Z"/>
+
+    <!-- Front Campus Garden and Lawn -->
+    <path
+        android:fillColor="#1E5E3A"
+        android:pathData="M0,192 Q200,185 400,192 V240 H0 Z"/>
+    <path
+        android:fillColor="#2E8B57"
+        android:pathData="M0,205 Q200,198 400,205 V240 H0 Z"/>
+
+    <!-- Palm / Ornamental Campus Trees -->
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M35,140 Q38,165 40,192 H34 Q32,165 30,140 Z"/>
+    <path
+        android:fillColor="#1A6B3D"
+        android:pathData="M35,130 Q15,135 10,150 Q25,140 35,145 Q45,140 60,150 Q55,135 35,130 Z"/>
+
+    <path
+        android:fillColor="#061B52"
+        android:pathData="M375,140 Q378,165 380,192 H374 Q372,165 370,140 Z"/>
+    <path
+        android:fillColor="#1A6B3D"
+        android:pathData="M375,130 Q355,135 350,150 Q365,140 375,145 Q385,140 400,150 Q395,135 375,130 Z"/>
+
+    <!-- Walkway Path -->
+    <path
+        android:fillColor="#E5B942"
+        android:pathData="M180,240 L210,192 L230,192 L260,240 Z"/>
+
+</vector>
