@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Biotech
@@ -42,7 +43,6 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Engineering
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.School
@@ -106,14 +106,14 @@ private val intermediateList = listOf(
     OnboardingProgramItem("I.Com", "Intermediate in Commerce", Icons.Default.Calculate),
     OnboardingProgramItem("F.Sc Pre-Engineering", "Pre-Engineering", Icons.Default.Engineering),
     OnboardingProgramItem("F.Sc Pre-Medical", "Pre-Medical", Icons.Default.Biotech),
-    OnboardingProgramItem("F.A", "Faculty of Arts", Icons.Default.MenuBook)
+    OnboardingProgramItem("F.A", "Faculty of Arts", Icons.AutoMirrored.Filled.MenuBook)
 )
 
 private val bsList = listOf(
     OnboardingProgramItem("BS Information Technology", "Department of IT", Icons.Default.Computer),
     OnboardingProgramItem("BS Business Administration", "Department of BBA", Icons.Default.Business),
     OnboardingProgramItem("BS English", "Department of English", Icons.Default.AutoStories),
-    OnboardingProgramItem("BS Islamic Studies", "Department of Islamic Studies", Icons.Default.MenuBook),
+    OnboardingProgramItem("BS Islamic Studies", "Department of Islamic Studies", Icons.AutoMirrored.Filled.MenuBook),
     OnboardingProgramItem("BS Physics", "Department of Physics", Icons.Default.Science),
     OnboardingProgramItem("BS Mathematics", "Department of Mathematics", Icons.Default.Calculate),
     OnboardingProgramItem("BS Political Science", "Department of Political Science", Icons.Default.AccountBalance),

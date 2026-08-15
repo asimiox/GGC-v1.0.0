@@ -24,12 +24,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -208,7 +208,7 @@ fun HomeScreen(
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Programs",
-                    icon = Icons.Outlined.MenuBook,
+                    icon = Icons.AutoMirrored.Outlined.MenuBook,
                     testTag = "bento_btn_programs",
                     onClick = onNavigateToPrograms
                 )
@@ -217,7 +217,7 @@ fun HomeScreen(
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Fee Structure",
-                    icon = Icons.Outlined.ReceiptLong,
+                    icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                     testTag = "bento_btn_fee_structure",
                     onClick = { activeSubScreen = HomeSubScreen.FEE_STRUCTURE }
                 )
@@ -412,7 +412,7 @@ private fun FeeStructureView(onBack: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ReceiptLong,
+                    imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
                     contentDescription = null,
                     tint = BrandNavy,
                     modifier = Modifier.size(54.dp)

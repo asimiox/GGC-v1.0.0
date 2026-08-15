@@ -26,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AutoStories
@@ -35,7 +36,6 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Engineering
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Science
@@ -80,17 +80,17 @@ fun getProgramIcon(id: String): ImageVector {
         "ics", "bs_it" -> Icons.Default.Computer
         "icom", "bs_bba" -> Icons.Default.Business
         "bs_english" -> Icons.Default.AutoStories
-        "bs_islamic_studies" -> Icons.Default.MenuBook
+        "bs_islamic_studies" -> Icons.AutoMirrored.Filled.MenuBook
         "fsc_pre_eng" -> Icons.Default.Engineering
         "fsc_pre_med" -> Icons.Default.Biotech
-        "fa" -> Icons.Default.MenuBook
+        "fa" -> Icons.AutoMirrored.Filled.MenuBook
         "bs_physics" -> Icons.Default.Science
         "bs_mathematics" -> Icons.Default.Calculate
         "bs_political_science" -> Icons.Default.AccountBalance
         "bs_urdu" -> Icons.Default.Translate
         "bs_chemistry" -> Icons.Default.Science
         "bs_zoology" -> Icons.Default.Pets
-        else -> Icons.Default.MenuBook
+        else -> Icons.AutoMirrored.Filled.MenuBook
     }
 }
 
@@ -478,7 +478,7 @@ private fun ProgramDetailView(
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.MenuBook,
+                                imageVector = Icons.AutoMirrored.Filled.MenuBook,
                                 contentDescription = null,
                                 tint = Color.White,
                                 modifier = Modifier.size(22.dp)
