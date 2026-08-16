@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import com.example.ui.components.RoundedPillBottomBar
+import com.example.ui.components.GgcBottomBar
 import com.example.ui.navigation.NavRoutes
 import com.example.ui.screens.about.AboutScreen
 import com.example.ui.screens.admission.AdmissionScreen
@@ -32,7 +32,7 @@ fun MainScreen() {
                 NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE -> previousRoute
                 else -> currentRoute
             }
-            RoundedPillBottomBar(
+            GgcBottomBar(
                 currentRoute = activeBottomRoute,
                 onNavigateToRoute = { route ->
                     previousRoute = currentRoute
