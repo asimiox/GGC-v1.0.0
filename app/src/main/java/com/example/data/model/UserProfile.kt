@@ -18,9 +18,16 @@ data class UserProfile(
     val designation: String? = null,
     val qualification: String? = null,
     val facultyId: String? = null,
-    val institutionalEmail: String? = null
+    val institutionalEmail: String? = null,
+    val appRole: AppRole = AppRole.STUDENT_BS
 ) {
     val isFaculty: Boolean
-        get() = userRole.equals("Faculty", ignoreCase = true) || programLevel.equals("Faculty", ignoreCase = true)
+        get() = appRole.isTeacherLevel || userRole.equals("Faculty", ignoreCase = true) || programLevel.equals("Faculty", ignoreCase = true)
+
+    val isHod: Boolean
+        get() = appRole == AppRole.HOD || appRole == AppRole.ADMIN
+
+    val isAdmin: Boolean
+        get() = appRole == AppRole.ADMIN
 }
 

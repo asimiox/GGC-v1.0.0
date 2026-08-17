@@ -1,6 +1,7 @@
 package com.example.data
 
 import android.content.Context
+import com.example.data.model.AppRole
 import com.example.data.model.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,13 +25,15 @@ object UserProfileManager {
     private const val KEY_QUALIFICATION = "user_qualification"
     private const val KEY_FACULTY_ID = "user_faculty_id"
     private const val KEY_INSTITUTIONAL_EMAIL = "user_institutional_email"
+    private const val KEY_APP_ROLE = "user_app_role"
 
     private val _userProfile = MutableStateFlow(
         UserProfile(
             name = "Student",
             programLevel = "BS",
             programName = "BS Information Technology",
-            semester = "Semester 1"
+            semester = "Semester 1",
+            appRole = AppRole.STUDENT_BS
         )
     )
     val userProfile: StateFlow<UserProfile> = _userProfile.asStateFlow()
@@ -52,6 +55,23 @@ object UserProfileManager {
         val qualification = prefs.getString(KEY_QUALIFICATION, null)
         val facultyId = prefs.getString(KEY_FACULTY_ID, null)
         val institutionalEmail = prefs.getString(KEY_INSTITUTIONAL_EMAIL, null)
+        val appRoleKey = prefs.getString(KEY_APP_ROLE, null)
+
+        val computedRole = if (!appRoleKey.isNullOrBlank()) {
+            AppRole.fromKey(appRoleKey)
+        } else if (level.equals("Intermediate", ignoreCase = true)) {
+            AppRole.STUDENT_INTERMEDIATE
+        } else if (userRole.equals("Faculty", ignoreCase = true) || level.equals("Faculty", ignoreCase = true)) {
+            if (designation?.contains("HOD", ignoreCase = true) == true ||
+                designation?.contains("Head of Department", ignoreCase = true) == true ||
+                designation?.contains("Principal", ignoreCase = true) == true) {
+                AppRole.HOD
+            } else {
+                AppRole.TEACHER
+            }
+        } else {
+            AppRole.STUDENT_BS
+        }
 
         _userProfile.value = UserProfile(
             name = name,
@@ -68,7 +88,8 @@ object UserProfileManager {
             designation = designation,
             qualification = qualification,
             facultyId = facultyId,
-            institutionalEmail = institutionalEmail
+            institutionalEmail = institutionalEmail,
+            appRole = computedRole
         )
     }
 
@@ -131,7 +152,8 @@ object UserProfileManager {
             registrationNumber = registrationNumber.trim().uppercase(),
             username = username.trim().lowercase(),
             isVerified = true,
-            userId = userId
+            userId = userId,
+            appRole = AppRole.STUDENT_INTERMEDIATE
         )
     }
 
@@ -156,6 +178,7 @@ object UserProfileManager {
             .putString(KEY_ROLL_NUMBER, rollNumber.trim().uppercase())
             .putString(KEY_REG_NUMBER, registrationNumber.trim().uppercase())
             .putString(KEY_USERNAME, username.trim().lowercase())
+            .putString(KEY_APP_ROLE, AppRole.STUDENT_BS.roleKey)
             .putBoolean(KEY_IS_VERIFIED, true)
             .putString(KEY_USER_ID, userId)
             .putBoolean(KEY_ONBOARDED, true)
@@ -170,7 +193,8 @@ object UserProfileManager {
             registrationNumber = registrationNumber.trim().uppercase(),
             username = username.trim().lowercase(),
             isVerified = true,
-            userId = userId
+            userId = userId,
+            appRole = AppRole.STUDENT_BS
         )
     }
 
@@ -186,6 +210,14 @@ object UserProfileManager {
         userId: String?
     ) {
         val cleanName = fullName.trim().ifEmpty { username }
+        val role = if (designation.contains("HOD", ignoreCase = true) ||
+            designation.contains("Head of Department", ignoreCase = true) ||
+            designation.contains("Principal", ignoreCase = true)) {
+            AppRole.HOD
+        } else {
+            AppRole.TEACHER
+        }
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit()
             .putString(KEY_NAME, cleanName)
@@ -199,6 +231,7 @@ object UserProfileManager {
             .putString(KEY_FACULTY_ID, facultyId.trim().uppercase())
             .putString(KEY_INSTITUTIONAL_EMAIL, institutionalEmail?.trim()?.lowercase())
             .putString(KEY_USERNAME, username.trim().lowercase())
+            .putString(KEY_APP_ROLE, role.roleKey)
             .putBoolean(KEY_IS_VERIFIED, true)
             .putString(KEY_USER_ID, userId)
             .putBoolean(KEY_ONBOARDED, true)
@@ -217,8 +250,15 @@ object UserProfileManager {
             institutionalEmail = institutionalEmail?.trim()?.lowercase(),
             username = username.trim().lowercase(),
             isVerified = true,
-            userId = userId
+            userId = userId,
+            appRole = role
         )
+    }
+
+    fun updateRole(context: Context, appRole: AppRole) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_APP_ROLE, appRole.roleKey).apply()
+        _userProfile.value = _userProfile.value.copy(appRole = appRole)
     }
 
     fun clearProfile(context: Context) {
@@ -228,7 +268,8 @@ object UserProfileManager {
             name = "Student",
             programLevel = "BS",
             programName = "BS Information Technology",
-            semester = "Semester 1"
+            semester = "Semester 1",
+            appRole = AppRole.STUDENT_BS
         )
     }
 

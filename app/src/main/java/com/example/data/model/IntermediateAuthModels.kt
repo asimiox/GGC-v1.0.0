@@ -18,14 +18,19 @@ data class IntermediateStudentProfileDto(
 
 @Serializable
 data class OfficialIntermediateStudentDto(
-    val id: String,
+    val id: String? = null,
     @SerialName("roll_number") val rollNumber: String,
     @SerialName("registration_number") val registrationNumber: String,
     val program: String,
+    val session: String = "2024-2026",
     @SerialName("first_name") val firstName: String? = null,
     @SerialName("last_name") val lastName: String? = null,
     @SerialName("is_claimed") val isClaimed: Boolean = false,
-    @SerialName("claimed_by_user_id") val claimedByUserId: String? = null
+    @SerialName("claimed_by_user_id") val claimedByUserId: String? = null,
+    @SerialName("claimed_at") val claimedAt: String? = null,
+    @SerialName("is_active") val isActive: Boolean = true,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null
 )
 
 data class IntermediateRegistrationForm(
