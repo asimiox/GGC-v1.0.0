@@ -57,4 +57,52 @@ class CollegeStorageRepository(
     suspend fun downloadDocument(bucketId: String, path: String): AuthResult<ByteArray> {
         return remoteDataSource.downloadFileBytes(bucketId, path)
     }
+
+    /**
+     * Uploads an official prospectus document file to Supabase Storage.
+     */
+    suspend fun uploadProspectus(sessionYear: String, fileName: String, bytes: ByteArray): AuthResult<String> {
+        val path = CollegeStorageRemoteDataSource.buildProspectusPath(sessionYear, fileName)
+        return remoteDataSource.uploadFileBytes(CollegeStorageRemoteDataSource.BUCKET_PROSPECTUS, path, bytes)
+    }
+
+    /**
+     * Uploads an official institutional document file to Supabase Storage.
+     */
+    suspend fun uploadOfficialDocument(category: String, departmentCode: String?, fileName: String, bytes: ByteArray): AuthResult<String> {
+        val path = CollegeStorageRemoteDataSource.buildDocumentPath(category, departmentCode, fileName)
+        return remoteDataSource.uploadFileBytes(CollegeStorageRemoteDataSource.BUCKET_OFFICIAL_DOCUMENTS, path, bytes)
+    }
+
+    /**
+     * Uploads an announcement attachment to Supabase Storage.
+     */
+    suspend fun uploadAnnouncementAttachment(departmentCode: String?, fileName: String, bytes: ByteArray): AuthResult<String> {
+        val path = CollegeStorageRemoteDataSource.buildAnnouncementAttachmentPath(departmentCode, fileName)
+        return remoteDataSource.uploadFileBytes(CollegeStorageRemoteDataSource.BUCKET_ANNOUNCEMENTS, path, bytes)
+    }
+
+    /**
+     * Uploads a course outline document to Supabase Storage.
+     */
+    suspend fun uploadCourseOutline(departmentCode: String, programCode: String, fileName: String, bytes: ByteArray): AuthResult<String> {
+        val path = CollegeStorageRemoteDataSource.buildCourseOutlinePath(departmentCode, programCode, fileName)
+        return remoteDataSource.uploadFileBytes(CollegeStorageRemoteDataSource.BUCKET_COURSE_OUTLINES, path, bytes)
+    }
+
+    /**
+     * Uploads college media banner to Supabase Storage.
+     */
+    suspend fun uploadCollegeMedia(fileName: String, bytes: ByteArray): AuthResult<String> {
+        val cleanName = fileName.trim().replace(" ", "_")
+        val path = "events/$cleanName"
+        return remoteDataSource.uploadFileBytes(CollegeStorageRemoteDataSource.BUCKET_COLLEGE_MEDIA, path, bytes)
+    }
+
+    /**
+     * Deletes a storage file from a specified bucket.
+     */
+    suspend fun deleteFile(bucketId: String, path: String): AuthResult<Unit> {
+        return remoteDataSource.deleteFile(bucketId, path)
+    }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,9 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Attachment
@@ -24,176 +28,250 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.model.CollegeEvent
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.model.CollegeEventDto
+
+private val BrandNavy = Color(0xFF061B52)
+private val BrandTextMuted = Color(0xFF5A6A85)
+private val BrandBackground = Color(0xFFF6F6F6)
 
 @Composable
 fun EventsScreen(
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    viewModel: EventsViewModel = viewModel()
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) } // 0 = Upcoming, 1 = Past
-    var selectedEvent by remember { mutableStateOf<CollegeEvent?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
+    val filteredEvents = viewModel.getFilteredEvents()
+    val categories = listOf("All", "College", "Sports", "Academic", "Seminar", "Workshop", "Cultural")
 
-    // REAL DATA RULE: Maintain official events list. Empty list shown when no verified live feed is connected.
-    val events = remember { emptyList<CollegeEvent>() }
-
-    val filteredEvents = remember(selectedTabIndex, events) {
-        events.filter { event ->
-            if (selectedTabIndex == 0) event.isUpcoming else !event.isUpcoming
-        }
+    if (uiState.selectedEvent != null) {
+        val bannerUrl = viewModel.getBannerUrl(uiState.selectedEvent?.bannerStoragePath)
+        CollegeEventDetailScreen(
+            event = uiState.selectedEvent!!,
+            bannerUrl = bannerUrl,
+            onBack = { viewModel.selectEvent(null) }
+        )
+        return
     }
 
-    if (selectedEvent != null) {
-        EventDetailScreen(
-            event = selectedEvent!!,
-            onBack = { selectedEvent = null }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .testTag("events_screen_container")
+    ) {
+        // Top App Bar
+        SurfaceHeader(
+            title = "Events & Activities",
+            subtitle = "Seminars, Workshops, Sports & Institutional Programs",
+            onBack = onBack,
+            onRefresh = { viewModel.loadPublishedEvents() }
         )
-    } else {
+
+        // Minimal Tab Bar (Upcoming / Past)
+        TabRow(
+            selectedTabIndex = uiState.selectedTab,
+            containerColor = Color.White,
+            contentColor = BrandNavy,
+            indicator = { tabPositions ->
+                if (uiState.selectedTab < tabPositions.size) {
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[uiState.selectedTab]),
+                        color = BrandNavy
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Tab(
+                selected = uiState.selectedTab == 0,
+                onClick = { viewModel.setSelectedTab(0) },
+                text = {
+                    Text(
+                        text = "Upcoming Events (${uiState.upcomingEvents.size})",
+                        fontWeight = if (uiState.selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 13.sp,
+                        color = if (uiState.selectedTab == 0) BrandNavy else BrandTextMuted
+                    )
+                },
+                modifier = Modifier.testTag("events_tab_upcoming")
+            )
+            Tab(
+                selected = uiState.selectedTab == 1,
+                onClick = { viewModel.setSelectedTab(1) },
+                text = {
+                    Text(
+                        text = "Past Activities (${uiState.pastEvents.size})",
+                        fontWeight = if (uiState.selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 13.sp,
+                        color = if (uiState.selectedTab == 1) BrandNavy else BrandTextMuted
+                    )
+                },
+                modifier = Modifier.testTag("events_tab_past")
+            )
+        }
+
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+
+        // Search & Category Bar
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .testTag("events_screen_container")
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
-            // Screen Header Bar
-            SurfaceHeader(
-                title = "Events & Activities",
-                subtitle = "Seminars, Workshops, Sports & Institutional Programs",
-                onBack = onBack
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = { viewModel.setSearchQuery(it) },
+                placeholder = { Text("Search events by keyword, venue...", fontSize = 13.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = BrandTextMuted
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("events_search_input"),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = BrandNavy,
+                    unfocusedBorderColor = Color(0xFFE2E8F0),
+                    focusedContainerColor = Color(0xFFF8FAFD),
+                    unfocusedContainerColor = Color(0xFFF8FAFD)
+                ),
+                singleLine = true
             )
 
-            // Minimal Tab Bar (Upcoming / Past)
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary,
-                indicator = { tabPositions ->
-                    if (selectedTabIndex < tabPositions.size) {
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Tab(
-                    selected = selectedTabIndex == 0,
-                    onClick = { selectedTabIndex = 0 },
-                    text = {
-                        Text(
-                            text = "Upcoming Events",
-                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 13.sp
-                        )
-                    },
-                    modifier = Modifier.testTag("events_tab_upcoming")
-                )
-                Tab(
-                    selected = selectedTabIndex == 1,
-                    onClick = { selectedTabIndex = 1 },
-                    text = {
-                        Text(
-                            text = "Past Activities",
-                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 13.sp
-                        )
-                    },
-                    modifier = Modifier.testTag("events_tab_past")
-                )
-            }
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Events List or Verified Empty State
-            if (filteredEvents.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp)
-                        .testTag("events_empty_state"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(categories) { category ->
+                    val isSelected = uiState.selectedCategory.equals(category, ignoreCase = true)
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(if (isSelected) BrandNavy else Color(0xFFEEF3FF))
+                            .clickable { viewModel.setSelectedCategory(category) }
+                            .padding(horizontal = 12.dp, vertical = 5.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Event,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
                         Text(
-                            text = "No events available.",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = if (selectedTabIndex == 0) {
-                                "Official schedule for upcoming academic seminars, workshops, sports week, and institutional ceremonies will be published here."
-                            } else {
-                                "No archived college activities recorded in this section."
-                            },
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            lineHeight = 18.sp
+                            text = category,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else BrandNavy
                         )
                     }
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+            }
+        }
+
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("events_loading_indicator"),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = BrandNavy)
+            }
+        } else if (filteredEvents.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .testTag("events_empty_state"),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    items(filteredEvents) { event ->
-                        EventCard(
-                            event = event,
-                            onClick = { selectedEvent = event }
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFEEF3FF)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Event,
+                            contentDescription = null,
+                            tint = BrandNavy,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = if (uiState.searchQuery.isNotBlank()) "No matching events found" else "No published events available",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = if (uiState.selectedTab == 0) {
+                            "Official schedule for upcoming academic seminars, workshops, sports week, and institutional ceremonies will be published here."
+                        } else {
+                            "No archived college activities recorded in this section."
+                        },
+                        fontSize = 12.sp,
+                        color = BrandTextMuted,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("events_list_container"),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(filteredEvents, key = { it.id ?: it.title }) { event ->
+                    PublishedEventCard(
+                        event = event,
+                        onClick = { viewModel.selectEvent(event) }
+                    )
                 }
             }
         }
@@ -204,60 +282,76 @@ fun EventsScreen(
 private fun SurfaceHeader(
     title: String,
     subtitle: String,
-    onBack: (() -> Unit)?
+    onBack: (() -> Unit)?,
+    onRefresh: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.White)
             .padding(horizontal = 12.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        if (onBack != null) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.testTag("events_header_back_button")
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.primary
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (onBack != null) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.testTag("events_header_back_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = BrandNavy
+                    )
+                }
+            }
+            Column(modifier = Modifier.padding(start = if (onBack != null) 4.dp else 8.dp)) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = BrandTextMuted
                 )
             }
         }
-        Column(modifier = Modifier.padding(start = if (onBack != null) 4.dp else 8.dp)) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = subtitle,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+
+        IconButton(
+            onClick = onRefresh,
+            modifier = Modifier.testTag("events_refresh_btn")
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Refresh",
+                tint = BrandNavy
             )
         }
     }
 }
 
 @Composable
-fun EventCard(
-    event: CollegeEvent,
+fun PublishedEventCard(
+    event: CollegeEventDto,
     onClick: () -> Unit
 ) {
-    OutlinedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .testTag("event_item_${event.id}"),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            .testTag("event_item_${event.id ?: event.title.hashCode()}"),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -266,15 +360,15 @@ fun EventCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFFEEF3FF))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = event.category,
+                        text = event.category.uppercase(),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = BrandNavy
                     )
                 }
 
@@ -282,67 +376,67 @@ fun EventCard(
                     Icon(
                         imageVector = Icons.Default.CalendarMonth,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp)
+                        tint = BrandTextMuted,
+                        modifier = Modifier.size(13.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = event.date,
+                        text = event.eventDate,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = BrandTextMuted
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = event.title,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = BrandNavy,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            if (event.venue != null || event.time != null) {
+            if (!event.venue.isNullOrBlank() || !event.eventTime.isNullOrBlank()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (event.venue != null) {
+                    if (!event.venue.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = BrandTextMuted,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Text(
                                 text = event.venue,
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = BrandTextMuted
                             )
                         }
                     }
 
-                    if (event.time != null) {
+                    if (!event.eventTime.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.Schedule,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = BrandTextMuted,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(3.dp))
                             Text(
-                                text = event.time,
+                                text = event.eventTime,
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = BrandTextMuted
                             )
                         }
                     }
@@ -354,33 +448,33 @@ fun EventCard(
             Text(
                 text = event.description,
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = BrandTextMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                lineHeight = 16.sp
+                lineHeight = 17.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (event.attachmentName != null) {
+                if (!event.attachmentName.isNullOrBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Attachment,
                             contentDescription = "Attachment",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp)
+                            tint = Color(0xFF1B873F),
+                            modifier = Modifier.size(13.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Attachment available",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color(0xFF1B873F)
                         )
                     }
                 } else {
@@ -392,12 +486,12 @@ fun EventCard(
                         text = "View Event Details",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = BrandNavy
                     )
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = BrandNavy,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -407,21 +501,24 @@ fun EventCard(
 }
 
 @Composable
-fun EventDetailScreen(
-    event: CollegeEvent,
+fun CollegeEventDetailScreen(
+    event: CollegeEventDto,
+    bannerUrl: String?,
     onBack: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(BrandBackground)
             .testTag("event_detail_screen_container")
     ) {
         // Top Back Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
+                .background(Color.White)
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -432,7 +529,7 @@ fun EventDetailScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back to Events",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = BrandNavy
                 )
             }
 
@@ -440,38 +537,41 @@ fun EventDetailScreen(
                 text = "Event Details",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = BrandNavy
             )
         }
 
-        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(18.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFEEF3FF))
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = event.category.uppercase(),
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = BrandNavy
                         )
                     }
 
@@ -481,15 +581,15 @@ fun EventDetailScreen(
                         text = event.title,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = BrandNavy,
                         lineHeight = 24.sp
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                    HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Event Schedule & Venue Information
                     Row(
@@ -499,19 +599,19 @@ fun EventDetailScreen(
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = BrandNavy,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Date: ${event.date}",
+                            text = "Date: ${event.eventDate}",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = BrandNavy
                         )
                     }
 
-                    if (event.time != null) {
+                    if (!event.eventTime.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -520,20 +620,20 @@ fun EventDetailScreen(
                             Icon(
                                 imageVector = Icons.Default.Schedule,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = BrandNavy,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Time: ${event.time}",
+                                text = "Time: ${event.eventTime}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = BrandNavy
                             )
                         }
                     }
 
-                    if (event.venue != null) {
+                    if (!event.venue.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -542,7 +642,7 @@ fun EventDetailScreen(
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = BrandNavy,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -550,46 +650,46 @@ fun EventDetailScreen(
                                 text = "Venue: ${event.venue}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = BrandNavy
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     Text(
                         text = "Official Program Details",
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = BrandNavy
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = event.description,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = BrandNavy,
                         lineHeight = 20.sp
                     )
 
-                    if (event.attachmentName != null) {
+                    if (!event.attachmentName.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFEEF3FF))
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Attachment,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = BrandNavy,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(10.dp))
@@ -598,12 +698,12 @@ fun EventDetailScreen(
                                     text = "Official Attachment",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = BrandNavy
                                 )
                                 Text(
                                     text = event.attachmentName,
                                     fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = BrandTextMuted
                                 )
                             }
                         }

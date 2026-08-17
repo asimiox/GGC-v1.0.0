@@ -82,4 +82,32 @@ class CollegeStorageRemoteDataSource {
             AuthResult.Error(e.message ?: "Failed to download file from storage")
         }
     }
+
+    /**
+     * Uploads raw file bytes to a designated storage bucket with automatic path structuring.
+     */
+    suspend fun uploadFileBytes(bucketId: String, path: String, bytes: ByteArray, upsert: Boolean = true): AuthResult<String> {
+        return try {
+            client.storage.from(bucketId).upload(path, bytes) {
+                this.upsert = upsert
+            }
+            AuthResult.Success(path)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to upload file to $bucketId/$path: ${e.message}", e)
+            AuthResult.Error(e.message ?: "Failed to upload file to storage")
+        }
+    }
+
+    /**
+     * Deletes an uploaded file from Supabase storage.
+     */
+    suspend fun deleteFile(bucketId: String, path: String): AuthResult<Unit> {
+        return try {
+            client.storage.from(bucketId).delete(path)
+            AuthResult.Success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete file $bucketId/$path: ${e.message}", e)
+            AuthResult.Error(e.message ?: "Failed to delete storage file")
+        }
+    }
 }

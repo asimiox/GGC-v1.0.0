@@ -28,6 +28,8 @@ object NavRoutes {
     const val PROGRAMS = "programs"
     const val FACULTY = "faculty"
     const val COURSES_OUTLINE = "courses_outline"
+    const val ADMIN_REGISTRY = "admin_registry"
+    const val CONTENT_MANAGEMENT = "content_management"
 }
 
 sealed class BottomNavItem(

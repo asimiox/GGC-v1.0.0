@@ -1,6 +1,8 @@
-package com.example.ui.screens.notices
+package com.example.ui.screens.documents
 
-import androidx.compose.animation.AnimatedVisibility
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,14 +24,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,24 +41,25 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.data.model.AnnouncementDto
+import com.example.data.model.OfficialDocumentDto
 import com.example.ui.theme.GgcGoldTertiary
 
 private val BrandNavy = Color(0xFF061B52)
@@ -62,29 +67,27 @@ private val BrandTextMuted = Color(0xFF5A6A85)
 private val BrandBackground = Color(0xFFF6F6F6)
 
 @Composable
-fun NoticesScreen(
+fun OfficialDocumentsScreen(
+    initialCategory: String? = null,
     onBack: (() -> Unit)? = null,
-    viewModel: NoticesViewModel = viewModel()
+    viewModel: OfficialDocumentsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
-    val categories = listOf("All", "General", "Admissions", "Examinations", "Academic", "Department", "Fee")
-
-    if (uiState.selectedNotice != null) {
-        val attachmentUrl = viewModel.getAttachmentUrl(uiState.selectedNotice?.attachmentStoragePath)
-        NoticeDetailScreen(
-            notice = uiState.selectedNotice!!,
-            attachmentUrl = attachmentUrl,
-            onBack = { viewModel.selectNotice(null) }
-        )
-        return
+    LaunchedEffect(initialCategory) {
+        if (initialCategory != null) {
+            viewModel.setSelectedType(initialCategory)
+        }
     }
+
+    val docCategories = listOf("All", "Fee Structure", "Rules", "Academic", "Examinations", "Forms", "Admissions")
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
-            .testTag("notices_screen_container")
+            .testTag("official_documents_screen_container")
     ) {
         // Top Header
         Column(
@@ -102,7 +105,7 @@ fun NoticesScreen(
                     if (onBack != null) {
                         IconButton(
                             onClick = onBack,
-                            modifier = Modifier.testTag("notices_back_btn")
+                            modifier = Modifier.testTag("documents_back_btn")
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -114,34 +117,34 @@ fun NoticesScreen(
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "Official Notices & Circulars",
-                                fontSize = 18.sp,
+                                text = "Official Documents & Rules",
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BrandNavy
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Icon(
                                 imageVector = Icons.Default.Verified,
-                                contentDescription = "Verified College Circulars",
+                                contentDescription = "Verified College Documents",
                                 tint = GgcGoldTertiary,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(17.dp)
                             )
                         }
                         Text(
-                            text = "Verified administrative updates and academic announcements",
-                            fontSize = 12.sp,
+                            text = "Institutional rules, fee schedules, forms & guidelines",
+                            fontSize = 11.sp,
                             color = BrandTextMuted
                         )
                     }
                 }
 
                 IconButton(
-                    onClick = { viewModel.loadPublishedNotices() },
-                    modifier = Modifier.testTag("notices_refresh_btn")
+                    onClick = { viewModel.loadPublishedDocuments() },
+                    modifier = Modifier.testTag("documents_refresh_btn")
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh Notices",
+                        contentDescription = "Refresh",
                         tint = BrandNavy
                     )
                 }
@@ -152,7 +155,7 @@ fun NoticesScreen(
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.setSearchQuery(it) },
-                placeholder = { Text("Search notices by keyword or title...", fontSize = 13.sp) },
+                placeholder = { Text("Search by title, session, or keyword...", fontSize = 13.sp) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -162,7 +165,7 @@ fun NoticesScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("notices_search_input"),
+                    .testTag("documents_search_input"),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = BrandNavy,
@@ -173,12 +176,12 @@ fun NoticesScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Category Filter Row
+            // Category Filter Pills
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(categories) { category ->
-                    val isSelected = uiState.selectedCategory.equals(category, ignoreCase = true)
+                items(docCategories) { category ->
+                    val isSelected = uiState.selectedType.equals(category, ignoreCase = true)
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
@@ -186,13 +189,13 @@ fun NoticesScreen(
                                 if (isSelected) BrandNavy
                                 else Color(0xFFEEF3FF)
                             )
-                            .clickable { viewModel.setCategory(category) }
-                            .padding(horizontal = 14.dp, vertical = 6.dp)
-                            .testTag("notice_filter_$category")
+                            .clickable { viewModel.setSelectedType(category) }
+                            .padding(horizontal = 13.dp, vertical = 6.dp)
+                            .testTag("doc_filter_$category")
                     ) {
                         Text(
                             text = category,
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = if (isSelected) Color.White else BrandNavy
                         )
@@ -207,17 +210,17 @@ fun NoticesScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .testTag("notices_loading_indicator"),
+                    .testTag("documents_loading_indicator"),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = BrandNavy)
             }
-        } else if (uiState.filteredNotices.isEmpty()) {
+        } else if (uiState.filteredDocuments.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp)
-                    .testTag("notices_empty_state"),
+                    .testTag("documents_empty_state"),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -242,7 +245,7 @@ fun NoticesScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = if (uiState.searchQuery.isNotBlank()) "No matching circulars found" else "No published circulars available",
+                        text = if (uiState.searchQuery.isNotBlank()) "No matching documents found" else "No published documents in this category",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy
@@ -251,11 +254,11 @@ fun NoticesScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = if (uiState.searchQuery.isNotBlank()) "Try refining your search keyword."
-                        else "Official notifications published by the administration will appear here in real time.",
+                        text = "Official documents uploaded and published by the administration will appear here for student & faculty access.",
                         fontSize = 12.sp,
                         color = BrandTextMuted,
-                        modifier = Modifier.padding(horizontal = 24.dp)
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        lineHeight = 18.sp
                     )
                 }
             }
@@ -263,14 +266,22 @@ fun NoticesScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .testTag("notices_list_container"),
+                    .testTag("documents_list_container"),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.filteredNotices, key = { it.id ?: it.title }) { notice ->
-                    PublishedNoticeCard(
-                        notice = notice,
-                        onClick = { viewModel.selectNotice(notice) }
+                items(uiState.filteredDocuments, key = { it.id ?: it.fileName }) { doc ->
+                    PublishedDocumentCard(
+                        doc = doc,
+                        onOpen = {
+                            val url = viewModel.getDocumentUrl(doc.storagePath)
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Opening document in browser: $url", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     )
                 }
             }
@@ -279,15 +290,14 @@ fun NoticesScreen(
 }
 
 @Composable
-fun PublishedNoticeCard(
-    notice: AnnouncementDto,
-    onClick: () -> Unit
+fun PublishedDocumentCard(
+    doc: OfficialDocumentDto,
+    onOpen: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .testTag("notice_item_${notice.id ?: notice.title.hashCode()}"),
+            .testTag("doc_item_${doc.id ?: doc.fileName.hashCode()}"),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -302,134 +312,139 @@ fun PublishedNoticeCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (notice.isPinned) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFFFF3CD))
-                                .padding(horizontal = 6.dp, vertical = 3.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PushPin,
-                                    contentDescription = "Pinned",
-                                    tint = Color(0xFF856404),
-                                    modifier = Modifier.size(11.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = "PINNED",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF856404)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFFEEF3FF))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    val displayType = when (doc.documentType.lowercase()) {
+                        "fee_structure" -> "Fee Schedule"
+                        "rules_regulations" -> "Rules & Regulations"
+                        "academic_notice" -> "Academic Circular"
+                        "examination" -> "Examination Policy"
+                        "form" -> "Official Form"
+                        "admission" -> "Admission Guide"
+                        else -> doc.documentType.replace("_", " ").uppercase()
                     }
+                    Text(
+                        text = displayType,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFFEEF3FF))
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
+                if (!doc.academicSession.isNullOrBlank()) {
+                    Text(
+                        text = "Session ${doc.academicSession}",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = GgcGoldTertiary
+                    )
+                } else {
+                    val dateFormatted = (doc.createdAt ?: "").take(10)
+                    if (dateFormatted.isNotBlank()) {
                         Text(
-                            text = notice.category.uppercase(),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandNavy
+                            text = dateFormatted,
+                            fontSize = 11.sp,
+                            color = BrandTextMuted
                         )
                     }
                 }
+            }
 
-                val dateFormatted = (notice.publishedAt ?: notice.createdAt ?: "")
-                    .take(10)
-                    .ifBlank { "Official Circular" }
+            Spacer(modifier = Modifier.height(10.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFFFEBEE)),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        tint = BrandTextMuted,
-                        modifier = Modifier.size(12.dp)
+                        imageVector = Icons.Default.PictureAsPdf,
+                        contentDescription = "PDF Document",
+                        tint = Color(0xFFC62828),
+                        modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = dateFormatted,
+                        text = doc.title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    if (!doc.description.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = doc.description,
+                            fontSize = 12.sp,
+                            color = BrandTextMuted,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 16.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val sizeText = doc.fileSizeBytes?.let {
+                        "${it / (1024 * 1024)} MB (${it / 1024} KB)"
+                    } ?: "Verified Official PDF"
+
+                    Text(
+                        text = "${doc.fileName} • $sizeText",
                         fontSize = 11.sp,
                         color = BrandTextMuted
                     )
                 }
             }
 
+            Spacer(modifier = Modifier.height(14.dp))
+
+            HorizontalDivider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+
             Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = notice.title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = notice.content,
-                fontSize = 13.sp,
-                color = BrandTextMuted,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                lineHeight = 18.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.End
             ) {
-                if (!notice.attachmentStoragePath.isNullOrBlank() || !notice.attachmentName.isNullOrBlank()) {
+                Button(
+                    onClick = onOpen,
+                    modifier = Modifier.testTag("btn_download_doc_${doc.id ?: doc.fileName.hashCode()}"),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Attachment,
-                            contentDescription = "Attachment",
-                            tint = Color(0xFF1B873F),
-                            modifier = Modifier.size(14.dp)
+                            imageVector = Icons.Default.OpenInBrowser,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "PDF Attachment Included",
-                            fontSize = 11.sp,
+                            text = "View / Download PDF",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1B873F)
+                            color = Color.White
                         )
                     }
-                } else {
-                    Text(
-                        text = "Issued by ${notice.authorName}",
-                        fontSize = 11.sp,
-                        color = BrandTextMuted
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Read Circular",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandNavy
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = BrandNavy,
-                        modifier = Modifier.size(16.dp)
-                    )
                 }
             }
         }

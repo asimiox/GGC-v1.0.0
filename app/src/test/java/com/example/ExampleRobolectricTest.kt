@@ -185,5 +185,19 @@ class ExampleRobolectricTest {
     assertEquals("Computer Science", faculty.department)
     assertEquals(true, faculty.isActive)
   }
+
+  @Test
+  fun `verify OfficialRegistryUiState initial state and tab selection`() {
+    val state = com.example.ui.screens.admin.OfficialRegistryUiState()
+    assertEquals(com.example.ui.screens.admin.OfficialRegistryTab.BS_STUDENTS, state.selectedTab)
+    assertEquals(false, state.isLoading)
+    assertEquals(false, state.isSaving)
+
+    val updatedState = state.copy(selectedTab = com.example.ui.screens.admin.OfficialRegistryTab.INTERMEDIATE_STUDENTS)
+    assertEquals(com.example.ui.screens.admin.OfficialRegistryTab.INTERMEDIATE_STUDENTS, updatedState.selectedTab)
+
+    val facultyState = state.copy(selectedTab = com.example.ui.screens.admin.OfficialRegistryTab.FACULTY)
+    assertEquals(com.example.ui.screens.admin.OfficialRegistryTab.FACULTY, facultyState.selectedTab)
+  }
 }
 

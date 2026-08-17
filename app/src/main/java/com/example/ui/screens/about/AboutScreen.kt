@@ -40,8 +40,15 @@ import androidx.compose.ui.unit.sp
 import com.example.R
 
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.People
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.data.UserProfileManager
+import com.example.data.model.AppRole
+
+import androidx.compose.material.icons.outlined.Campaign
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandBackground = Color(0xFFF6F6F6)
@@ -50,9 +57,12 @@ private val BrandIconBadgeBg = Color(0xFFEEF3FF)
 
 @Composable
 fun AboutScreen(
-    onNavigateToFaculty: (() -> Unit)? = null
+    onNavigateToFaculty: (() -> Unit)? = null,
+    onNavigateToAdminRegistry: (() -> Unit)? = null,
+    onNavigateToContentManagement: (() -> Unit)? = null
 ) {
     val scrollState = rememberScrollState()
+    val userProfile by UserProfileManager.userProfile.collectAsState()
 
     Column(
         modifier = Modifier
@@ -228,6 +238,128 @@ fun AboutScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "41 Official faculty members, HODs & leadership",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = BrandTextMuted
+                            )
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = BrandTextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // 4b. Content Management Portal Card
+            if (onNavigateToContentManagement != null && userProfile.isVerified && (userProfile.appRole == AppRole.ADMIN || userProfile.appRole == AppRole.HOD)) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { onNavigateToContentManagement() }
+                        .testTag("about_content_management_btn"),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFEEF3FF)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Campaign,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Official Content Management",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandNavy
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Announcements, Events, Documents & Outlines",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = BrandTextMuted
+                            )
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = BrandTextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // 4c. Admin Registry Management Card
+            if (onNavigateToAdminRegistry != null && userProfile.isVerified && (userProfile.appRole == AppRole.ADMIN || userProfile.appRole == AppRole.HOD)) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { onNavigateToAdminRegistry() }
+                        .testTag("about_admin_registry_btn"),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(18.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFFFF3D6)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AdminPanelSettings,
+                                contentDescription = null,
+                                tint = Color(0xFFC59B27),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Official Registry Management",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandNavy
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Manage BS, Inter and Faculty registries",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Normal,
                                 color = BrandTextMuted

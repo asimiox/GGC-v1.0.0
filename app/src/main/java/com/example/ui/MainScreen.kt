@@ -14,6 +14,8 @@ import androidx.compose.ui.platform.testTag
 import com.example.ui.components.GgcBottomBar
 import com.example.ui.navigation.NavRoutes
 import com.example.ui.screens.about.AboutScreen
+import com.example.ui.screens.admin.OfficialRegistryScreen
+import com.example.ui.screens.admin.content.ContentManagementScreen
 import com.example.ui.screens.admission.AdmissionScreen
 import com.example.ui.screens.alumni.AlumniScreen
 import com.example.ui.screens.courses.CoursesOutlineScreen
@@ -29,7 +31,7 @@ fun MainScreen() {
     Scaffold(
         bottomBar = {
             val activeBottomRoute = when (currentRoute) {
-                NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE -> previousRoute
+                NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE, NavRoutes.ADMIN_REGISTRY, NavRoutes.CONTENT_MANAGEMENT -> previousRoute
                 else -> currentRoute
             }
             GgcBottomBar(
@@ -56,6 +58,14 @@ fun MainScreen() {
                     onNavigateToCoursesOutline = {
                         previousRoute = NavRoutes.HOME
                         currentRoute = NavRoutes.COURSES_OUTLINE
+                    },
+                    onNavigateToAdminRegistry = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.ADMIN_REGISTRY
+                    },
+                    onNavigateToContentManagement = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.CONTENT_MANAGEMENT
                     }
                 )
                 NavRoutes.ADMISSION -> AdmissionScreen(
@@ -73,6 +83,14 @@ fun MainScreen() {
                     onNavigateToFaculty = {
                         previousRoute = NavRoutes.ABOUT
                         currentRoute = NavRoutes.FACULTY
+                    },
+                    onNavigateToAdminRegistry = {
+                        previousRoute = NavRoutes.ABOUT
+                        currentRoute = NavRoutes.ADMIN_REGISTRY
+                    },
+                    onNavigateToContentManagement = {
+                        previousRoute = NavRoutes.ABOUT
+                        currentRoute = NavRoutes.CONTENT_MANAGEMENT
                     }
                 )
                 NavRoutes.PROGRAMS -> ProgramsScreen(
@@ -92,6 +110,12 @@ fun MainScreen() {
                 NavRoutes.COURSES_OUTLINE -> CoursesOutlineScreen(
                     onBack = { currentRoute = previousRoute }
                 )
+                NavRoutes.ADMIN_REGISTRY -> OfficialRegistryScreen(
+                    onBack = { currentRoute = previousRoute }
+                )
+                NavRoutes.CONTENT_MANAGEMENT -> ContentManagementScreen(
+                    onBack = { currentRoute = previousRoute }
+                )
                 else -> HomeScreen(
                     onNavigateToPrograms = {
                         previousRoute = NavRoutes.HOME
@@ -100,6 +124,14 @@ fun MainScreen() {
                     onNavigateToCoursesOutline = {
                         previousRoute = NavRoutes.HOME
                         currentRoute = NavRoutes.COURSES_OUTLINE
+                    },
+                    onNavigateToAdminRegistry = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.ADMIN_REGISTRY
+                    },
+                    onNavigateToContentManagement = {
+                        previousRoute = NavRoutes.HOME
+                        currentRoute = NavRoutes.CONTENT_MANAGEMENT
                     }
                 )
             }

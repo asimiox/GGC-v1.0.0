@@ -1,5 +1,7 @@
 package com.example.ui.screens.notices
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,10 +48,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.model.AnnouncementDto
 
 @Composable
 fun NoticeDetailScreen(
-    notice: OfficialNotice,
+    notice: AnnouncementDto,
+    attachmentUrl: String?,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -97,7 +102,12 @@ fun NoticeDetailScreen(
 
             IconButton(
                 onClick = {
-                    Toast.makeText(context, "Notice reference link copied to clipboard", Toast.LENGTH_SHORT).show()
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, notice.title)
+                        putExtra(Intent.EXTRA_TEXT, "${notice.title}\n\n${notice.content}\n\nIssued by: ${notice.authorName}\nGovt Graduate College Mandi Bahauddin")
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Notice"))
                 },
                 modifier = Modifier.testTag("notice_share_button")
             ) {
@@ -130,40 +140,50 @@ fun NoticeDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (notice.isPinned) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFFFF3CD))
+                                        .padding(horizontal = 8.dp, vertical = 5.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.PushPin,
+                                            contentDescription = "Pinned",
+                                            tint = Color(0xFF856404),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "PINNED",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF856404)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(
-                                        if (notice.isUrgent) Color(0xFFDC2626)
-                                        else MaterialTheme.colorScheme.primaryContainer
-                                    )
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
                                     .padding(horizontal = 10.dp, vertical = 5.dp)
                             ) {
                                 Text(
                                     text = notice.category.uppercase(),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (notice.isUrgent) Color.White else MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
-
-                            if (notice.department != null) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                                        .padding(horizontal = 10.dp, vertical = 5.dp)
-                                ) {
-                                    Text(
-                                        text = notice.department,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                }
-                            }
                         }
+
+                        val dateDisplay = (notice.publishedAt ?: notice.createdAt ?: "")
+                            .take(10)
+                            .ifBlank { "Official Circular" }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -174,7 +194,7 @@ fun NoticeDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = notice.date,
+                                text = dateDisplay,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -220,7 +240,7 @@ fun NoticeDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = notice.issuer,
+                                text = notice.authorName,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -257,7 +277,7 @@ fun NoticeDetailScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = notice.description,
+                        text = notice.content,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 22.sp
@@ -266,7 +286,7 @@ fun NoticeDetailScreen(
             }
 
             // Official Attachment Card
-            if (notice.hasPdf || notice.attachmentUrl != null) {
+            if (!notice.attachmentStoragePath.isNullOrBlank() || !notice.attachmentName.isNullOrBlank()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -317,8 +337,11 @@ fun NoticeDetailScreen(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
+                                    val sizeText = notice.attachmentSizeBytes?.let {
+                                        "${it / 1024} KB"
+                                    } ?: "Official Signed Document"
                                     Text(
-                                        text = "Official Signed Circular (PDF)",
+                                        text = sizeText,
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -330,11 +353,20 @@ fun NoticeDetailScreen(
 
                         Button(
                             onClick = {
-                                Toast.makeText(
-                                    context,
-                                    "Downloading official notice document...",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                if (!attachmentUrl.isNullOrBlank()) {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(attachmentUrl))
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Could not open browser / viewer for URL", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Attachment URL is being resolved from Supabase Storage...",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -350,7 +382,7 @@ fun NoticeDetailScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Download / View PDF Circular",
+                                    text = "View / Download Official PDF",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
