@@ -18,10 +18,10 @@ data class IntermediateStudentProfileDto(
 
 @Serializable
 data class OfficialIntermediateStudentDto(
-    val id: String? = null,
-    @SerialName("roll_number") val rollNumber: String,
-    @SerialName("registration_number") val registrationNumber: String,
-    val program: String,
+    val id: String = "",
+    @SerialName("roll_number") val rollNumber: String = "",
+    @SerialName("registration_number") val registrationNumber: String = "",
+    val program: String = "",
     val session: String = "2024-2026",
     @SerialName("first_name") val firstName: String? = null,
     @SerialName("last_name") val lastName: String? = null,

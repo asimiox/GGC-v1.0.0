@@ -20,10 +20,10 @@ data class BsStudentProfileDto(
 
 @Serializable
 data class OfficialBsStudentDto(
-    val id: String? = null,
-    @SerialName("roll_number") val rollNumber: String,
-    @SerialName("registration_number") val registrationNumber: String,
-    val program: String,
+    val id: String = "",
+    @SerialName("roll_number") val rollNumber: String = "",
+    @SerialName("registration_number") val registrationNumber: String = "",
+    val program: String = "",
     val session: String? = null,
     @SerialName("first_name") val firstName: String? = null,
     @SerialName("last_name") val lastName: String? = null,
