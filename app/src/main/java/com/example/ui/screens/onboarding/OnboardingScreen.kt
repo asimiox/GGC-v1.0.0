@@ -27,10 +27,12 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -80,6 +82,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.UserProfileManager
+import com.example.ui.screens.auth.BsAuthContent
+import com.example.ui.screens.auth.IntermediateAuthContent
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandBackground = Color(0xFFF6F6F6)
@@ -90,23 +94,16 @@ enum class OnboardingStep {
     WELCOME,
     ENTER_NAME,
     CHOOSE_LEVEL,
-    INTERMEDIATE_PROGRAMS,
+    INTERMEDIATE_AUTH,
     BS_PROGRAMS,
-    SELECT_SEMESTER
+    SELECT_SEMESTER,
+    BS_AUTH
 }
 
 data class OnboardingProgramItem(
     val title: String,
     val subtitle: String,
     val icon: ImageVector
-)
-
-private val intermediateList = listOf(
-    OnboardingProgramItem("ICS", "Intermediate in Computer Science", Icons.Default.Computer),
-    OnboardingProgramItem("I.Com", "Intermediate in Commerce", Icons.Default.Calculate),
-    OnboardingProgramItem("F.Sc Pre-Engineering", "Pre-Engineering", Icons.Default.Engineering),
-    OnboardingProgramItem("F.Sc Pre-Medical", "Pre-Medical", Icons.Default.Biotech),
-    OnboardingProgramItem("F.A", "Faculty of Arts", Icons.AutoMirrored.Filled.MenuBook)
 )
 
 private val bsList = listOf(
@@ -139,9 +136,10 @@ fun OnboardingScreen(
             OnboardingStep.WELCOME -> OnboardingStep.WELCOME
             OnboardingStep.ENTER_NAME -> OnboardingStep.WELCOME
             OnboardingStep.CHOOSE_LEVEL -> OnboardingStep.ENTER_NAME
-            OnboardingStep.INTERMEDIATE_PROGRAMS -> OnboardingStep.CHOOSE_LEVEL
+            OnboardingStep.INTERMEDIATE_AUTH -> OnboardingStep.CHOOSE_LEVEL
             OnboardingStep.BS_PROGRAMS -> OnboardingStep.CHOOSE_LEVEL
             OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_PROGRAMS
+            OnboardingStep.BS_AUTH -> OnboardingStep.SELECT_SEMESTER
         }
     }
 
@@ -181,27 +179,17 @@ fun OnboardingScreen(
                     onSelectLevel = { level ->
                         selectedLevel = level
                         if (level == "Intermediate") {
-                            currentStep = OnboardingStep.INTERMEDIATE_PROGRAMS
+                            currentStep = OnboardingStep.INTERMEDIATE_AUTH
                         } else {
                             currentStep = OnboardingStep.BS_PROGRAMS
                         }
                     }
                 )
 
-                OnboardingStep.INTERMEDIATE_PROGRAMS -> IntermediateProgramsStepScreen(
+                OnboardingStep.INTERMEDIATE_AUTH -> IntermediateAuthStepScreen(
+                    initialName = studentName,
                     onBack = { currentStep = OnboardingStep.CHOOSE_LEVEL },
-                    onSelectProgram = { progName ->
-                        selectedProgram = progName
-                        selectedSemester = null
-                        UserProfileManager.saveProfile(
-                            context = context,
-                            name = studentName,
-                            level = "Intermediate",
-                            programName = progName,
-                            semester = null
-                        )
-                        onOnboardingFinished()
-                    }
+                    onAuthSuccess = onOnboardingFinished
                 )
 
                 OnboardingStep.BS_PROGRAMS -> BsProgramsStepScreen(
@@ -217,15 +205,15 @@ fun OnboardingScreen(
                     onSelectSemester = { selectedSemester = it },
                     onBack = { currentStep = OnboardingStep.BS_PROGRAMS },
                     onContinue = {
-                        UserProfileManager.saveProfile(
-                            context = context,
-                            name = studentName,
-                            level = "BS",
-                            programName = selectedProgram,
-                            semester = selectedSemester ?: "Semester 1"
-                        )
-                        onOnboardingFinished()
+                        currentStep = OnboardingStep.BS_AUTH
                     }
+                )
+
+                OnboardingStep.BS_AUTH -> BsAuthStepScreen(
+                    initialProgram = selectedProgram,
+                    initialSemester = selectedSemester,
+                    onBack = { currentStep = OnboardingStep.SELECT_SEMESTER },
+                    onAuthSuccess = onOnboardingFinished
                 )
             }
         }
@@ -528,7 +516,7 @@ private fun ChooseLevelStepScreen(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Select your current level",
+            text = "Select your current student level",
             fontSize = 13.sp,
             fontWeight = FontWeight.Normal,
             color = BrandTextMuted,
@@ -538,7 +526,7 @@ private fun ChooseLevelStepScreen(
 
         Spacer(modifier = Modifier.height(36.dp))
 
-        // Level Option 1: Intermediate
+        // Level Option 1: Intermediate Student
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -574,14 +562,14 @@ private fun ChooseLevelStepScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Intermediate",
+                        text = "Intermediate Student",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "2 Years Programs",
+                        text = "Verified Portal Login & Registration (2 Years)",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = BrandTextMuted
@@ -599,7 +587,7 @@ private fun ChooseLevelStepScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Level Option 2: BS Programs
+        // Level Option 2: BS Student
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -635,14 +623,14 @@ private fun ChooseLevelStepScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "BS Programs",
+                        text = "BS Student",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "4 Years Programs",
+                        text = "4 Years BS Degree Programs",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = BrandTextMuted
@@ -661,18 +649,23 @@ private fun ChooseLevelStepScreen(
 }
 
 // -------------------------------------------------------------
-// STEP 4A: INTERMEDIATE PROGRAMS (Reference Image: Screen 5)
+// STEP 4A: INTERMEDIATE AUTHENTICATION (Login / Registration)
 // -------------------------------------------------------------
 @Composable
-private fun IntermediateProgramsStepScreen(
+private fun IntermediateAuthStepScreen(
+    initialName: String,
     onBack: () -> Unit,
-    onSelectProgram: (String) -> Unit
+    onAuthSuccess: () -> Unit
 ) {
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 16.dp)
+            .testTag("intermediate_auth_step_container")
     ) {
         // Top Bar
         Row(
@@ -681,7 +674,7 @@ private fun IntermediateProgramsStepScreen(
         ) {
             IconButton(
                 onClick = onBack,
-                modifier = Modifier.testTag("inter_back_btn")
+                modifier = Modifier.testTag("inter_auth_back_btn")
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -689,102 +682,28 @@ private fun IntermediateProgramsStepScreen(
                     tint = BrandNavy
                 )
             }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Intermediate Registration",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Intermediate Programs",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = BrandNavy,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = "Select your program",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Normal,
-            color = BrandTextMuted,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
+        // Intermediate Auth Card
+        IntermediateAuthContent(
+            onAuthSuccess = onAuthSuccess
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = 24.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(intermediateList) { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { onSelectProgram(item.title) }
-                        .testTag("inter_item_${item.title.replace(" ", "_").lowercase()}"),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(BrandIconBadgeBg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = null,
-                                tint = BrandNavy,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = item.title,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandNavy
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = item.subtitle,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = BrandTextMuted
-                            )
-                        }
-
-                        Icon(
-                            imageVector = Icons.Default.ChevronRight,
-                            contentDescription = null,
-                            tint = BrandTextMuted,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-        }
     }
 }
 
 // -------------------------------------------------------------
-// STEP 4B: BS PROGRAMS (Reference Image: Screen 6)
+// STEP 4B: BS PROGRAMS (Reference Image: Screen 6 - Unchanged)
 // -------------------------------------------------------------
 @Composable
 private fun BsProgramsStepScreen(
@@ -899,7 +818,7 @@ private fun BsProgramsStepScreen(
 }
 
 // -------------------------------------------------------------
-// STEP 5: SELECT SEMESTER (Reference Image: Screen 7)
+// STEP 5: SELECT SEMESTER (Reference Image: Screen 7 - Unchanged)
 // -------------------------------------------------------------
 @Composable
 private fun SelectSemesterStepScreen(
@@ -1028,5 +947,62 @@ private fun SelectSemesterStepScreen(
                 color = Color.White
             )
         }
+    }
+}
+
+// -------------------------------------------------------------
+// STEP 6: BS AUTHENTICATION (Login / Registration Portal)
+// -------------------------------------------------------------
+@Composable
+private fun BsAuthStepScreen(
+    initialProgram: String,
+    initialSemester: String?,
+    onBack: () -> Unit,
+    onAuthSuccess: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .testTag("bs_auth_step_container")
+    ) {
+        // Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.testTag("bs_auth_back_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BrandNavy
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "BS Student Registration",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // BS Auth Card
+        BsAuthContent(
+            initialProgram = initialProgram,
+            initialSemester = initialSemester,
+            onAuthSuccess = onAuthSuccess
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
