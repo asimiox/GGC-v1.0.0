@@ -230,7 +230,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = userProfile.fullName.ifBlank { "College Student / Scholar" },
+                        text = userProfile.name.ifBlank { "College Student / Scholar" },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -241,7 +241,7 @@ fun HomeScreen(
                     Text(
                         text = when (userProfile.appRole) {
                             AppRole.STUDENT_BS -> "BS Student • ${userProfile.department ?: "Degree Program"}"
-                            AppRole.STUDENT_INTER -> "Intermediate Student • ${userProfile.department ?: "Stream"}"
+                            AppRole.STUDENT_INTERMEDIATE -> "Intermediate Student • ${userProfile.department ?: "Stream"}"
                             AppRole.TEACHER -> "Faculty Member • ${userProfile.department ?: "Academic Department"}"
                             AppRole.HOD -> "Head of Department • ${userProfile.department ?: "Department"}"
                             AppRole.ADMIN -> "College Administrator • Official Portal"
