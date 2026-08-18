@@ -131,7 +131,7 @@ class IntermediateAuthRemoteDataSource {
             AuthResult.Success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error checking eligibility", e)
-            AuthResult.Error(e.localizedMessage ?: "Failed to verify student record against college registry.")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify student record against college registry."))
         }
     }
 

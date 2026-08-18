@@ -20,6 +20,7 @@ import io.github.jan.supabase.storage.Storage
 object SupabaseClientProvider {
     private const val TAG = "SupabaseClientProvider"
     const val OFFICIAL_SUPABASE_URL = "https://mhiudbdnrooipovvonfb.supabase.co"
+    const val OFFICIAL_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oaXVkYmRucm9vaXBvdnZvbmZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4OTc0MjAsImV4cCI6MjEwMjQ3MzQyMH0.l3mcZ-oKTCRaGxba_P3s_De30IsawKTyY1lxF5Hv8Cs"
 
     val client: SupabaseClient by lazy {
         val configUrl = try { BuildConfig.SUPABASE_URL.trim() } catch (_: Exception) { "" }
@@ -30,11 +31,10 @@ object SupabaseClientProvider {
             else -> OFFICIAL_SUPABASE_URL
         }
 
-        if (anonKey.isBlank() || anonKey.contains("your-supabase-public-anon-key")) {
-            Log.w(TAG, "SUPABASE_ANON_KEY is using default placeholder. Make sure anon key is provided in .env")
+        val safeKey = when {
+            anonKey.isNotBlank() && !anonKey.contains("your-supabase-public-anon-key") -> anonKey
+            else -> OFFICIAL_SUPABASE_ANON_KEY
         }
-
-        val safeKey = if (anonKey.isNotBlank()) anonKey else "placeholder-anon-key"
 
         Log.i(TAG, "Initializing SupabaseClient with URL: $resolvedUrl")
 
@@ -56,10 +56,28 @@ object SupabaseClientProvider {
         val configUrl = try { BuildConfig.SUPABASE_URL.trim() } catch (_: Exception) { "" }
         val anonKey = try { BuildConfig.SUPABASE_ANON_KEY.trim() } catch (_: Exception) { "" }
         val effectiveUrl = if (configUrl.isNotBlank() && !configUrl.contains("your-project-id")) configUrl else OFFICIAL_SUPABASE_URL
+        val effectiveKey = if (anonKey.isNotBlank() && !anonKey.contains("your-supabase-public-anon-key")) anonKey else OFFICIAL_SUPABASE_ANON_KEY
         return effectiveUrl.isNotBlank() &&
                 !effectiveUrl.contains("your-project-id") &&
                 (effectiveUrl.startsWith("http://") || effectiveUrl.startsWith("https://")) &&
-                anonKey.isNotBlank() &&
-                !anonKey.contains("your-supabase-public-anon-key")
+                effectiveKey.isNotBlank() &&
+                !effectiveKey.contains("your-supabase-public-anon-key")
+    }
+
+    /**
+     * Translates common backend exceptions (like missing anon API key) into actionable user messages.
+     */
+    fun formatErrorMessage(e: Exception, fallback: String): String {
+        val msg = e.localizedMessage ?: e.message ?: ""
+        return when {
+            msg.contains("Invalid API key", ignoreCase = true) || msg.contains("your-supabase-public-anon-key", ignoreCase = true) || msg.contains("401", ignoreCase = true) -> {
+                "Supabase Anon Key is missing or invalid. Please add your SUPABASE_ANON_KEY secret in the AI Studio Secrets panel."
+            }
+            msg.contains("Unable to resolve host", ignoreCase = true) || msg.contains("No address associated", ignoreCase = true) -> {
+                "Unable to connect to Supabase server. Please check your internet connection."
+            }
+            msg.isNotBlank() -> msg
+            else -> fallback
+        }
     }
 }

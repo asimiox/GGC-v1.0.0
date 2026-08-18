@@ -130,7 +130,7 @@ class BsAuthRemoteDataSource {
             AuthResult.Success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error checking BS eligibility", e)
-            AuthResult.Error(e.localizedMessage ?: "Failed to verify BS student record against college registry.")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify BS student record against college registry."))
         }
     }
 
@@ -267,7 +267,7 @@ class BsAuthRemoteDataSource {
             if (msg.contains("duplicate key", ignoreCase = true) || msg.contains("unique", ignoreCase = true)) {
                 AuthResult.Error("Duplicate identity detected: Roll number, university registration number, or username is already registered.")
             } else {
-                AuthResult.Error(msg)
+                AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
         }
     }
