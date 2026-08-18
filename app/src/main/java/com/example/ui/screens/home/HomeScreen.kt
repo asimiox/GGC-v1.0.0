@@ -54,13 +54,16 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.platform.LocalContext
 import com.example.R
 import com.example.data.UserProfileManager
 import com.example.data.model.AppRole
+import com.example.data.repository.NotificationRepository
 import com.example.ui.screens.courses.CoursesOutlineScreen
 import com.example.ui.screens.documents.OfficialDocumentsScreen
 import com.example.ui.screens.events.EventsScreen
 import com.example.ui.screens.notices.NoticesScreen
+import com.example.ui.screens.notifications.NotificationCenterScreen
 import com.example.ui.screens.prospectus.ProspectusScreen
 
 private val BrandNavy = Color(0xFF061B52)
@@ -69,6 +72,7 @@ private val BrandTextMuted = Color(0xFF7A879D)
 
 enum class HomeSubScreen {
     NONE,
+    NOTIFICATION_CENTER,
     FEE_STRUCTURE,
     ANNOUNCEMENT,
     PROSPECTUS,
@@ -84,12 +88,29 @@ fun HomeScreen(
     onNavigateToAdminRegistry: () -> Unit = {},
     onNavigateToContentManagement: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val userProfile by UserProfileManager.userProfile.collectAsState()
+    val notificationRepository = remember { NotificationRepository.getInstance(context) }
+    val unreadCount by notificationRepository.unreadCount.collectAsState()
+
     var activeSubScreen by remember { mutableStateOf(HomeSubScreen.NONE) }
     val scrollState = rememberScrollState()
 
     if (activeSubScreen != HomeSubScreen.NONE) {
         when (activeSubScreen) {
+            HomeSubScreen.NOTIFICATION_CENTER -> NotificationCenterScreen(
+                onBack = { activeSubScreen = HomeSubScreen.NONE },
+                onNavigateToContent = { contentType, _ ->
+                    when (contentType.lowercase()) {
+                        "announcement", "notice" -> activeSubScreen = HomeSubScreen.ANNOUNCEMENT
+                        "event" -> activeSubScreen = HomeSubScreen.EVENTS
+                        "document", "fee_structure" -> activeSubScreen = HomeSubScreen.DOCUMENTS
+                        "course_outline", "syllabus" -> activeSubScreen = HomeSubScreen.COURSES_OUTLINE
+                        "prospectus" -> activeSubScreen = HomeSubScreen.PROSPECTUS
+                        else -> activeSubScreen = HomeSubScreen.ANNOUNCEMENT
+                    }
+                }
+            )
             HomeSubScreen.FEE_STRUCTURE -> OfficialDocumentsScreen(
                 initialCategory = "Fee Structure",
                 onBack = { activeSubScreen = HomeSubScreen.NONE }
@@ -157,16 +178,37 @@ fun HomeScreen(
                 }
             }
 
-            IconButton(
-                onClick = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT },
-                modifier = Modifier.testTag("home_notifications_btn")
-            ) {
-                Icon(
-                    imageVector = Icons.Default.NotificationsNone,
-                    contentDescription = "Notifications",
-                    tint = BrandNavy,
-                    modifier = Modifier.size(22.dp)
-                )
+            Box(contentAlignment = Alignment.TopEnd) {
+                IconButton(
+                    onClick = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER },
+                    modifier = Modifier.testTag("home_notifications_btn")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NotificationsNone,
+                        contentDescription = "Notifications",
+                        tint = BrandNavy,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                if (unreadCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 6.dp, end = 6.dp)
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFD32F2F))
+                            .testTag("home_bell_unread_badge"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
 

@@ -5,13 +5,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import com.example.data.UserProfileManager
+import com.example.data.model.AppNotificationDto
+import com.example.data.repository.NotificationRepository
 import com.example.ui.components.GgcBottomBar
+import com.example.ui.components.InAppNotificationBanner
 import com.example.ui.navigation.NavRoutes
 import com.example.ui.screens.about.AboutScreen
 import com.example.ui.screens.admin.OfficialRegistryScreen
@@ -25,8 +34,31 @@ import com.example.ui.screens.programs.ProgramsScreen
 
 @Composable
 fun MainScreen() {
+    val context = LocalContext.current
+    val userProfile by UserProfileManager.userProfile.collectAsState()
+    val notificationRepository = remember { NotificationRepository.getInstance(context) }
+
     var currentRoute by remember { mutableStateOf(NavRoutes.HOME) }
     var previousRoute by remember { mutableStateOf(NavRoutes.HOME) }
+    var incomingAlertNotification by remember { mutableStateOf<AppNotificationDto?>(null) }
+
+    // Start lifecycle-aware realtime subscription for the authenticated user
+    LaunchedEffect(userProfile) {
+        notificationRepository.startRealtimeSubscription(userProfile)
+    }
+
+    // Collect incoming realtime events for in-app floating banner
+    LaunchedEffect(Unit) {
+        notificationRepository.incomingNotification.collect { incoming ->
+            incomingAlertNotification = incoming
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            // Keep repository active for session, or teardown if exiting
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -135,6 +167,32 @@ fun MainScreen() {
                     }
                 )
             }
+
+            // Floating In-App Realtime Notification Banner
+            InAppNotificationBanner(
+                notification = incomingAlertNotification,
+                onDismiss = { incomingAlertNotification = null },
+                onOpenContent = { notif ->
+                    notif.id?.let { id -> notificationRepository.markAsRead(id) }
+                    incomingAlertNotification = null
+                    val contentType = notif.contentType ?: "announcement"
+                    when (contentType.lowercase()) {
+                        "course_outline" -> {
+                            previousRoute = currentRoute
+                            currentRoute = NavRoutes.COURSES_OUTLINE
+                        }
+                        "faculty" -> {
+                            previousRoute = currentRoute
+                            currentRoute = NavRoutes.FACULTY
+                        }
+                        else -> {
+                            previousRoute = currentRoute
+                            currentRoute = NavRoutes.HOME
+                        }
+                    }
+                },
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
