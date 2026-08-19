@@ -23,11 +23,6 @@ class BsAuthRemoteDataSource {
     private val json = Json { ignoreUnknownKeys = true }
     private val TAG = "BsAuthRemote"
 
-    private fun usernameToEmail(username: String): String {
-        val clean = username.trim().lowercase().filter { it.isLetterOrDigit() || it == '.' || it == '_' }
-        return "$clean@bs.student.ggcmbdin.edu.pk"
-    }
-
     /**
      * Checks if a BS username is available using the secure SECURITY DEFINER RPC.
      */
@@ -65,8 +60,7 @@ class BsAuthRemoteDataSource {
     }
 
     /**
-     * Checks if a BS roll number, university registration number, or username is eligible for registration
-     * using secure database RPCs.
+     * Checks if a BS roll number, university registration number, or username is eligible for registration.
      */
     suspend fun checkEligibility(
         rollNumber: String,
@@ -80,13 +74,11 @@ class BsAuthRemoteDataSource {
             val cleanUsername = username.trim().lowercase()
             val cleanProgram = program.trim()
 
-            // 1. Check Username Availability via Secure RPC
             val usernameCheck = checkUsernameAvailable(cleanUsername)
             if (usernameCheck is AuthResult.Error) {
                 return AuthResult.Error(usernameCheck.message)
             }
 
-            // 2. Check BS Student Eligibility via Secure RPC
             val rpcParams = buildJsonObject {
                 put("p_roll_number", cleanRoll)
                 put("p_registration_number", cleanReg)
@@ -109,17 +101,12 @@ class BsAuthRemoteDataSource {
             AuthResult.Success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error checking BS eligibility", e)
-            val msg = e.localizedMessage ?: ""
-            if (msg.contains("permission denied", ignoreCase = true)) {
-                AuthResult.Error("Unable to verify student eligibility right now. Please try again.")
-            } else {
-                AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify BS student record against college registry."))
-            }
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify student record."))
         }
     }
 
     /**
-     * Registers a new BS student account via Supabase Auth and atomic DB verification.
+     * Registers a new BS student account directly via secure RPC (No email needed).
      */
     suspend fun registerBsStudent(
         form: BsRegistrationForm
@@ -133,92 +120,68 @@ class BsAuthRemoteDataSource {
             val cleanSemester = form.semester.trim()
             val cleanFirstName = form.firstName.trim()
             val cleanLastName = form.lastName.trim()
-            val authEmail = usernameToEmail(cleanUsername)
 
-            // Step 1: Pre-verify eligibility and username availability via secure RPC
-            val check = checkEligibility(cleanRoll, cleanReg, cleanProgram, cleanUsername)
-            if (check is AuthResult.Error) {
-                return AuthResult.Error(check.message)
+            val regParams = buildJsonObject {
+                put("p_roll_number", cleanRoll)
+                put("p_registration_number", cleanReg)
+                put("p_program_name", cleanProgram)
+                put("p_semester", cleanSemester)
+                put("p_username", cleanUsername)
+                put("p_first_name", cleanFirstName)
+                put("p_last_name", cleanLastName)
+                put("p_password", form.password)
             }
 
-            // Step 2: Supabase Auth Sign Up
-            val authResult = try {
-                client.auth.signUpWith(Email) {
-                    email = authEmail
-                    password = form.password
-                }
-            } catch (authEx: Exception) {
-                Log.e(TAG, "Supabase Auth signUp failed for BS", authEx)
-                val msg = authEx.localizedMessage ?: ""
-                return if (msg.contains("already registered", ignoreCase = true) || msg.contains("User already exists", ignoreCase = true)) {
-                    AuthResult.Error("Username \"${form.username}\" is already registered.")
-                } else {
-                    AuthResult.Error("Authentication service error: $msg")
-                }
+            val rpcResponse = client.postgrest.rpc("direct_register_bs_student", regParams)
+            val bodyText = rpcResponse.data
+            if (bodyText.isBlank()) {
+                return AuthResult.Error("No response received from registration server.")
             }
 
-            val currentAuthUser = client.auth.currentUserOrNull()
-            val userId = currentAuthUser?.id
-                ?: return AuthResult.Error("Could not retrieve created user ID from authentication session.")
-
-            // Step 3: Call atomic PostgreSQL claiming RPC to create profile & claim official record
-            var registeredProfile: BsStudentProfileDto? = null
-
-            try {
-                val claimParams = buildJsonObject {
-                    put("p_roll_number", cleanRoll)
-                    put("p_registration_number", cleanReg)
-                    put("p_program_name", cleanProgram)
-                    put("p_username", cleanUsername)
-                    put("p_first_name", cleanFirstName)
-                    put("p_last_name", cleanLastName)
-                    put("p_semester_number", cleanSemester.toIntOrNull() ?: 1)
-                }
-
-                val rpcResponse = client.postgrest.rpc("claim_bs_student_account", claimParams)
-                val bodyText = rpcResponse.data
-                if (bodyText.isNotBlank()) {
-                    val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                    val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
-                    if (!isSuccess) {
-                        val errMsg = jsonObj["error"]?.jsonPrimitive?.content
-                            ?: "Failed to claim BS student record."
-                        return AuthResult.Error(errMsg)
-                    }
-                }
-            } catch (rpcEx: Exception) {
-                Log.w(TAG, "BS RPC claim call error: ${rpcEx.message}")
+            val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+            val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            if (!isSuccess) {
+                val errMsg = jsonObj["error"]?.jsonPrimitive?.content
+                    ?: "Registration failed. Please check your details and try again."
+                return AuthResult.Error(errMsg)
             }
 
-            // Fetch authenticated student profile (RLS permits reading own profile)
-            val profiles = client.from("bs_student_profiles")
-                .select {
-                    filter {
-                        eq("id", userId)
-                    }
-                }.decodeList<BsStudentProfileDto>()
-
-            registeredProfile = profiles.firstOrNull() ?: BsStudentProfileDto(
-                id = userId,
-                username = cleanUsername,
-                firstName = cleanFirstName,
-                lastName = cleanLastName,
-                rollNumber = cleanRoll,
-                registrationNumber = cleanReg,
-                program = cleanProgram,
-                session = cleanSession,
-                semester = cleanSemester
-            )
+            val profileObj = jsonObj["profile"]?.jsonObject
+            val profile = if (profileObj != null) {
+                BsStudentProfileDto(
+                    id = profileObj["id"]?.jsonPrimitive?.content ?: "",
+                    username = profileObj["username"]?.jsonPrimitive?.content ?: cleanUsername,
+                    firstName = profileObj["first_name"]?.jsonPrimitive?.content ?: cleanFirstName,
+                    lastName = profileObj["last_name"]?.jsonPrimitive?.content ?: cleanLastName,
+                    rollNumber = profileObj["roll_number"]?.jsonPrimitive?.content ?: cleanRoll,
+                    registrationNumber = profileObj["registration_number"]?.jsonPrimitive?.content ?: cleanReg,
+                    program = profileObj["program"]?.jsonPrimitive?.content ?: cleanProgram,
+                    session = cleanSession,
+                    semester = profileObj["semester"]?.jsonPrimitive?.content ?: cleanSemester
+                )
+            } else {
+                BsStudentProfileDto(
+                    id = "",
+                    username = cleanUsername,
+                    firstName = cleanFirstName,
+                    lastName = cleanLastName,
+                    rollNumber = cleanRoll,
+                    registrationNumber = cleanReg,
+                    program = cleanProgram,
+                    session = cleanSession,
+                    semester = cleanSemester
+                )
+            }
 
             AuthResult.Success(
-                data = registeredProfile,
-                message = "BS Student registration verified successfully! Welcome to GGC M.B.Din."
+                data = profile,
+                message = "BS Student registration successful! Welcome to GGC M.B.Din."
             )
         } catch (e: Exception) {
             Log.e(TAG, "BS Registration failed", e)
-            val msg = e.localizedMessage ?: "Unknown registration error"
+            val msg = e.localizedMessage ?: "Registration failed"
             if (msg.contains("duplicate key", ignoreCase = true) || msg.contains("unique", ignoreCase = true)) {
-                AuthResult.Error("Duplicate identity detected: Roll number, university registration number, or username is already registered.")
+                AuthResult.Error("This Roll Number, Registration Number, or Username is already registered.")
             } else {
                 AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
@@ -226,7 +189,7 @@ class BsAuthRemoteDataSource {
     }
 
     /**
-     * Authenticates a BS student by Username, Roll Number, or University Registration Number.
+     * Authenticates a BS student by Username, Roll Number, or University Registration Number + Password.
      */
     suspend fun loginBsStudent(
         usernameOrRoll: String,
@@ -238,51 +201,39 @@ class BsAuthRemoteDataSource {
                 return AuthResult.Error("Roll Number/Username and Password are required.")
             }
 
-            var cleanUsername = query.lowercase()
-
-            // Optional: If user entered roll number, attempt resolution safely without failing login
-            if (!query.contains("@")) {
-                try {
-                    val profileByRoll = client.from("bs_student_profiles")
-                        .select {
-                            filter {
-                                or {
-                                    ilike("roll_number", query.uppercase())
-                                    ilike("registration_number", query.uppercase())
-                                    ilike("username", query.lowercase())
-                                }
-                            }
-                        }.decodeList<BsStudentProfileDto>()
-
-                    if (profileByRoll.isNotEmpty()) {
-                        cleanUsername = profileByRoll.first().username
-                    }
-                } catch (lookupEx: Exception) {
-                    Log.d(TAG, "Unauthenticated roll lookup blocked by RLS (expected): ${lookupEx.message}")
-                }
+            val loginParams = buildJsonObject {
+                put("p_identifier", query)
+                put("p_password", password)
             }
 
-            val authEmail = usernameToEmail(cleanUsername)
-
-            // Supabase Auth Login
-            client.auth.signInWith(Email) {
-                email = authEmail
-                this.password = password
+            val rpcResponse = client.postgrest.rpc("direct_login_bs_student", loginParams)
+            val bodyText = rpcResponse.data
+            if (bodyText.isBlank()) {
+                return AuthResult.Error("No response received from login server.")
             }
 
-            val currentAuthUser = client.auth.currentUserOrNull()
-                ?: return AuthResult.Error("Could not verify BS student credentials.")
+            val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+            val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            if (!isSuccess) {
+                val errMsg = jsonObj["error"]?.jsonPrimitive?.content
+                    ?: "Invalid Roll Number, Registration Number, username, or password."
+                return AuthResult.Error(errMsg)
+            }
 
-            // Fetch BS student profile (allowed by RLS for authenticated user)
-            val profiles = client.from("bs_student_profiles")
-                .select {
-                    filter {
-                        eq("id", currentAuthUser.id)
-                    }
-                }.decodeList<BsStudentProfileDto>()
+            val profileObj = jsonObj["profile"]?.jsonObject
+                ?: return AuthResult.Error("Could not retrieve BS student profile.")
 
-            val profile = profiles.firstOrNull()
-                ?: return AuthResult.Error("BS student profile data could not be found.")
+            val profile = BsStudentProfileDto(
+                id = profileObj["id"]?.jsonPrimitive?.content ?: "",
+                username = profileObj["username"]?.jsonPrimitive?.content ?: query,
+                firstName = profileObj["first_name"]?.jsonPrimitive?.content ?: "",
+                lastName = profileObj["last_name"]?.jsonPrimitive?.content ?: "",
+                rollNumber = profileObj["roll_number"]?.jsonPrimitive?.content ?: "",
+                registrationNumber = profileObj["registration_number"]?.jsonPrimitive?.content ?: "",
+                program = profileObj["program"]?.jsonPrimitive?.content ?: "",
+                session = "",
+                semester = profileObj["semester"]?.jsonPrimitive?.content ?: ""
+            )
 
             AuthResult.Success(profile, "BS Student login successful.")
         } catch (e: Exception) {
@@ -297,10 +248,6 @@ class BsAuthRemoteDataSource {
     }
 
     suspend fun logout() {
-        try {
-            client.auth.signOut()
-        } catch (e: Exception) {
-            Log.w(TAG, "BS Sign out error", e)
-        }
+        // Direct session cleared locally
     }
 }

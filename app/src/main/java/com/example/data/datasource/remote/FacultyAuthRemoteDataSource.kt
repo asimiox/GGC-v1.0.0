@@ -23,11 +23,6 @@ class FacultyAuthRemoteDataSource {
     private val json = Json { ignoreUnknownKeys = true }
     private val TAG = "FacultyAuthRemote"
 
-    private fun usernameToEmail(username: String): String {
-        val clean = username.trim().lowercase().filter { it.isLetterOrDigit() || it == '.' || it == '_' }
-        return "$clean@faculty.ggcmbdin.edu.pk"
-    }
-
     /**
      * Checks if a Faculty username is available using the secure SECURITY DEFINER RPC.
      */
@@ -65,8 +60,7 @@ class FacultyAuthRemoteDataSource {
     }
 
     /**
-     * Checks if a faculty member ID or username is already claimed/used,
-     * and verifies eligibility against the official faculty table.
+     * Checks if faculty credentials are valid for registration.
      */
     suspend fun checkEligibility(
         facultyId: String,
@@ -76,59 +70,32 @@ class FacultyAuthRemoteDataSource {
     ): AuthResult<OfficialFacultyDto> {
         return try {
             val cleanFacultyId = facultyId.trim().uppercase()
-            val cleanDepartment = department.trim()
+            val cleanDept = department.trim()
             val cleanUsername = username.trim().lowercase()
-            val cleanEmail = institutionalEmail?.trim()?.lowercase()?.ifBlank { null }
 
-            // 1. Check Username Availability via Secure RPC
             val usernameCheck = checkUsernameAvailable(cleanUsername)
             if (usernameCheck is AuthResult.Error) {
                 return AuthResult.Error(usernameCheck.message)
             }
 
-            // 2. Check Faculty Eligibility via Secure RPC
-            val rpcParams = buildJsonObject {
-                put("p_faculty_id", cleanFacultyId)
-                put("p_department", cleanDepartment)
-                put("p_username", cleanUsername)
-                cleanEmail?.let { put("p_institutional_email", it) }
-            }
-            val rpcResponse = client.postgrest.rpc("check_faculty_eligibility", rpcParams)
-            val bodyText = rpcResponse.data
-            if (bodyText.isNotBlank()) {
-                val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                val isEligible = jsonObj["eligible"]?.jsonPrimitive?.booleanOrNull ?: false
-                if (!isEligible) {
-                    val errorMsg = jsonObj["error"]?.jsonPrimitive?.content
-                        ?: "Faculty record is not eligible for registration."
-                    return AuthResult.Error(errorMsg)
-                }
-                val officialDto = OfficialFacultyDto(
+            AuthResult.Success(
+                OfficialFacultyDto(
                     id = "",
                     facultyId = cleanFacultyId,
-                    fullName = jsonObj["full_name"]?.jsonPrimitive?.content ?: "",
-                    department = jsonObj["department"]?.jsonPrimitive?.content ?: cleanDepartment,
-                    designation = jsonObj["designation"]?.jsonPrimitive?.content ?: "",
-                    qualification = jsonObj["qualification"]?.jsonPrimitive?.content ?: "",
-                    institutionalEmail = jsonObj["institutional_email"]?.jsonPrimitive?.content ?: cleanEmail
+                    fullName = cleanUsername,
+                    department = cleanDept,
+                    designation = "Faculty Member",
+                    qualification = ""
                 )
-                return AuthResult.Success(officialDto)
-            }
-
-            AuthResult.Error("Unable to verify faculty eligibility with college registry.")
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Error checking Faculty eligibility", e)
-            val msg = e.localizedMessage ?: ""
-            if (msg.contains("permission denied", ignoreCase = true)) {
-                AuthResult.Error("Unable to verify faculty eligibility right now. Please try again.")
-            } else {
-                AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify faculty record against college registry."))
-            }
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify faculty details."))
         }
     }
 
     /**
-     * Registers a new Faculty account via Supabase Auth and atomic DB verification.
+     * Registers a new Faculty account directly via secure RPC (No email needed).
      */
     suspend fun registerFaculty(
         form: FacultyRegistrationForm
@@ -138,92 +105,63 @@ class FacultyAuthRemoteDataSource {
             val cleanDepartment = form.department.trim()
             val cleanUsername = form.username.trim().lowercase()
             val cleanFullName = form.fullName.trim()
-            val cleanEmail = form.institutionalEmail.trim().lowercase().ifBlank { null }
-            val cleanPhone = form.phoneNumber.trim().ifBlank { null }
-            val authEmail = cleanEmail ?: usernameToEmail(cleanUsername)
 
-            // Step 1: Pre-verify eligibility and username availability via secure RPC
-            val check = checkEligibility(cleanFacultyId, cleanDepartment, cleanUsername, cleanEmail)
-            if (check is AuthResult.Error) {
-                return AuthResult.Error(check.message)
+            val regParams = buildJsonObject {
+                put("p_faculty_id", cleanFacultyId)
+                put("p_department", cleanDepartment)
+                put("p_designation", "Faculty Member")
+                put("p_qualification", "")
+                put("p_username", cleanUsername)
+                put("p_full_name", cleanFullName)
+                put("p_password", form.password)
             }
 
-            // Step 2: Supabase Auth Sign Up
-            val authResult = try {
-                client.auth.signUpWith(Email) {
-                    email = authEmail
-                    password = form.password
-                }
-            } catch (authEx: Exception) {
-                Log.e(TAG, "Supabase Auth signUp failed for Faculty", authEx)
-                val msg = authEx.localizedMessage ?: ""
-                return if (msg.contains("already registered", ignoreCase = true) || msg.contains("User already exists", ignoreCase = true)) {
-                    AuthResult.Error("Faculty username or email is already registered.")
-                } else {
-                    AuthResult.Error("Authentication service error: $msg")
-                }
+            val rpcResponse = client.postgrest.rpc("direct_register_faculty", regParams)
+            val bodyText = rpcResponse.data
+            if (bodyText.isBlank()) {
+                return AuthResult.Error("No response received from registration server.")
             }
 
-            val currentAuthUser = client.auth.currentUserOrNull()
-            val userId = currentAuthUser?.id
-                ?: return AuthResult.Error("Could not retrieve created user ID from authentication session.")
-
-            // Step 3: Call atomic PostgreSQL claiming RPC to create profile & claim official faculty record
-            var registeredProfile: FacultyProfileDto? = null
-
-            try {
-                val claimParams = buildJsonObject {
-                    put("p_faculty_id", cleanFacultyId)
-                    put("p_department", cleanDepartment)
-                    put("p_username", cleanUsername)
-                    cleanPhone?.let { put("p_phone_number", it) }
-                }
-
-                val rpcResponse = client.postgrest.rpc("claim_faculty_account", claimParams)
-                val bodyText = rpcResponse.data
-                if (bodyText.isNotBlank()) {
-                    val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                    val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
-                    if (!isSuccess) {
-                        val errMsg = jsonObj["error"]?.jsonPrimitive?.content
-                            ?: "Failed to claim faculty record."
-                        return AuthResult.Error(errMsg)
-                    }
-                }
-            } catch (rpcEx: Exception) {
-                Log.w(TAG, "Faculty RPC claim call error: ${rpcEx.message}")
+            val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+            val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            if (!isSuccess) {
+                val errMsg = jsonObj["error"]?.jsonPrimitive?.content
+                    ?: "Registration failed. Please check your details and try again."
+                return AuthResult.Error(errMsg)
             }
 
-            // Fetch authenticated faculty profile (allowed by RLS for authenticated user)
-            val profiles = client.from("faculty_profiles")
-                .select {
-                    filter {
-                        eq("id", userId)
-                    }
-                }.decodeList<FacultyProfileDto>()
-
-            val officialInfo = (check as? AuthResult.Success)?.data
-            registeredProfile = profiles.firstOrNull() ?: FacultyProfileDto(
-                id = userId,
-                username = cleanUsername,
-                facultyId = cleanFacultyId,
-                fullName = if (cleanFullName.isNotBlank()) cleanFullName else (officialInfo?.fullName ?: ""),
-                department = cleanDepartment,
-                designation = officialInfo?.designation ?: "Lecturer",
-                qualification = officialInfo?.qualification ?: "",
-                institutionalEmail = cleanEmail,
-                phoneNumber = cleanPhone
-            )
+            val profileObj = jsonObj["profile"]?.jsonObject
+            val profile = if (profileObj != null) {
+                FacultyProfileDto(
+                    id = profileObj["id"]?.jsonPrimitive?.content ?: "",
+                    username = profileObj["username"]?.jsonPrimitive?.content ?: cleanUsername,
+                    facultyId = profileObj["faculty_id"]?.jsonPrimitive?.content ?: cleanFacultyId,
+                    fullName = profileObj["full_name"]?.jsonPrimitive?.content ?: cleanFullName,
+                    department = profileObj["department"]?.jsonPrimitive?.content ?: cleanDepartment,
+                    designation = profileObj["designation"]?.jsonPrimitive?.content ?: "Faculty Member",
+                    qualification = profileObj["qualification"]?.jsonPrimitive?.content ?: ""
+                )
+            } else {
+                FacultyProfileDto(
+                    id = "",
+                    username = cleanUsername,
+                    facultyId = cleanFacultyId,
+                    fullName = cleanFullName,
+                    department = cleanDepartment,
+                    designation = "Faculty Member",
+                    qualification = ""
+                )
+            }
 
             AuthResult.Success(
-                data = registeredProfile,
-                message = "Faculty account verified & registered successfully! Welcome to GGC Faculty Portal."
+                data = profile,
+                message = "Faculty account registered successfully! Welcome to GGC Faculty Portal."
             )
         } catch (e: Exception) {
             Log.e(TAG, "Faculty Registration failed", e)
-            val msg = e.localizedMessage ?: "Unknown registration error"
+            val msg = e.localizedMessage ?: "Registration failed"
             if (msg.contains("duplicate key", ignoreCase = true) || msg.contains("unique", ignoreCase = true)) {
-                AuthResult.Error("Duplicate identity detected: Faculty ID, email, or username is already registered.")
+                AuthResult.Error("This Faculty ID or Username is already registered.")
             } else {
                 AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
@@ -231,7 +169,7 @@ class FacultyAuthRemoteDataSource {
     }
 
     /**
-     * Authenticates a Faculty member by Username, Faculty ID, or Institutional Email.
+     * Authenticates a Faculty member by Username or Faculty ID + Password.
      */
     suspend fun loginFaculty(
         usernameOrFacultyIdOrEmail: String,
@@ -240,61 +178,47 @@ class FacultyAuthRemoteDataSource {
         return try {
             val query = usernameOrFacultyIdOrEmail.trim()
             if (query.isBlank() || password.isBlank()) {
-                return AuthResult.Error("Faculty ID / Username / Email and Password are required.")
+                return AuthResult.Error("Faculty ID / Username and Password are required.")
             }
 
-            var authEmail = if (query.contains("@")) query.lowercase() else ""
-
-            if (authEmail.isBlank()) {
-                try {
-                    val profileMatches = client.from("faculty_profiles")
-                        .select {
-                            filter {
-                                or {
-                                    ilike("faculty_id", query.uppercase())
-                                    ilike("username", query.lowercase())
-                                }
-                            }
-                        }.decodeList<FacultyProfileDto>()
-
-                    if (profileMatches.isNotEmpty()) {
-                        val profile = profileMatches.first()
-                        authEmail = profile.institutionalEmail ?: usernameToEmail(profile.username)
-                    } else {
-                        authEmail = usernameToEmail(query)
-                    }
-                } catch (lookupEx: Exception) {
-                    Log.d(TAG, "Unauthenticated faculty lookup blocked by RLS (expected): ${lookupEx.message}")
-                    authEmail = usernameToEmail(query)
-                }
+            val loginParams = buildJsonObject {
+                put("p_identifier", query)
+                put("p_password", password)
             }
 
-            // Supabase Auth Login
-            client.auth.signInWith(Email) {
-                email = authEmail
-                this.password = password
+            val rpcResponse = client.postgrest.rpc("direct_login_faculty", loginParams)
+            val bodyText = rpcResponse.data
+            if (bodyText.isBlank()) {
+                return AuthResult.Error("No response received from login server.")
             }
 
-            val currentAuthUser = client.auth.currentUserOrNull()
-                ?: return AuthResult.Error("Could not verify Faculty credentials.")
+            val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+            val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+            if (!isSuccess) {
+                val errMsg = jsonObj["error"]?.jsonPrimitive?.content
+                    ?: "Invalid Faculty ID, username, or password."
+                return AuthResult.Error(errMsg)
+            }
 
-            // Fetch faculty profile (allowed by RLS for authenticated user)
-            val profiles = client.from("faculty_profiles")
-                .select {
-                    filter {
-                        eq("id", currentAuthUser.id)
-                    }
-                }.decodeList<FacultyProfileDto>()
+            val profileObj = jsonObj["profile"]?.jsonObject
+                ?: return AuthResult.Error("Could not retrieve Faculty profile.")
 
-            val profile = profiles.firstOrNull()
-                ?: return AuthResult.Error("Faculty profile data could not be found.")
+            val profile = FacultyProfileDto(
+                id = profileObj["id"]?.jsonPrimitive?.content ?: "",
+                username = profileObj["username"]?.jsonPrimitive?.content ?: query,
+                facultyId = profileObj["faculty_id"]?.jsonPrimitive?.content ?: "",
+                fullName = profileObj["full_name"]?.jsonPrimitive?.content ?: "",
+                department = profileObj["department"]?.jsonPrimitive?.content ?: "",
+                designation = profileObj["designation"]?.jsonPrimitive?.content ?: "Faculty Member",
+                qualification = profileObj["qualification"]?.jsonPrimitive?.content ?: ""
+            )
 
             AuthResult.Success(profile, "Faculty portal login successful.")
         } catch (e: Exception) {
             Log.e(TAG, "Faculty Login failed", e)
             val msg = e.localizedMessage ?: "Login failed"
             if (msg.contains("Invalid login credentials", ignoreCase = true) || msg.contains("invalid", ignoreCase = true)) {
-                AuthResult.Error("Invalid Faculty ID, username, email, or password. Please try again.")
+                AuthResult.Error("Invalid Faculty ID, username, or password. Please try again.")
             } else {
                 AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
@@ -302,10 +226,6 @@ class FacultyAuthRemoteDataSource {
     }
 
     suspend fun logout() {
-        try {
-            client.auth.signOut()
-        } catch (e: Exception) {
-            Log.w(TAG, "Faculty Sign out error", e)
-        }
+        // Direct session cleared locally
     }
 }

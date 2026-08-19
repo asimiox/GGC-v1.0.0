@@ -65,16 +65,32 @@ object SupabaseClientProvider {
     }
 
     /**
-     * Translates common backend exceptions (like missing anon API key) into actionable user messages.
+     * Translates common backend exceptions (like missing anon API key or auth errors) into clean user messages.
      */
     fun formatErrorMessage(e: Exception, fallback: String): String {
         val msg = e.localizedMessage ?: e.message ?: ""
         return when {
             msg.contains("Invalid API key", ignoreCase = true) || msg.contains("your-supabase-public-anon-key", ignoreCase = true) || msg.contains("401", ignoreCase = true) -> {
-                "Supabase Anon Key is missing or invalid. Please add your SUPABASE_ANON_KEY secret in the AI Studio Secrets panel."
+                "Supabase Anon Key is missing or invalid. Please check configuration."
             }
-            msg.contains("Unable to resolve host", ignoreCase = true) || msg.contains("No address associated", ignoreCase = true) -> {
-                "Unable to connect to Supabase server. Please check your internet connection."
+            msg.contains("Unable to resolve host", ignoreCase = true) || msg.contains("No address associated", ignoreCase = true) || msg.contains("ConnectException", ignoreCase = true) -> {
+                "Unable to connect to the server. Please check your internet connection."
+            }
+            msg.contains("already registered", ignoreCase = true) || msg.contains("User already exists", ignoreCase = true) -> {
+                "This username is already registered. Please login or choose a different username."
+            }
+            msg.contains("email_address_invalid", ignoreCase = true) -> {
+                "Invalid username format. Please use letters and numbers only."
+            }
+            msg.contains("Invalid login credentials", ignoreCase = true) -> {
+                "Incorrect username or password. Please verify your credentials."
+            }
+            msg.contains("duplicate key", ignoreCase = true) || msg.contains("unique", ignoreCase = true) -> {
+                "This Roll Number, Registration Number, or Username is already registered."
+            }
+            msg.contains("URL:", ignoreCase = true) || msg.contains("Headers:", ignoreCase = true) -> {
+                val cleanSummary = msg.substringBefore("\n").substringBefore("URL:").trim()
+                if (cleanSummary.isNotBlank()) cleanSummary else fallback
             }
             msg.isNotBlank() -> msg
             else -> fallback
