@@ -520,7 +520,7 @@ fun IntermediateAuthContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "🔒 Official Record Verification: Account creation requires an existing, unclaimed official Intermediate student record in the college database.",
+                        text = "🔒 Student Account Registration: Ensure your Roll Number, Registration Number, and Username are unique. You can log in immediately after creating your account.",
                         fontSize = 11.sp,
                         color = Color(0xFF4A5568),
                         lineHeight = 15.sp
@@ -548,7 +548,7 @@ fun IntermediateAuthContent(
                         )
                     } else {
                         Text(
-                            text = "Verify & Create Account",
+                            text = "Create Student Account",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
