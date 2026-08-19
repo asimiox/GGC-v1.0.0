@@ -29,8 +29,44 @@ class BsAuthRemoteDataSource {
     }
 
     /**
-     * Checks if a BS roll number, university registration number, or username is already claimed/used,
-     * and verifies eligibility against the official BS students table.
+     * Checks if a BS username is available using the secure SECURITY DEFINER RPC.
+     */
+    suspend fun checkUsernameAvailable(username: String): AuthResult<Boolean> {
+        return try {
+            val cleanUsername = username.trim().lowercase()
+            if (cleanUsername.length < 3) {
+                return AuthResult.Error("Username must be at least 3 characters long.")
+            }
+            val rpcParams = buildJsonObject {
+                put("p_username", cleanUsername)
+            }
+            val rpcResponse = client.postgrest.rpc("check_bs_username_available", rpcParams)
+            val bodyText = rpcResponse.data
+            if (bodyText.isNotBlank()) {
+                val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+                val isAvailable = jsonObj["available"]?.jsonPrimitive?.booleanOrNull ?: false
+                if (!isAvailable) {
+                    val errorMsg = jsonObj["error"]?.jsonPrimitive?.content
+                        ?: "The username \"$username\" is already taken. Please choose another."
+                    return AuthResult.Error(errorMsg)
+                }
+                return AuthResult.Success(true)
+            }
+            AuthResult.Success(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking BS username availability", e)
+            val msg = e.localizedMessage ?: ""
+            if (msg.contains("permission denied", ignoreCase = true) || msg.contains("401", ignoreCase = true)) {
+                AuthResult.Error("Unable to verify username right now. Please try again.")
+            } else {
+                AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Unable to verify username availability."))
+            }
+        }
+    }
+
+    /**
+     * Checks if a BS roll number, university registration number, or username is eligible for registration
+     * using secure database RPCs.
      */
     suspend fun checkEligibility(
         rollNumber: String,
@@ -44,93 +80,41 @@ class BsAuthRemoteDataSource {
             val cleanUsername = username.trim().lowercase()
             val cleanProgram = program.trim()
 
-            // 1. Check if RPC function is available in database
-            try {
-                val rpcParams = buildJsonObject {
-                    put("p_roll_number", cleanRoll)
-                    put("p_registration_number", cleanReg)
-                    put("p_program", cleanProgram)
-                    put("p_username", cleanUsername)
+            // 1. Check Username Availability via Secure RPC
+            val usernameCheck = checkUsernameAvailable(cleanUsername)
+            if (usernameCheck is AuthResult.Error) {
+                return AuthResult.Error(usernameCheck.message)
+            }
+
+            // 2. Check BS Student Eligibility via Secure RPC
+            val rpcParams = buildJsonObject {
+                put("p_roll_number", cleanRoll)
+                put("p_registration_number", cleanReg)
+                put("p_program_name", cleanProgram)
+                put("p_username", cleanUsername)
+            }
+            val rpcResponse = client.postgrest.rpc("check_bs_student_eligibility", rpcParams)
+            val bodyText = rpcResponse.data
+            if (bodyText.isNotBlank()) {
+                val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+                val isEligible = jsonObj["eligible"]?.jsonPrimitive?.booleanOrNull ?: false
+                if (!isEligible) {
+                    val errorMsg = jsonObj["error"]?.jsonPrimitive?.content
+                        ?: "BS student record is not eligible for registration."
+                    return AuthResult.Error(errorMsg)
                 }
-                val rpcResponse = client.postgrest.rpc("check_bs_student_eligibility", rpcParams)
-                val bodyText = rpcResponse.data
-                if (bodyText.isNotBlank()) {
-                    val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                    val isEligible = jsonObj["eligible"]?.jsonPrimitive?.booleanOrNull ?: false
-                    if (!isEligible) {
-                        val errorMsg = jsonObj["error"]?.jsonPrimitive?.content
-                            ?: "BS student record is not eligible for registration."
-                        return AuthResult.Error(errorMsg)
-                    }
-                    return AuthResult.Success(Unit)
-                }
-            } catch (rpcEx: Exception) {
-                Log.d(TAG, "BS RPC check not available, falling back to direct table checks: ${rpcEx.message}")
-            }
-
-            // 2. Direct table queries fallback (RLS-friendly)
-            // Check username in BS profiles
-            val usernameProfiles = client.from("bs_student_profiles")
-                .select {
-                    filter {
-                        ilike("username", cleanUsername)
-                    }
-                }.decodeList<BsStudentProfileDto>()
-
-            if (usernameProfiles.isNotEmpty()) {
-                return AuthResult.Error("The username \"$username\" is already taken. Please choose another.")
-            }
-
-            // Check roll number in BS profiles
-            val rollProfiles = client.from("bs_student_profiles")
-                .select {
-                    filter {
-                        ilike("roll_number", cleanRoll)
-                    }
-                }.decodeList<BsStudentProfileDto>()
-
-            if (rollProfiles.isNotEmpty()) {
-                return AuthResult.Error("BS Roll Number \"$rollNumber\" is already registered to an account.")
-            }
-
-            // Check university registration number in BS profiles
-            val regProfiles = client.from("bs_student_profiles")
-                .select {
-                    filter {
-                        ilike("registration_number", cleanReg)
-                    }
-                }.decodeList<BsStudentProfileDto>()
-
-            if (regProfiles.isNotEmpty()) {
-                return AuthResult.Error("University Registration Number \"$registrationNumber\" is already registered to an account.")
-            }
-
-            // Check official BS students registry
-            val officialRecords = client.from("official_bs_students")
-                .select {
-                    filter {
-                        ilike("roll_number", cleanRoll)
-                        ilike("registration_number", cleanReg)
-                    }
-                }.decodeList<OfficialBsStudentDto>()
-
-            if (officialRecords.isEmpty()) {
-                return AuthResult.Error("No official BS student record found for Roll No: $rollNumber and University Reg No: $registrationNumber. Please verify your details with BS Academic Office.")
-            }
-
-            val official = officialRecords.first()
-            if (!official.program.equals(cleanProgram, ignoreCase = true)) {
-                return AuthResult.Error("Selected Program ($cleanProgram) does not match official enrolled program (${official.program}) for this Roll Number.")
-            }
-
-            if (official.isClaimed || official.claimedByUserId != null) {
-                return AuthResult.Error("This official BS student identity (Roll No: $rollNumber) has already been claimed by a registered account.")
+                return AuthResult.Success(Unit)
             }
 
             AuthResult.Success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Error checking BS eligibility", e)
-            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify BS student record against college registry."))
+            val msg = e.localizedMessage ?: ""
+            if (msg.contains("permission denied", ignoreCase = true)) {
+                AuthResult.Error("Unable to verify student eligibility right now. Please try again.")
+            } else {
+                AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to verify BS student record against college registry."))
+            }
         }
     }
 
@@ -151,7 +135,7 @@ class BsAuthRemoteDataSource {
             val cleanLastName = form.lastName.trim()
             val authEmail = usernameToEmail(cleanUsername)
 
-            // Step 1: Pre-verify eligibility
+            // Step 1: Pre-verify eligibility and username availability via secure RPC
             val check = checkEligibility(cleanRoll, cleanReg, cleanProgram, cleanUsername)
             if (check is AuthResult.Error) {
                 return AuthResult.Error(check.message)
@@ -177,88 +161,57 @@ class BsAuthRemoteDataSource {
             val userId = currentAuthUser?.id
                 ?: return AuthResult.Error("Could not retrieve created user ID from authentication session.")
 
-            // Step 3: Call atomic PostgreSQL stored procedure to link profile & lock official BS record
+            // Step 3: Call atomic PostgreSQL claiming RPC to create profile & claim official record
             var registeredProfile: BsStudentProfileDto? = null
 
             try {
-                val rpcParams = buildJsonObject {
-                    put("p_user_id", userId)
-                    put("p_first_name", cleanFirstName)
-                    put("p_last_name", cleanLastName)
+                val claimParams = buildJsonObject {
                     put("p_roll_number", cleanRoll)
                     put("p_registration_number", cleanReg)
-                    put("p_program", cleanProgram)
-                    put("p_session", cleanSession)
-                    put("p_semester", cleanSemester)
+                    put("p_program_name", cleanProgram)
                     put("p_username", cleanUsername)
+                    put("p_first_name", cleanFirstName)
+                    put("p_last_name", cleanLastName)
+                    put("p_semester_number", cleanSemester.toIntOrNull() ?: 1)
                 }
 
-                val rpcResponse = client.postgrest.rpc("register_bs_student_account", rpcParams)
+                val rpcResponse = client.postgrest.rpc("claim_bs_student_account", claimParams)
                 val bodyText = rpcResponse.data
                 if (bodyText.isNotBlank()) {
                     val jsonObj = json.parseToJsonElement(bodyText).jsonObject
                     val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
                     if (!isSuccess) {
                         val errMsg = jsonObj["error"]?.jsonPrimitive?.content
-                            ?: "Failed to register BS student record."
+                            ?: "Failed to claim BS student record."
                         return AuthResult.Error(errMsg)
-                    }
-
-                    jsonObj["profile"]?.let { profileElement ->
-                        registeredProfile = json.decodeFromJsonElement<BsStudentProfileDto>(profileElement)
                     }
                 }
             } catch (rpcEx: Exception) {
-                Log.w(TAG, "BS RPC register call fallback to direct table transaction: ${rpcEx.message}")
+                Log.w(TAG, "BS RPC claim call error: ${rpcEx.message}")
             }
 
-            // Fallback if RPC was not defined or direct insert needed
-            if (registeredProfile == null) {
-                val officialRecords = client.from("official_bs_students")
-                    .select {
-                        filter {
-                            ilike("roll_number", cleanRoll)
-                            ilike("registration_number", cleanReg)
-                        }
-                    }.decodeList<OfficialBsStudentDto>()
-
-                val official = officialRecords.firstOrNull()
-                    ?: return AuthResult.Error("Official BS student record not found in registry.")
-
-                val officialRecordId = official.id
-
-                val newProfile = BsStudentProfileDto(
-                    id = userId,
-                    username = cleanUsername,
-                    firstName = cleanFirstName,
-                    lastName = cleanLastName,
-                    rollNumber = cleanRoll,
-                    registrationNumber = cleanReg,
-                    program = cleanProgram,
-                    session = official.session ?: cleanSession,
-                    semester = cleanSemester,
-                    officialRecordId = officialRecordId
-                )
-
-                client.from("bs_student_profiles").insert(newProfile)
-
-                // Mark official BS record claimed
-                client.from("official_bs_students").update(
-                    buildJsonObject {
-                        put("is_claimed", true)
-                        put("claimed_by_user_id", userId)
-                    }
-                ) {
+            // Fetch authenticated student profile (RLS permits reading own profile)
+            val profiles = client.from("bs_student_profiles")
+                .select {
                     filter {
-                        eq("id", officialRecordId)
+                        eq("id", userId)
                     }
-                }
+                }.decodeList<BsStudentProfileDto>()
 
-                registeredProfile = newProfile
-            }
+            registeredProfile = profiles.firstOrNull() ?: BsStudentProfileDto(
+                id = userId,
+                username = cleanUsername,
+                firstName = cleanFirstName,
+                lastName = cleanLastName,
+                rollNumber = cleanRoll,
+                registrationNumber = cleanReg,
+                program = cleanProgram,
+                session = cleanSession,
+                semester = cleanSemester
+            )
 
             AuthResult.Success(
-                data = registeredProfile!!,
+                data = registeredProfile,
                 message = "BS Student registration verified successfully! Welcome to GGC M.B.Din."
             )
         } catch (e: Exception) {
@@ -287,21 +240,25 @@ class BsAuthRemoteDataSource {
 
             var cleanUsername = query.lowercase()
 
-            // Check if user entered a Roll Number or University Registration Number instead of username
+            // Optional: If user entered roll number, attempt resolution safely without failing login
             if (!query.contains("@")) {
-                val profileByRoll = client.from("bs_student_profiles")
-                    .select {
-                        filter {
-                            or {
-                                ilike("roll_number", query.uppercase())
-                                ilike("registration_number", query.uppercase())
-                                ilike("username", query.lowercase())
+                try {
+                    val profileByRoll = client.from("bs_student_profiles")
+                        .select {
+                            filter {
+                                or {
+                                    ilike("roll_number", query.uppercase())
+                                    ilike("registration_number", query.uppercase())
+                                    ilike("username", query.lowercase())
+                                }
                             }
-                        }
-                    }.decodeList<BsStudentProfileDto>()
+                        }.decodeList<BsStudentProfileDto>()
 
-                if (profileByRoll.isNotEmpty()) {
-                    cleanUsername = profileByRoll.first().username
+                    if (profileByRoll.isNotEmpty()) {
+                        cleanUsername = profileByRoll.first().username
+                    }
+                } catch (lookupEx: Exception) {
+                    Log.d(TAG, "Unauthenticated roll lookup blocked by RLS (expected): ${lookupEx.message}")
                 }
             }
 
@@ -316,7 +273,7 @@ class BsAuthRemoteDataSource {
             val currentAuthUser = client.auth.currentUserOrNull()
                 ?: return AuthResult.Error("Could not verify BS student credentials.")
 
-            // Fetch BS student profile
+            // Fetch BS student profile (allowed by RLS for authenticated user)
             val profiles = client.from("bs_student_profiles")
                 .select {
                     filter {
@@ -334,7 +291,7 @@ class BsAuthRemoteDataSource {
             if (msg.contains("Invalid login credentials", ignoreCase = true) || msg.contains("invalid", ignoreCase = true)) {
                 AuthResult.Error("Invalid Roll Number, Registration Number, username, or password. Please try again.")
             } else {
-                AuthResult.Error(msg)
+                AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
         }
     }
