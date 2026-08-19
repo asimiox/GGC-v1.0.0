@@ -36,12 +36,12 @@ class IntermediateAuthViewModel(
     val uiState: StateFlow<IntermediateAuthUiState> = _uiState.asStateFlow()
 
     val intermediatePrograms = listOf(
-        "ICS (Physics)",
-        "ICS (Stats)",
-        "I.Com",
-        "F.Sc Pre-Engineering",
-        "F.Sc Pre-Medical",
-        "F.A"
+        "F.Sc Pre-Med",
+        "F.Sc Pre-Eng",
+        "ICs",
+        "ICom",
+        "FA",
+        "FA.IT"
     )
 
     fun switchTab(tab: IntermediateAuthTab) {
