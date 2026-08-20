@@ -66,6 +66,17 @@ import com.example.ui.screens.notices.NoticesScreen
 import com.example.ui.screens.notifications.NotificationCenterScreen
 import com.example.ui.screens.prospectus.ProspectusScreen
 
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.example.ui.screens.auth.FacultyAuthContent
+import com.example.ui.screens.profile.ProfileScreen
+import kotlinx.coroutines.launch
+
 private val BrandNavy = Color(0xFF061B52)
 private val BrandBackground = Color(0xFFF6F6F6)
 private val BrandTextMuted = Color(0xFF7A879D)
@@ -73,6 +84,7 @@ private val BrandTextMuted = Color(0xFF7A879D)
 enum class HomeSubScreen {
     NONE,
     NOTIFICATION_CENTER,
+    PROFILE,
     FEE_STRUCTURE,
     ANNOUNCEMENT,
     PROSPECTUS,
@@ -81,6 +93,7 @@ enum class HomeSubScreen {
     DOCUMENTS
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToPrograms: () -> Unit = {},
@@ -89,15 +102,45 @@ fun HomeScreen(
     onNavigateToContentManagement: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val userProfile by UserProfileManager.userProfile.collectAsState()
     val notificationRepository = remember { NotificationRepository.getInstance(context) }
     val unreadCount by notificationRepository.unreadCount.collectAsState()
 
     var activeSubScreen by remember { mutableStateOf(HomeSubScreen.NONE) }
+    var showFacultyAuthSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberScrollState()
+
+    if (showFacultyAuthSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showFacultyAuthSheet = false },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                FacultyAuthContent(
+                    onAuthSuccess = {
+                        scope.launch {
+                            sheetState.hide()
+                            showFacultyAuthSheet = false
+                        }
+                    }
+                )
+            }
+        }
+    }
 
     if (activeSubScreen != HomeSubScreen.NONE) {
         when (activeSubScreen) {
+            HomeSubScreen.PROFILE -> ProfileScreen(
+                onBack = { activeSubScreen = HomeSubScreen.NONE }
+            )
             HomeSubScreen.NOTIFICATION_CENTER -> NotificationCenterScreen(
                 onBack = { activeSubScreen = HomeSubScreen.NONE },
                 onNavigateToContent = { contentType, _ ->
@@ -151,7 +194,12 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { activeSubScreen = HomeSubScreen.PROFILE }
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_ggc_logo),
                     contentDescription = "GGC Logo",
@@ -170,7 +218,7 @@ fun HomeScreen(
                         color = BrandNavy
                     )
                     Text(
-                        text = "Official App",
+                        text = if (userProfile.isFaculty) "Faculty Portal" else "Official App",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = BrandTextMuted
@@ -178,35 +226,51 @@ fun HomeScreen(
                 }
             }
 
-            Box(contentAlignment = Alignment.TopEnd) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Profile & Portals Button
                 IconButton(
-                    onClick = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER },
-                    modifier = Modifier.testTag("home_notifications_btn")
+                    onClick = { activeSubScreen = HomeSubScreen.PROFILE },
+                    modifier = Modifier.testTag("home_profile_btn")
                 ) {
                     Icon(
-                        imageVector = Icons.Default.NotificationsNone,
-                        contentDescription = "Notifications",
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "User Profile & Portals",
                         tint = BrandNavy,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
 
-                if (unreadCount > 0) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 6.dp, end = 6.dp)
-                            .size(18.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFD32F2F))
-                            .testTag("home_bell_unread_badge"),
-                        contentAlignment = Alignment.Center
+                // Notification Bell
+                Box(contentAlignment = Alignment.TopEnd) {
+                    IconButton(
+                        onClick = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER },
+                        modifier = Modifier.testTag("home_notifications_btn")
                     ) {
-                        Text(
-                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                        Icon(
+                            imageVector = Icons.Default.NotificationsNone,
+                            contentDescription = "Notifications",
+                            tint = BrandNavy,
+                            modifier = Modifier.size(24.dp)
                         )
+                    }
+
+                    if (unreadCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp, end = 6.dp)
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFD32F2F))
+                                .testTag("home_bell_unread_badge"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -235,10 +299,12 @@ fun HomeScreen(
             val currentDayName = remember { liveDayFormat.format(todayDate) }
             val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
 
-            // 2. Personalized User Bento Card
+            // 2. Personalized User Bento Card (Clickable to view Profile & Portals)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable { activeSubScreen = HomeSubScreen.PROFILE }
                     .testTag("home_user_bento_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = BrandNavy),
@@ -287,7 +353,7 @@ fun HomeScreen(
                             AppRole.TEACHER -> "Faculty Member • ${userProfile.department ?: "Academic Department"}"
                             AppRole.HOD -> "Head of Department • ${userProfile.department ?: "Department"}"
                             AppRole.ADMIN -> "College Administrator • Official Portal"
-                            else -> "Authorized College Member"
+                            else -> "Authorized College Member • Tap to manage account"
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Normal,
@@ -331,24 +397,101 @@ fun HomeScreen(
                 }
             }
 
-            // 3. Grid of Bento Action Buttons
+            // Quick Access Card for Teacher & Faculty Portal
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable {
+                        if (userProfile.isFaculty && userProfile.isVerified) {
+                            activeSubScreen = HomeSubScreen.PROFILE
+                        } else {
+                            showFacultyAuthSheet = true
+                        }
+                    }
+                    .testTag("bento_btn_faculty_teacher_portal"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = if (userProfile.isFaculty) Color(0xFF030D2B) else Color(0xFF132A66)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (userProfile.appRole == AppRole.ADMIN) Icons.Default.AdminPanelSettings else Icons.Default.School,
+                                contentDescription = "Faculty & Teacher Portal",
+                                tint = Color(0xFFE5C058),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column {
+                            Text(
+                                text = if (userProfile.isFaculty) "Faculty Portal (Logged In)" else "Teacher & Admin Portal",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                text = if (userProfile.isFaculty) "Signed in as ${userProfile.name} • Tap to view" else "Official Login for Teachers, Faculty & College Staff",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Open Faculty Portal",
+                        tint = Color(0xFFE5C058),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            // 3. Grid of Bento Action Buttons (Alternating Blue-White Ladder Structure)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // 1. Programs (Blue)
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Programs",
                     icon = Icons.AutoMirrored.Outlined.MenuBook,
                     testTag = "bento_btn_programs",
+                    containerColor = BrandNavy,
+                    contentColor = Color.White,
                     onClick = onNavigateToPrograms
                 )
 
+                // 2. Fee Structure (White)
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Fee Structure",
                     icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                     testTag = "bento_btn_fee_structure",
+                    containerColor = Color.White,
+                    contentColor = BrandNavy,
                     onClick = { activeSubScreen = HomeSubScreen.FEE_STRUCTURE }
                 )
             }
@@ -357,19 +500,25 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // 3. Circulars & Notices (White)
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Circulars & Notices",
                     icon = Icons.Outlined.Campaign,
                     testTag = "bento_btn_announcement",
+                    containerColor = Color.White,
+                    contentColor = BrandNavy,
                     onClick = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT }
                 )
 
+                // 4. Prospectus (Blue)
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Prospectus",
                     icon = Icons.Outlined.Description,
                     testTag = "bento_btn_prospectus",
+                    containerColor = BrandNavy,
+                    contentColor = Color.White,
                     onClick = { activeSubScreen = HomeSubScreen.PROSPECTUS }
                 )
             }
@@ -378,19 +527,25 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // 5. College Events (Blue)
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "College Events",
                     icon = Icons.Default.Event,
                     testTag = "bento_btn_events",
+                    containerColor = BrandNavy,
+                    contentColor = Color.White,
                     onClick = { activeSubScreen = HomeSubScreen.EVENTS }
                 )
 
+                // 6. Rules & Documents (White)
                 BentoActionCard(
                     modifier = Modifier.weight(1f),
                     title = "Rules & Documents",
                     icon = Icons.Outlined.Description,
                     testTag = "bento_btn_documents",
+                    containerColor = Color.White,
+                    contentColor = BrandNavy,
                     onClick = { activeSubScreen = HomeSubScreen.DOCUMENTS }
                 )
             }
