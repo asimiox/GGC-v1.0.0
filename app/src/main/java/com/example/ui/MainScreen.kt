@@ -21,15 +21,21 @@ import com.example.data.model.AppNotificationDto
 import com.example.data.repository.NotificationRepository
 import com.example.ui.components.GgcBottomBar
 import com.example.ui.components.InAppNotificationBanner
+import com.example.ui.navigation.BottomNavItem
 import com.example.ui.navigation.NavRoutes
 import com.example.ui.screens.about.AboutScreen
+import com.example.ui.screens.academics.AcademicsScreen
+import com.example.ui.screens.admin.AdminDashboardScreen
 import com.example.ui.screens.admin.OfficialRegistryScreen
 import com.example.ui.screens.admin.content.ContentManagementScreen
 import com.example.ui.screens.admission.AdmissionScreen
 import com.example.ui.screens.alumni.AlumniScreen
 import com.example.ui.screens.courses.CoursesOutlineScreen
 import com.example.ui.screens.faculty.FacultyTabScreen
+import com.example.ui.screens.events.EventsScreen
 import com.example.ui.screens.home.HomeScreen
+import com.example.ui.screens.notices.NoticesScreen
+import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.programs.ProgramsScreen
 
 @Composable
@@ -41,6 +47,16 @@ fun MainScreen() {
     var currentRoute by remember { mutableStateOf(NavRoutes.HOME) }
     var previousRoute by remember { mutableStateOf(NavRoutes.HOME) }
     var incomingAlertNotification by remember { mutableStateOf<AppNotificationDto?>(null) }
+
+    // Dedicated Super Administrator Control Center (Completely Separate Flow)
+    if (userProfile.isAdmin) {
+        AdminDashboardScreen(
+            onNavigateBack = {
+                // Session reset handled by ViewModel
+            }
+        )
+        return
+    }
 
     // Start lifecycle-aware realtime subscription for the authenticated user
     LaunchedEffect(userProfile) {
@@ -66,8 +82,15 @@ fun MainScreen() {
                 NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE, NavRoutes.ADMIN_REGISTRY, NavRoutes.CONTENT_MANAGEMENT -> previousRoute
                 else -> currentRoute
             }
+            val navItems = if (userProfile.isFaculty) {
+                BottomNavItem.facultyItems
+            } else {
+                BottomNavItem.studentItems
+            }
+
             GgcBottomBar(
                 currentRoute = activeBottomRoute,
+                items = navItems,
                 onNavigateToRoute = { route ->
                     previousRoute = currentRoute
                     currentRoute = route
@@ -99,6 +122,16 @@ fun MainScreen() {
                         previousRoute = NavRoutes.HOME
                         currentRoute = NavRoutes.CONTENT_MANAGEMENT
                     }
+                )
+                NavRoutes.ACADEMICS -> AcademicsScreen()
+                NavRoutes.NOTICES -> NoticesScreen(
+                    onBack = { currentRoute = NavRoutes.HOME }
+                )
+                NavRoutes.EVENTS -> EventsScreen(
+                    onBack = { currentRoute = NavRoutes.HOME }
+                )
+                NavRoutes.PROFILE -> ProfileScreen(
+                    onBack = { currentRoute = NavRoutes.HOME }
                 )
                 NavRoutes.ADMISSION -> AdmissionScreen(
                     onNavigateToPrograms = {

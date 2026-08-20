@@ -77,6 +77,10 @@ import com.example.ui.screens.auth.FacultyAuthContent
 import com.example.ui.screens.profile.ProfileScreen
 import kotlinx.coroutines.launch
 
+import com.example.ui.screens.admin.content.ContentManagementScreen
+import com.example.ui.screens.admin.content.ContentSectionTab
+import com.example.ui.screens.faculty.FacultyDashboardView
+
 private val BrandNavy = Color(0xFF061B52)
 private val BrandBackground = Color(0xFFF6F6F6)
 private val BrandTextMuted = Color(0xFF7A879D)
@@ -90,7 +94,8 @@ enum class HomeSubScreen {
     PROSPECTUS,
     COURSES_OUTLINE,
     EVENTS,
-    DOCUMENTS
+    DOCUMENTS,
+    CONTENT_MANAGEMENT
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,6 +113,7 @@ fun HomeScreen(
     val unreadCount by notificationRepository.unreadCount.collectAsState()
 
     var activeSubScreen by remember { mutableStateOf(HomeSubScreen.NONE) }
+    var targetContentTab by remember { mutableStateOf(ContentSectionTab.ANNOUNCEMENTS) }
     var showFacultyAuthSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberScrollState()
@@ -173,8 +179,31 @@ fun HomeScreen(
             HomeSubScreen.DOCUMENTS -> OfficialDocumentsScreen(
                 onBack = { activeSubScreen = HomeSubScreen.NONE }
             )
+            HomeSubScreen.CONTENT_MANAGEMENT -> ContentManagementScreen(
+                onBack = { activeSubScreen = HomeSubScreen.NONE },
+                initialTab = targetContentTab
+            )
             HomeSubScreen.NONE -> {}
         }
+        return
+    }
+
+    // If User is Faculty/Teacher, render dedicated Faculty Portal Dashboard
+    if (userProfile.isFaculty) {
+        FacultyDashboardView(
+            userProfile = userProfile,
+            unreadCount = unreadCount,
+            onNavigateToContentTab = { tab ->
+                targetContentTab = tab
+                activeSubScreen = HomeSubScreen.CONTENT_MANAGEMENT
+            },
+            onNavigateToCourses = onNavigateToCoursesOutline,
+            onNavigateToNotices = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT },
+            onNavigateToEvents = { activeSubScreen = HomeSubScreen.EVENTS },
+            onNavigateToDocuments = { activeSubScreen = HomeSubScreen.DOCUMENTS },
+            onNavigateToProfile = { activeSubScreen = HomeSubScreen.PROFILE },
+            onNavigateToNotificationCenter = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER }
+        )
         return
     }
 
@@ -299,7 +328,7 @@ fun HomeScreen(
             val currentDayName = remember { liveDayFormat.format(todayDate) }
             val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
 
-            // 2. Personalized User Bento Card (Clickable to view Profile & Portals)
+            // 2. Personalized Student Academic Bento Card (Clickable to view Profile)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -338,7 +367,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = userProfile.name.ifBlank { "College Student / Scholar" },
+                        text = userProfile.name.ifBlank { "College Student" },
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -347,18 +376,58 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = when (userProfile.appRole) {
-                            AppRole.STUDENT_BS -> "BS Student • ${userProfile.department ?: "Degree Program"}"
-                            AppRole.STUDENT_INTERMEDIATE -> "Intermediate Student • ${userProfile.department ?: "Stream"}"
-                            AppRole.TEACHER -> "Faculty Member • ${userProfile.department ?: "Academic Department"}"
-                            AppRole.HOD -> "Head of Department • ${userProfile.department ?: "Department"}"
-                            AppRole.ADMIN -> "College Administrator • Official Portal"
-                            else -> "Authorized College Member • Tap to manage account"
+                        text = if (userProfile.programName.isNotBlank()) {
+                            "${userProfile.programName}${if (!userProfile.semester.isNullOrBlank()) " • ${userProfile.semester}" else ""}"
+                        } else {
+                            when (userProfile.appRole) {
+                                AppRole.STUDENT_BS -> "BS Student Portal"
+                                AppRole.STUDENT_INTERMEDIATE -> "Intermediate Student Portal"
+                                else -> "Authorized Student Portal"
+                            }
                         },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Normal,
                         color = Color.White.copy(alpha = 0.85f)
                     )
+
+                    if (!userProfile.rollNumber.isNullOrBlank() || !userProfile.registrationNumber.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (!userProfile.rollNumber.isNullOrBlank()) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color.White.copy(alpha = 0.12f))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = "Roll: ${userProfile.rollNumber}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                            if (!userProfile.registrationNumber.isNullOrBlank()) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color.White.copy(alpha = 0.12f))
+                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = "Reg: ${userProfile.registrationNumber}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -397,74 +466,70 @@ fun HomeScreen(
                 }
             }
 
-            // Quick Access Card for Teacher & Faculty Portal
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable {
-                        if (userProfile.isFaculty && userProfile.isVerified) {
-                            activeSubScreen = HomeSubScreen.PROFILE
-                        } else {
-                            showFacultyAuthSheet = true
-                        }
-                    }
-                    .testTag("bento_btn_faculty_teacher_portal"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = if (userProfile.isFaculty) Color(0xFF030D2B) else Color(0xFF132A66)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
+            // Only show Faculty/Admin quick access if the active session is an authenticated Faculty/Admin
+            if (userProfile.isFaculty && userProfile.isVerified) {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { activeSubScreen = HomeSubScreen.PROFILE }
+                        .testTag("bento_btn_faculty_teacher_portal"),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF030D2B)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                imageVector = if (userProfile.appRole == AppRole.ADMIN) Icons.Default.AdminPanelSettings else Icons.Default.School,
-                                contentDescription = "Faculty & Teacher Portal",
-                                tint = Color(0xFFE5C058),
-                                modifier = Modifier.size(24.dp)
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (userProfile.appRole == AppRole.ADMIN) Icons.Default.AdminPanelSettings else Icons.Default.School,
+                                    contentDescription = "Faculty Portal",
+                                    tint = Color(0xFFE5C058),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column {
+                                Text(
+                                    text = "Faculty Portal (Logged In)",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = "Signed in as ${userProfile.name} • Tap to view",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column {
-                            Text(
-                                text = if (userProfile.isFaculty) "Faculty Portal (Logged In)" else "Teacher & Admin Portal",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(
-                                text = if (userProfile.isFaculty) "Signed in as ${userProfile.name} • Tap to view" else "Official Login for Teachers, Faculty & College Staff",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = Color.White.copy(alpha = 0.8f)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open Faculty Portal",
+                            tint = Color(0xFFE5C058),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Open Faculty Portal",
-                        tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
 

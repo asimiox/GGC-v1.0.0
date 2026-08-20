@@ -41,15 +41,9 @@ private val BrandCanvasBg = Color(0xFFF6F6F6)
 fun GgcBottomBar(
     currentRoute: String?,
     onNavigateToRoute: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    items: List<BottomNavItem> = BottomNavItem.studentItems
 ) {
-    val items = listOf(
-        BottomNavItem.Home,
-        BottomNavItem.Admission,
-        BottomNavItem.Alumni,
-        BottomNavItem.About
-    )
-
     val selectedIndex = items.indexOfFirst { it.route == currentRoute }.let {
         if (it == -1) 0 else it
     }

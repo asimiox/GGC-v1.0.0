@@ -123,12 +123,18 @@ private val BrandGoldContainer = Color(0xFFFFF8E1)
 @Composable
 fun ContentManagementScreen(
     onBack: () -> Unit,
+    initialTab: ContentSectionTab = ContentSectionTab.ANNOUNCEMENTS,
     viewModel: ContentManagementViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val userProfile by UserProfileManager.userProfile.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+
+    // Initial Tab trigger
+    LaunchedEffect(initialTab) {
+        viewModel.selectTab(initialTab)
+    }
 
     // Dialog States
     var showAnnouncementDialog by remember { mutableStateOf(false) }
@@ -156,8 +162,8 @@ fun ContentManagementScreen(
         }
     }
 
-    // Role verification
-    val isAuthorized = userProfile.isVerified && (userProfile.appRole == AppRole.ADMIN || userProfile.appRole == AppRole.HOD)
+    // Role verification (Admin, HOD, and Faculty/Teacher)
+    val isAuthorized = userProfile.isVerified && (userProfile.isAdmin || userProfile.isHod || userProfile.isFaculty)
 
     Scaffold(
         topBar = {
@@ -171,9 +177,10 @@ fun ContentManagementScreen(
                             color = Color.White
                         )
                         Text(
-                            text = when (userProfile.appRole) {
-                                AppRole.ADMIN -> "College Administrator • Full Access"
-                                AppRole.HOD -> "HOD Portal • ${userProfile.department ?: "Department"} Scope"
+                            text = when {
+                                userProfile.isAdmin -> "College Administrator • Full Access"
+                                userProfile.isHod -> "HOD Portal • ${userProfile.department ?: "Department"} Scope"
+                                userProfile.isFaculty -> "Faculty Portal • ${userProfile.department ?: "Academic Management"}"
                                 else -> "Unauthorized"
                             },
                             fontSize = 12.sp,

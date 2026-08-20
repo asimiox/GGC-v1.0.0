@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Translate
@@ -82,22 +83,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.UserProfileManager
+import com.example.ui.screens.auth.AdminAuthContent
 import com.example.ui.screens.auth.BsAuthContent
+import com.example.ui.screens.auth.FacultyAuthContent
 import com.example.ui.screens.auth.IntermediateAuthContent
+import androidx.compose.material.icons.filled.AdminPanelSettings
 
 private val BrandNavy = Color(0xFF061B52)
+private val BrandNavyDark = Color(0xFF030D2B)
 private val BrandBackground = Color(0xFFF6F6F6)
 private val BrandTextMuted = Color(0xFF7A879D)
 private val BrandIconBadgeBg = Color(0xFFEEF3FF)
 
 enum class OnboardingStep {
     WELCOME,
-    ENTER_NAME,
+    CONTINUE_AS,
     CHOOSE_LEVEL,
     INTERMEDIATE_AUTH,
     BS_PROGRAMS,
     SELECT_SEMESTER,
-    BS_AUTH
+    BS_AUTH,
+    TEACHER_AUTH,
+    ADMIN_AUTH
 }
 
 data class OnboardingProgramItem(
@@ -134,12 +141,14 @@ fun OnboardingScreen(
     BackHandler(enabled = currentStep != OnboardingStep.WELCOME) {
         currentStep = when (currentStep) {
             OnboardingStep.WELCOME -> OnboardingStep.WELCOME
-            OnboardingStep.ENTER_NAME -> OnboardingStep.WELCOME
-            OnboardingStep.CHOOSE_LEVEL -> OnboardingStep.ENTER_NAME
+            OnboardingStep.CONTINUE_AS -> OnboardingStep.WELCOME
+            OnboardingStep.CHOOSE_LEVEL -> OnboardingStep.CONTINUE_AS
             OnboardingStep.INTERMEDIATE_AUTH -> OnboardingStep.CHOOSE_LEVEL
             OnboardingStep.BS_PROGRAMS -> OnboardingStep.CHOOSE_LEVEL
             OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_PROGRAMS
             OnboardingStep.BS_AUTH -> OnboardingStep.SELECT_SEMESTER
+            OnboardingStep.TEACHER_AUTH -> OnboardingStep.CONTINUE_AS
+            OnboardingStep.ADMIN_AUTH -> OnboardingStep.CONTINUE_AS
         }
     }
 
@@ -164,18 +173,25 @@ fun OnboardingScreen(
         ) { step ->
             when (step) {
                 OnboardingStep.WELCOME -> WelcomeStepScreen(
-                    onGetStarted = { currentStep = OnboardingStep.ENTER_NAME }
+                    onGetStarted = { currentStep = OnboardingStep.CONTINUE_AS }
                 )
 
-                OnboardingStep.ENTER_NAME -> EnterNameStepScreen(
-                    name = studentName,
-                    onNameChange = { studentName = it },
+                OnboardingStep.CONTINUE_AS -> ContinueAsStepScreen(
                     onBack = { currentStep = OnboardingStep.WELCOME },
-                    onContinue = { currentStep = OnboardingStep.CHOOSE_LEVEL }
+                    onSelectStudent = {
+                        currentStep = OnboardingStep.CHOOSE_LEVEL
+                    },
+                    onSelectTeacher = {
+                        currentStep = OnboardingStep.TEACHER_AUTH
+                    },
+                    onSelectAdmin = {
+                        currentStep = OnboardingStep.ADMIN_AUTH
+                    },
+                    onSelectGuest = onOnboardingFinished
                 )
 
                 OnboardingStep.CHOOSE_LEVEL -> ChooseLevelStepScreen(
-                    onBack = { currentStep = OnboardingStep.ENTER_NAME },
+                    onBack = { currentStep = OnboardingStep.CONTINUE_AS },
                     onSelectLevel = { level ->
                         selectedLevel = level
                         if (level == "Intermediate") {
@@ -213,6 +229,16 @@ fun OnboardingScreen(
                     initialProgram = selectedProgram,
                     initialSemester = selectedSemester,
                     onBack = { currentStep = OnboardingStep.SELECT_SEMESTER },
+                    onAuthSuccess = onOnboardingFinished
+                )
+
+                OnboardingStep.TEACHER_AUTH -> TeacherAuthStepScreen(
+                    onBack = { currentStep = OnboardingStep.CONTINUE_AS },
+                    onAuthSuccess = onOnboardingFinished
+                )
+
+                OnboardingStep.ADMIN_AUTH -> AdminAuthStepScreen(
+                    onBack = { currentStep = OnboardingStep.CONTINUE_AS },
                     onAuthSuccess = onOnboardingFinished
                 )
             }
@@ -336,17 +362,16 @@ private fun WelcomeStepScreen(
 }
 
 // -------------------------------------------------------------
-// STEP 2: ENTER YOUR NAME (Reference Image: Screen 3)
+// STEP 2: CONTINUE AS (Role Selection)
 // -------------------------------------------------------------
 @Composable
-private fun EnterNameStepScreen(
-    name: String,
-    onNameChange: (String) -> Unit,
+private fun ContinueAsStepScreen(
     onBack: () -> Unit,
-    onContinue: () -> Unit
+    onSelectStudent: () -> Unit,
+    onSelectTeacher: () -> Unit,
+    onSelectAdmin: () -> Unit,
+    onSelectGuest: () -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -354,7 +379,7 @@ private fun EnterNameStepScreen(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             // Top Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -362,7 +387,7 @@ private fun EnterNameStepScreen(
             ) {
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.testTag("name_back_btn")
+                    modifier = Modifier.testTag("continue_as_back_btn")
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -375,100 +400,395 @@ private fun EnterNameStepScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Enter Your Name",
-                fontSize = 22.sp,
+                text = "Continue as",
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = BrandNavy,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "This will personalize your experience",
+                text = "Select your role to access GGC M.B.Din Official Portal",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Normal,
                 color = BrandTextMuted,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Person Avatar Badge
-            Box(
+            // Option 1: Student (BS / Intermediate)
+            Card(
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .background(BrandIconBadgeBg),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onSelectStudent() }
+                    .testTag("role_option_student"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavy),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = "Student Role",
+                            tint = Color(0xFFE5C058),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Student",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "BS Honors & Intermediate Portals",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Academics · Outlines · Notices",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFFE5C058),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Option 2: Teacher / Faculty
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onSelectTeacher() }
+                    .testTag("role_option_teacher"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0C245E)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Badge,
+                            contentDescription = "Teacher Role",
+                            tint = Color(0xFFE5C058),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Teacher / Faculty",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Faculty Management & Teaching Portal",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Courses · Notes · Announcements",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFFE5C058),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Option 3: Administrator (Super Control)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onSelectAdmin() }
+                    .testTag("role_option_admin"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavyDark),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0xFFC59B27).copy(alpha = 0.35f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AdminPanelSettings,
+                            contentDescription = "Admin Role",
+                            tint = Color(0xFFF3D372),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Administrator",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Central Super Control & Governance",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFC59B27).copy(alpha = 0.25f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "All Registries · Content · Broadcasts",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF3D372)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFFF3D372),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Option 4: Guest / Visitor
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onSelectGuest() }
+                    .testTag("role_option_guest"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(BrandIconBadgeBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Guest",
+                            tint = BrandNavy,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "College Guest / Visitor",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Explore Programs, Prospectus & Events",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = BrandTextMuted
+                        )
+                    }
+
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = BrandTextMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        // Bottom college footer notice
+        Text(
+            text = "Official Academic App · Govt. Graduate College Mandi Bahauddin",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Normal,
+            color = BrandTextMuted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
+        )
+    }
+}
+
+// -------------------------------------------------------------
+// TEACHER AUTH STEP (Official Supabase Faculty Verification & Login)
+// -------------------------------------------------------------
+@Composable
+private fun TeacherAuthStepScreen(
+    onBack: () -> Unit,
+    onAuthSuccess: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+    ) {
+        // Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.testTag("teacher_auth_back_btn")
             ) {
                 Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    tint = BrandNavy,
-                    modifier = Modifier.size(44.dp)
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BrandNavy
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-            // Name Input Field
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                placeholder = {
-                    Text(
-                        text = "e.g: Asim",
-                        color = BrandTextMuted,
-                        fontSize = 14.sp
-                    )
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = BrandNavy,
-                    unfocusedTextColor = BrandNavy,
-                    focusedPlaceholderColor = BrandTextMuted,
-                    unfocusedPlaceholderColor = BrandTextMuted,
-                    focusedBorderColor = BrandNavy,
-                    unfocusedBorderColor = Color(0xFFE2E6EE),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = BrandNavy
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("onboarding_name_input")
-            )
+            Column {
+                Text(
+                    text = "Faculty Portal",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy
+                )
+                Text(
+                    text = "Official Teacher Login & Claim",
+                    fontSize = 12.sp,
+                    color = BrandTextMuted
+                )
+            }
         }
 
-        // Continue Button
-        Button(
-            onClick = onContinue,
-            enabled = name.trim().isNotEmpty(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .testTag("name_continue_btn"),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = BrandNavy,
-                disabledContainerColor = BrandNavy.copy(alpha = 0.35f)
-            ),
-            shape = RoundedCornerShape(14.dp)
-        ) {
-            Text(
-                text = "Continue",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Embedded Supabase Faculty Verification and Authentication
+        FacultyAuthContent(
+            onAuthSuccess = onAuthSuccess,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
+}
+
+// -------------------------------------------------------------
+// ADMIN AUTH STEP (Official Supabase Super Control Login)
+// -------------------------------------------------------------
+@Composable
+private fun AdminAuthStepScreen(
+    onBack: () -> Unit,
+    onAuthSuccess: () -> Unit
+) {
+    AdminAuthContent(
+        onBack = onBack,
+        onAuthSuccess = onAuthSuccess
+    )
 }
 
 // -------------------------------------------------------------

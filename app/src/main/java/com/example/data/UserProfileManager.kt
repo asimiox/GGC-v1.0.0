@@ -255,6 +255,51 @@ object UserProfileManager {
         )
     }
 
+    fun saveVerifiedAdminProfile(
+        context: Context,
+        fullName: String,
+        username: String,
+        institutionalEmail: String?,
+        userId: String?
+    ) {
+        val cleanName = fullName.trim().ifEmpty { username }
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .putString(KEY_NAME, cleanName)
+            .putString(KEY_PROGRAM_LEVEL, "Administration")
+            .putString(KEY_PROGRAM_NAME, "College Central Administration")
+            .putString(KEY_SEMESTER, null)
+            .putString(KEY_USER_ROLE, "Admin")
+            .putString(KEY_DEPARTMENT, "Administration")
+            .putString(KEY_DESIGNATION, "Super Administrator")
+            .putString(KEY_QUALIFICATION, "System Executive")
+            .putString(KEY_FACULTY_ID, "ADMIN-01")
+            .putString(KEY_INSTITUTIONAL_EMAIL, institutionalEmail?.trim()?.lowercase())
+            .putString(KEY_USERNAME, username.trim().lowercase())
+            .putString(KEY_APP_ROLE, AppRole.ADMIN.roleKey)
+            .putBoolean(KEY_IS_VERIFIED, true)
+            .putString(KEY_USER_ID, userId)
+            .putBoolean(KEY_ONBOARDED, true)
+            .apply()
+
+        _userProfile.value = UserProfile(
+            name = cleanName,
+            programLevel = "Administration",
+            programName = "College Central Administration",
+            semester = null,
+            userRole = "Admin",
+            department = "Administration",
+            designation = "Super Administrator",
+            qualification = "System Executive",
+            facultyId = "ADMIN-01",
+            institutionalEmail = institutionalEmail?.trim()?.lowercase(),
+            username = username.trim().lowercase(),
+            isVerified = true,
+            userId = userId,
+            appRole = AppRole.ADMIN
+        )
+    }
+
     fun updateRole(context: Context, appRole: AppRole) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putString(KEY_APP_ROLE, appRole.roleKey).apply()
