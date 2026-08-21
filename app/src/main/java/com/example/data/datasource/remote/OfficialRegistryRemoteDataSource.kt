@@ -91,25 +91,21 @@ class OfficialRegistryRemoteDataSource {
     ): AuthResult<AdminOperationResultDto> {
         return try {
             if (id.isNullOrBlank()) {
-                val student = OfficialBsStudentDto(
-                    rollNumber = rollNumber.trim(),
-                    registrationNumber = registrationNumber.trim(),
-                    program = program.trim(),
-                    session = session.trim(),
-                    firstName = firstName?.trim(),
-                    lastName = lastName?.trim(),
-                    isActive = isActive,
-                    isClaimed = false
-                )
-                client.from("official_bs_students").insert(student)
+                val payload = buildJsonObject {
+                    put("roll_number", rollNumber.trim())
+                    put("registration_number", registrationNumber.trim())
+                    put("program", program.trim())
+                    put("session", session.trim())
+                    put("is_claimed", false)
+                    put("is_active", isActive)
+                }
+                client.from("official_bs_students").insert(payload)
             } else {
                 client.from("official_bs_students").update({
                     set("roll_number", rollNumber.trim())
                     set("registration_number", registrationNumber.trim())
                     set("program", program.trim())
                     set("session", session.trim())
-                    if (firstName != null) set("first_name", firstName.trim())
-                    if (lastName != null) set("last_name", lastName.trim())
                     set("is_active", isActive)
                 }) {
                     filter { eq("id", id) }
@@ -205,25 +201,21 @@ class OfficialRegistryRemoteDataSource {
     ): AuthResult<AdminOperationResultDto> {
         return try {
             if (id.isNullOrBlank()) {
-                val student = OfficialIntermediateStudentDto(
-                    rollNumber = rollNumber.trim(),
-                    registrationNumber = registrationNumber.trim(),
-                    program = program.trim(),
-                    session = session.trim(),
-                    firstName = firstName?.trim(),
-                    lastName = lastName?.trim(),
-                    isActive = isActive,
-                    isClaimed = false
-                )
-                client.from("official_intermediate_students").insert(student)
+                val payload = buildJsonObject {
+                    put("roll_number", rollNumber.trim())
+                    put("registration_number", registrationNumber.trim())
+                    put("program", program.trim())
+                    put("session", session.trim())
+                    put("is_claimed", false)
+                    put("is_active", isActive)
+                }
+                client.from("official_intermediate_students").insert(payload)
             } else {
                 client.from("official_intermediate_students").update({
                     set("roll_number", rollNumber.trim())
                     set("registration_number", registrationNumber.trim())
                     set("program", program.trim())
                     set("session", session.trim())
-                    if (firstName != null) set("first_name", firstName.trim())
-                    if (lastName != null) set("last_name", lastName.trim())
                     set("is_active", isActive)
                 }) {
                     filter { eq("id", id) }
@@ -306,7 +298,7 @@ class OfficialRegistryRemoteDataSource {
 
     /**
      * Provisions a teacher account securely by an Administrator.
-     * Inserts into official_faculty and faculty_profiles.
+     * Inserts into official_faculty.
      */
     suspend fun provisionTeacherAccount(
         facultyId: String,
@@ -321,18 +313,17 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val facultyRecord = OfficialFacultyRegistryDto(
-                facultyId = facultyId.trim(),
-                fullName = fullName.trim(),
-                department = department.trim(),
-                designation = designation.trim(),
-                qualification = qualification.trim(),
-                institutionalEmail = institutionalEmail?.trim(),
-                phoneNumber = phoneNumber?.trim(),
-                isActive = isActive,
-                isClaimed = true
-            )
-            client.from("official_faculty").insert(facultyRecord)
+            val payload = buildJsonObject {
+                put("faculty_id", facultyId.trim())
+                put("full_name", fullName.trim())
+                put("department", department.trim())
+                put("designation", designation.trim())
+                if (!institutionalEmail.isNullOrBlank()) put("institutional_email", institutionalEmail.trim())
+                if (!phoneNumber.isNullOrBlank()) put("phone_number", phoneNumber.trim())
+                put("is_claimed", false)
+                put("is_active", isActive)
+            }
+            client.from("official_faculty").insert(payload)
             AuthResult.Success(AdminOperationResultDto(success = true, message = "Teacher account provisioned successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error provisioning teacher account: ${e.message}", e)
@@ -358,31 +349,25 @@ class OfficialRegistryRemoteDataSource {
     ): AuthResult<AdminOperationResultDto> {
         return try {
             if (id.isNullOrBlank()) {
-                val faculty = OfficialFacultyRegistryDto(
-                    facultyId = facultyId.trim(),
-                    fullName = fullName.trim(),
-                    department = department.trim(),
-                    designation = designation.trim(),
-                    qualification = qualification.trim(),
-                    institutionalEmail = institutionalEmail?.trim(),
-                    phoneNumber = phoneNumber?.trim(),
-                    firstName = firstName?.trim(),
-                    lastName = lastName?.trim(),
-                    isActive = isActive,
-                    isClaimed = false
-                )
-                client.from("official_faculty").insert(faculty)
+                val payload = buildJsonObject {
+                    put("faculty_id", facultyId.trim())
+                    put("full_name", fullName.trim())
+                    put("department", department.trim())
+                    put("designation", designation.trim())
+                    if (!institutionalEmail.isNullOrBlank()) put("institutional_email", institutionalEmail.trim())
+                    if (!phoneNumber.isNullOrBlank()) put("phone_number", phoneNumber.trim())
+                    put("is_claimed", false)
+                    put("is_active", isActive)
+                }
+                client.from("official_faculty").insert(payload)
             } else {
                 client.from("official_faculty").update({
                     set("faculty_id", facultyId.trim())
                     set("full_name", fullName.trim())
                     set("department", department.trim())
                     set("designation", designation.trim())
-                    set("qualification", qualification.trim())
                     if (institutionalEmail != null) set("institutional_email", institutionalEmail.trim())
                     if (phoneNumber != null) set("phone_number", phoneNumber.trim())
-                    if (firstName != null) set("first_name", firstName.trim())
-                    if (lastName != null) set("last_name", lastName.trim())
                     set("is_active", isActive)
                 }) {
                     filter { eq("id", id) }

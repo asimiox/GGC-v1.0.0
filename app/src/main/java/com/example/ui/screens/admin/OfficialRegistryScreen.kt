@@ -1387,7 +1387,7 @@ private fun FacultyRegistryCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 DetailInfoItem(label = "Faculty ID", value = faculty.facultyId)
-                DetailInfoItem(label = "Qualification", value = faculty.qualification)
+                DetailInfoItem(label = "Qualification", value = faculty.qualification ?: "N/A")
                 DetailInfoItem(label = "Email", value = faculty.institutionalEmail ?: "N/A")
             }
 

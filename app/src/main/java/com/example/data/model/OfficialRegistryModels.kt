@@ -9,13 +9,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class OfficialFacultyRegistryDto(
     val id: String? = null,
-    @SerialName("faculty_id") val facultyId: String,
-    @SerialName("full_name") val fullName: String,
+    @SerialName("faculty_id") val facultyId: String = "",
+    @SerialName("full_name") val fullName: String = "",
     @SerialName("first_name") val firstName: String? = null,
     @SerialName("last_name") val lastName: String? = null,
-    val department: String,
-    val designation: String,
-    val qualification: String,
+    val department: String = "",
+    val designation: String = "",
+    val qualification: String? = null,
     @SerialName("institutional_email") val institutionalEmail: String? = null,
     @SerialName("phone_number") val phoneNumber: String? = null,
     @SerialName("is_claimed") val isClaimed: Boolean = false,

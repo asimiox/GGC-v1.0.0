@@ -12,6 +12,8 @@ import com.example.data.model.OfficialDocumentDto
 import com.example.data.model.ProspectusDto
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class CollegeContentRemoteDataSource {
     private val client = SupabaseClientProvider.client
@@ -132,15 +134,41 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveCourseOutline(outline: CourseOutlineDto): AuthResult<CourseOutlineDto> {
         return try {
-            val payload = outline.copy(createdBy = null)
-            if (payload.id.isNullOrBlank()) {
+            val payload = buildJsonObject {
+                put("course_id", outline.courseId)
+                if (!outline.programId.isNullOrBlank()) put("program_id", outline.programId)
+                if (!outline.departmentId.isNullOrBlank()) put("department_id", outline.departmentId)
+                put("title", outline.title.trim())
+                if (!outline.sessionYear.isNullOrBlank()) put("session_year", outline.sessionYear.trim())
+                put("semester_number", outline.semesterNumber)
+                if (!outline.outlineContent.isNullOrBlank()) put("outline_content", outline.outlineContent.trim())
+                if (!outline.storagePath.isNullOrBlank()) put("storage_path", outline.storagePath.trim())
+                if (!outline.fileName.isNullOrBlank()) put("file_name", outline.fileName.trim())
+                if (outline.fileSizeBytes != null) put("file_size_bytes", outline.fileSizeBytes)
+                put("mime_type", outline.mimeType)
+                put("is_published", outline.isPublished)
+            }
+            if (outline.id.isNullOrBlank()) {
                 val inserted = client.from("course_outlines").insert(payload) {
                     select()
                 }.decodeSingle<CourseOutlineDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("course_outlines").update(payload) {
-                    filter { eq("id", payload.id) }
+                val updated = client.from("course_outlines").update({
+                    set("course_id", outline.courseId)
+                    if (outline.programId != null) set("program_id", outline.programId)
+                    if (outline.departmentId != null) set("department_id", outline.departmentId)
+                    set("title", outline.title.trim())
+                    if (outline.sessionYear != null) set("session_year", outline.sessionYear.trim())
+                    set("semester_number", outline.semesterNumber)
+                    if (outline.outlineContent != null) set("outline_content", outline.outlineContent.trim())
+                    if (outline.storagePath != null) set("storage_path", outline.storagePath.trim())
+                    if (outline.fileName != null) set("file_name", outline.fileName.trim())
+                    if (outline.fileSizeBytes != null) set("file_size_bytes", outline.fileSizeBytes)
+                    set("mime_type", outline.mimeType)
+                    set("is_published", outline.isPublished)
+                }) {
+                    filter { eq("id", outline.id) }
                     select()
                 }.decodeSingle<CourseOutlineDto>()
                 AuthResult.Success(updated)
@@ -211,16 +239,39 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveAnnouncement(announcement: AnnouncementDto): AuthResult<AnnouncementDto> {
         return try {
-            // Nullify authorId so announcements_author_id_fkey foreign key constraint is never violated
-            val payload = announcement.copy(authorId = null)
-            if (payload.id.isNullOrBlank()) {
+            val payload = buildJsonObject {
+                put("title", announcement.title.trim())
+                put("content", announcement.content.trim())
+                put("category", announcement.category.trim())
+                if (!announcement.departmentId.isNullOrBlank()) put("department_id", announcement.departmentId)
+                put("author_name", announcement.authorName.trim())
+                put("is_pinned", announcement.isPinned)
+                put("is_published", announcement.isPublished)
+                if (!announcement.publishedAt.isNullOrBlank()) put("published_at", announcement.publishedAt)
+                if (!announcement.attachmentStoragePath.isNullOrBlank()) put("attachment_storage_path", announcement.attachmentStoragePath)
+                if (!announcement.attachmentName.isNullOrBlank()) put("attachment_name", announcement.attachmentName)
+                if (announcement.attachmentSizeBytes != null) put("attachment_size_bytes", announcement.attachmentSizeBytes)
+            }
+            if (announcement.id.isNullOrBlank()) {
                 val inserted = client.from("announcements").insert(payload) {
                     select()
                 }.decodeSingle<AnnouncementDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("announcements").update(payload) {
-                    filter { eq("id", payload.id) }
+                val updated = client.from("announcements").update({
+                    set("title", announcement.title.trim())
+                    set("content", announcement.content.trim())
+                    set("category", announcement.category.trim())
+                    if (announcement.departmentId != null) set("department_id", announcement.departmentId)
+                    set("author_name", announcement.authorName.trim())
+                    set("is_pinned", announcement.isPinned)
+                    set("is_published", announcement.isPublished)
+                    if (announcement.publishedAt != null) set("published_at", announcement.publishedAt)
+                    if (announcement.attachmentStoragePath != null) set("attachment_storage_path", announcement.attachmentStoragePath)
+                    if (announcement.attachmentName != null) set("attachment_name", announcement.attachmentName)
+                    if (announcement.attachmentSizeBytes != null) set("attachment_size_bytes", announcement.attachmentSizeBytes)
+                }) {
+                    filter { eq("id", announcement.id) }
                     select()
                 }.decodeSingle<AnnouncementDto>()
                 AuthResult.Success(updated)
@@ -290,15 +341,39 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveEvent(event: CollegeEventDto): AuthResult<CollegeEventDto> {
         return try {
-            val payload = event.copy(createdBy = null)
-            if (payload.id.isNullOrBlank()) {
+            val payload = buildJsonObject {
+                put("title", event.title.trim())
+                put("description", event.description.trim())
+                put("event_date", event.eventDate.trim())
+                if (!event.eventTime.isNullOrBlank()) put("event_time", event.eventTime.trim())
+                if (!event.venue.isNullOrBlank()) put("venue", event.venue.trim())
+                put("category", event.category.trim())
+                if (!event.departmentId.isNullOrBlank()) put("department_id", event.departmentId)
+                put("is_upcoming", event.isUpcoming)
+                put("is_published", event.isPublished)
+                if (!event.bannerStoragePath.isNullOrBlank()) put("banner_storage_path", event.bannerStoragePath)
+                if (!event.attachmentName.isNullOrBlank()) put("attachment_name", event.attachmentName)
+            }
+            if (event.id.isNullOrBlank()) {
                 val inserted = client.from("college_events").insert(payload) {
                     select()
                 }.decodeSingle<CollegeEventDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("college_events").update(payload) {
-                    filter { eq("id", payload.id) }
+                val updated = client.from("college_events").update({
+                    set("title", event.title.trim())
+                    set("description", event.description.trim())
+                    set("event_date", event.eventDate.trim())
+                    if (event.eventTime != null) set("event_time", event.eventTime.trim())
+                    if (event.venue != null) set("venue", event.venue.trim())
+                    set("category", event.category.trim())
+                    if (event.departmentId != null) set("department_id", event.departmentId)
+                    set("is_upcoming", event.isUpcoming)
+                    set("is_published", event.isPublished)
+                    if (event.bannerStoragePath != null) set("banner_storage_path", event.bannerStoragePath)
+                    if (event.attachmentName != null) set("attachment_name", event.attachmentName)
+                }) {
+                    filter { eq("id", event.id) }
                     select()
                 }.decodeSingle<CollegeEventDto>()
                 AuthResult.Success(updated)
@@ -372,15 +447,35 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveOfficialDocument(document: OfficialDocumentDto): AuthResult<OfficialDocumentDto> {
         return try {
-            val payload = document.copy(uploadedBy = null)
-            if (payload.id.isNullOrBlank()) {
+            val payload = buildJsonObject {
+                put("title", document.title.trim())
+                if (!document.description.isNullOrBlank()) put("description", document.description.trim())
+                put("document_type", document.documentType.trim())
+                if (!document.departmentId.isNullOrBlank()) put("department_id", document.departmentId.trim())
+                put("storage_path", document.storagePath.trim())
+                put("file_name", document.fileName.trim())
+                if (document.fileSizeBytes != null) put("file_size_bytes", document.fileSizeBytes)
+                put("mime_type", document.mimeType)
+                put("is_published", document.isPublished)
+            }
+            if (document.id.isNullOrBlank()) {
                 val inserted = client.from("official_documents").insert(payload) {
                     select()
                 }.decodeSingle<OfficialDocumentDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("official_documents").update(payload) {
-                    filter { eq("id", payload.id) }
+                val updated = client.from("official_documents").update({
+                    set("title", document.title.trim())
+                    if (document.description != null) set("description", document.description.trim())
+                    set("document_type", document.documentType.trim())
+                    if (document.departmentId != null) set("department_id", document.departmentId.trim())
+                    set("storage_path", document.storagePath.trim())
+                    set("file_name", document.fileName.trim())
+                    if (document.fileSizeBytes != null) set("file_size_bytes", document.fileSizeBytes)
+                    set("mime_type", document.mimeType)
+                    set("is_published", document.isPublished)
+                }) {
+                    filter { eq("id", document.id) }
                     select()
                 }.decodeSingle<OfficialDocumentDto>()
                 AuthResult.Success(updated)
@@ -458,15 +553,39 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveProspectus(prospectus: ProspectusDto): AuthResult<ProspectusDto> {
         return try {
-            val payload = prospectus.copy(uploadedBy = null)
-            if (payload.id.isNullOrBlank()) {
+            val payload = buildJsonObject {
+                put("title", prospectus.title.trim())
+                put("academic_session", prospectus.academicSession.trim())
+                if (!prospectus.programLevel.isNullOrBlank()) put("program_level", prospectus.programLevel.trim())
+                if (!prospectus.description.isNullOrBlank()) put("description", prospectus.description.trim())
+                put("storage_path", prospectus.storagePath.trim())
+                put("file_name", prospectus.fileName.trim())
+                if (prospectus.fileSizeBytes != null) put("file_size_bytes", prospectus.fileSizeBytes)
+                put("mime_type", prospectus.mimeType)
+                if (!prospectus.coverImageStoragePath.isNullOrBlank()) put("cover_image_storage_path", prospectus.coverImageStoragePath.trim())
+                put("is_current", prospectus.isCurrent)
+                put("is_published", prospectus.isPublished)
+            }
+            if (prospectus.id.isNullOrBlank()) {
                 val inserted = client.from("prospectus").insert(payload) {
                     select()
                 }.decodeSingle<ProspectusDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("prospectus").update(payload) {
-                    filter { eq("id", payload.id) }
+                val updated = client.from("prospectus").update({
+                    set("title", prospectus.title.trim())
+                    set("academic_session", prospectus.academicSession.trim())
+                    if (prospectus.programLevel != null) set("program_level", prospectus.programLevel.trim())
+                    if (prospectus.description != null) set("description", prospectus.description.trim())
+                    set("storage_path", prospectus.storagePath.trim())
+                    set("file_name", prospectus.fileName.trim())
+                    if (prospectus.fileSizeBytes != null) set("file_size_bytes", prospectus.fileSizeBytes)
+                    set("mime_type", prospectus.mimeType)
+                    if (prospectus.coverImageStoragePath != null) set("cover_image_storage_path", prospectus.coverImageStoragePath.trim())
+                    set("is_current", prospectus.isCurrent)
+                    set("is_published", prospectus.isPublished)
+                }) {
+                    filter { eq("id", prospectus.id) }
                     select()
                 }.decodeSingle<ProspectusDto>()
                 AuthResult.Success(updated)
