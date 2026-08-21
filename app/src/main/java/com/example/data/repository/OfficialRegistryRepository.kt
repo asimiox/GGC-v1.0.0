@@ -97,6 +97,24 @@ class OfficialRegistryRepository(
         return remoteDataSource.fetchOfficialFaculty(department, isClaimed, isActive, searchQuery, limit, offset)
     }
 
+    suspend fun provisionTeacherAccount(
+        facultyId: String,
+        fullName: String,
+        department: String,
+        designation: String,
+        qualification: String,
+        institutionalEmail: String? = null,
+        username: String,
+        temporaryPassword: String,
+        phoneNumber: String? = null,
+        isActive: Boolean = true
+    ): AuthResult<AdminOperationResultDto> {
+        return remoteDataSource.provisionTeacherAccount(
+            facultyId, fullName, department, designation, qualification,
+            institutionalEmail, username, temporaryPassword, phoneNumber, isActive
+        )
+    }
+
     suspend fun manageFacultyRecord(
         id: String? = null,
         facultyId: String,

@@ -764,22 +764,41 @@ fun OfficialRegistryScreen(
                 showAddFacultyDialog = false
                 editingFaculty = null
             },
-            onSave = { facultyId, fullName, dept, desig, qual, email, phone, active ->
-                viewModel.saveFaculty(
-                    id = editingFaculty?.id,
-                    facultyId = facultyId,
-                    fullName = fullName,
-                    department = dept,
-                    designation = desig,
-                    qualification = qual,
-                    institutionalEmail = email,
-                    phoneNumber = phone,
-                    isActive = active,
-                    onSuccess = {
-                        showAddFacultyDialog = false
-                        editingFaculty = null
-                    }
-                )
+            onSave = { facultyId, fullName, dept, desig, qual, email, username, tempPassword, phone, active ->
+                if (editingFaculty == null || (tempPassword != null && tempPassword.isNotBlank())) {
+                    viewModel.provisionTeacher(
+                        facultyId = facultyId,
+                        fullName = fullName,
+                        department = dept,
+                        designation = desig,
+                        qualification = qual,
+                        institutionalEmail = email,
+                        username = username ?: facultyId.lowercase(),
+                        temporaryPassword = tempPassword ?: "teacher123",
+                        phoneNumber = phone,
+                        isActive = active,
+                        onSuccess = {
+                            showAddFacultyDialog = false
+                            editingFaculty = null
+                        }
+                    )
+                } else {
+                    viewModel.saveFaculty(
+                        id = editingFaculty?.id,
+                        facultyId = facultyId,
+                        fullName = fullName,
+                        department = dept,
+                        designation = desig,
+                        qualification = qual,
+                        institutionalEmail = email,
+                        phoneNumber = phone,
+                        isActive = active,
+                        onSuccess = {
+                            showAddFacultyDialog = false
+                            editingFaculty = null
+                        }
+                    )
+                }
             }
         )
     }
@@ -2136,7 +2155,7 @@ fun FacultyFormDialog(
     initial: OfficialFacultyRegistryDto? = null,
     isSaving: Boolean,
     onDismiss: () -> Unit,
-    onSave: (facultyId: String, fullName: String, dept: String, desig: String, qual: String, email: String?, phone: String?, active: Boolean) -> Unit
+    onSave: (facultyId: String, fullName: String, dept: String, desig: String, qual: String, email: String?, username: String?, tempPassword: String?, phone: String?, active: Boolean) -> Unit
 ) {
     var facultyId by remember { mutableStateOf(initial?.facultyId ?: "") }
     var fullName by remember { mutableStateOf(initial?.fullName ?: "") }
@@ -2144,6 +2163,8 @@ fun FacultyFormDialog(
     var designation by remember { mutableStateOf(initial?.designation ?: DESIGNATION_OPTIONS[3]) }
     var qualification by remember { mutableStateOf(initial?.qualification ?: "M.Phil.") }
     var institutionalEmail by remember { mutableStateOf(initial?.institutionalEmail ?: "") }
+    var username by remember { mutableStateOf(initial?.facultyId?.lowercase() ?: "") }
+    var temporaryPassword by remember { mutableStateOf(if (initial == null) "teacher123" else "") }
     var phoneNumber by remember { mutableStateOf(initial?.phoneNumber ?: "") }
     var isActive by remember { mutableStateOf(initial?.isActive ?: true) }
 
@@ -2153,6 +2174,8 @@ fun FacultyFormDialog(
     var facultyIdError by remember { mutableStateOf<String?>(null) }
     var nameError by remember { mutableStateOf<String?>(null) }
     var qualError by remember { mutableStateOf<String?>(null) }
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var pwdError by remember { mutableStateOf<String?>(null) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -2174,7 +2197,7 @@ fun FacultyFormDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (initial == null) "Add Faculty Member" else "Edit Faculty Member",
+                        text = if (initial == null) "Provision Teacher Account" else "Edit Faculty Member",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy
@@ -2192,6 +2215,9 @@ fun FacultyFormDialog(
                     onValueChange = {
                         facultyId = it.uppercase()
                         facultyIdError = null
+                        if (username.isBlank() || username == facultyId.lowercase().dropLast(1)) {
+                            username = it.lowercase()
+                        }
                     },
                     label = { Text("Faculty ID * (e.g. FAC-CS-001)") },
                     isError = facultyIdError != null,
@@ -2313,6 +2339,62 @@ fun FacultyFormDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                // Login Credentials (Username & Password) Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Teacher Login Credentials",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = {
+                                username = it.lowercase().trim()
+                                usernameError = null
+                            },
+                            label = { Text("Assigned Username *") },
+                            placeholder = { Text("e.g. ahmad_cs") },
+                            isError = usernameError != null,
+                            supportingText = usernameError?.let { { Text(it, color = BrandError) } },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("form_faculty_username_input"),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextField(
+                            value = temporaryPassword,
+                            onValueChange = {
+                                temporaryPassword = it
+                                pwdError = null
+                            },
+                            label = { Text(if (initial == null) "Initial / Temporary Password *" else "Reset Password (leave empty to keep)") },
+                            placeholder = { Text("Min 6 chars (e.g. teacher123)") },
+                            isError = pwdError != null,
+                            supportingText = pwdError?.let { { Text(it, color = BrandError) } },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("form_faculty_password_input"),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
                 // Institutional Email
                 OutlinedTextField(
                     value = institutionalEmail,
@@ -2351,7 +2433,7 @@ fun FacultyFormDialog(
                 ) {
                     Column {
                         Text("Record Active", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandNavy)
-                        Text("Allow this record for faculty verification", fontSize = 11.sp, color = BrandTextMuted)
+                        Text("Allow this teacher to sign in to the portal", fontSize = 11.sp, color = BrandTextMuted)
                     }
                     Switch(
                         checked = isActive,
@@ -2381,6 +2463,11 @@ fun FacultyFormDialog(
                             qualError = "Qualification is required"
                             hasError = true
                         }
+                        val finalUsername = username.ifBlank { facultyId.lowercase() }
+                        if (initial == null && temporaryPassword.isNotBlank() && temporaryPassword.length < 6) {
+                            pwdError = "Password must be at least 6 characters"
+                            hasError = true
+                        }
                         if (!hasError) {
                             onSave(
                                 facultyId.trim().uppercase(),
@@ -2389,6 +2476,8 @@ fun FacultyFormDialog(
                                 designation.trim(),
                                 qualification.trim(),
                                 institutionalEmail.trim().lowercase().ifBlank { null },
+                                finalUsername.trim(),
+                                temporaryPassword.trim().ifBlank { null },
                                 phoneNumber.trim().ifBlank { null },
                                 isActive
                             )
@@ -2405,7 +2494,7 @@ fun FacultyFormDialog(
                     if (isSaving) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
                     } else {
-                        Text(if (initial == null) "Save Faculty Member" else "Update Faculty Record", fontWeight = FontWeight.Bold)
+                        Text(if (initial == null) "Provision Teacher Account" else "Update Faculty Record", fontWeight = FontWeight.Bold)
                     }
                 }
             }

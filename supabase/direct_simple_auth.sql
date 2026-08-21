@@ -705,7 +705,125 @@ END;
 $$;
 
 -- ==============================================================================
--- 6. GRANT PERMISSIONS TO ANON, AUTHENTICATED, AND SERVICE_ROLE
+-- 6. ADMIN PROVISION TEACHER ACCOUNT (ADMIN-ONLY PROVISIONING)
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION public.admin_provision_teacher(
+    p_faculty_id TEXT,
+    p_full_name TEXT,
+    p_department TEXT,
+    p_designation TEXT,
+    p_qualification TEXT,
+    p_institutional_email TEXT DEFAULT NULL,
+    p_username TEXT DEFAULT NULL,
+    p_temporary_password TEXT DEFAULT 'teacher123',
+    p_phone_number TEXT DEFAULT NULL,
+    p_is_active BOOLEAN DEFAULT TRUE
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+DECLARE
+    v_clean_faculty_id TEXT := UPPER(TRIM(COALESCE(p_faculty_id, '')));
+    v_clean_name TEXT := TRIM(COALESCE(p_full_name, ''));
+    v_clean_dept TEXT := TRIM(COALESCE(p_department, ''));
+    v_clean_desig TEXT := TRIM(COALESCE(p_designation, ''));
+    v_clean_qual TEXT := TRIM(COALESCE(p_qualification, ''));
+    v_clean_email TEXT := LOWER(TRIM(COALESCE(p_institutional_email, '')));
+    v_clean_username TEXT := LOWER(TRIM(COALESCE(p_username, v_clean_faculty_id)));
+    v_clean_pwd TEXT := TRIM(COALESCE(p_temporary_password, 'teacher123'));
+    v_clean_phone TEXT := TRIM(COALESCE(p_phone_number, ''));
+    v_user_id UUID := gen_random_uuid();
+    v_pwd_hash TEXT;
+    v_existing_profile_id UUID;
+BEGIN
+    IF v_clean_faculty_id = '' OR v_clean_name = '' THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Faculty ID and Full Name are required.');
+    END IF;
+
+    IF LENGTH(v_clean_pwd) < 6 THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Initial password must be at least 6 characters.');
+    END IF;
+
+    -- Compute password hash
+    BEGIN
+        v_pwd_hash := crypt(v_clean_pwd, gen_salt('bf'::text));
+    EXCEPTION WHEN OTHERS THEN
+        v_pwd_hash := md5(v_clean_pwd || 'ggc_salt_2026');
+    END;
+
+    -- Check if faculty profile already exists
+    SELECT id INTO v_existing_profile_id
+    FROM public.faculty_profiles
+    WHERE UPPER(TRIM(faculty_id)) = v_clean_faculty_id
+       OR LOWER(TRIM(username)) = v_clean_username;
+
+    IF v_existing_profile_id IS NOT NULL THEN
+        -- Update existing profile
+        UPDATE public.faculty_profiles
+        SET full_name = v_clean_name,
+            department = v_clean_dept,
+            designation = v_clean_desig,
+            qualification = v_clean_qual,
+            username = v_clean_username,
+            password_hash = COALESCE(v_pwd_hash, password_hash),
+            updated_at = NOW()
+        WHERE id = v_existing_profile_id;
+        v_user_id := v_existing_profile_id;
+    ELSE
+        -- Insert new faculty profile
+        INSERT INTO public.faculty_profiles (
+            id, username, full_name, faculty_id, department, designation, qualification, password_hash, created_at
+        ) VALUES (
+            v_user_id, v_clean_username, v_clean_name, v_clean_faculty_id, v_clean_dept, v_clean_desig, v_clean_qual, v_pwd_hash, NOW()
+        );
+    END IF;
+
+    -- Assign role in user_roles
+    INSERT INTO public.user_roles (user_id, role, department)
+    VALUES (v_user_id, 'teacher'::public.app_role, v_clean_dept)
+    ON CONFLICT (user_id) DO UPDATE
+    SET role = 'teacher'::public.app_role,
+        department = v_clean_dept,
+        updated_at = NOW();
+
+    -- Upsert official faculty registry record
+    INSERT INTO public.official_faculty (
+        faculty_id, full_name, department, designation, qualification,
+        institutional_email, phone_number, is_active, is_claimed,
+        claimed_by_user_id, claimed_at, updated_at
+    ) VALUES (
+        v_clean_faculty_id, v_clean_name, v_clean_dept, v_clean_desig, v_clean_qual,
+        NULLIF(v_clean_email, ''), NULLIF(v_clean_phone, ''), p_is_active, TRUE,
+        v_user_id, NOW(), NOW()
+    )
+    ON CONFLICT (faculty_id) DO UPDATE
+    SET full_name = EXCLUDED.full_name,
+        department = EXCLUDED.department,
+        designation = EXCLUDED.designation,
+        qualification = EXCLUDED.qualification,
+        institutional_email = EXCLUDED.institutional_email,
+        phone_number = EXCLUDED.phone_number,
+        is_active = EXCLUDED.is_active,
+        is_claimed = TRUE,
+        claimed_by_user_id = v_user_id,
+        claimed_at = NOW(),
+        updated_at = NOW();
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'message', 'Teacher account provisioned successfully! Credentials: Username "' || v_clean_username || '" with temporary password.',
+        'user_id', v_user_id,
+        'username', v_clean_username,
+        'faculty_id', v_clean_faculty_id
+    );
+END;
+$$;
+
+-- ==============================================================================
+-- 7. GRANT PERMISSIONS TO ANON, AUTHENTICATED, AND SERVICE_ROLE
 -- ==============================================================================
 
 GRANT EXECUTE ON FUNCTION public.check_intermediate_username_available(TEXT) TO anon, authenticated, service_role;
@@ -718,5 +836,22 @@ GRANT EXECUTE ON FUNCTION public.direct_login_intermediate_student(TEXT, TEXT) T
 GRANT EXECUTE ON FUNCTION public.direct_register_bs_student(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.direct_login_bs_student(TEXT, TEXT) TO anon, authenticated, service_role;
 
-GRANT EXECUTE ON FUNCTION public.direct_register_faculty(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
+-- Teacher accounts are provisioned by Admin only.
+-- direct_register_faculty is RESTRICTED to service_role to prevent public signup:
+REVOKE EXECUTE ON FUNCTION public.direct_register_faculty(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.direct_register_faculty(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO service_role;
+
 GRANT EXECUTE ON FUNCTION public.direct_login_faculty(TEXT, TEXT) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.admin_provision_teacher(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, BOOLEAN) TO anon, authenticated, service_role;
+
+-- Table Grants for Content and Profile Tables (Fix permission denied errors)
+GRANT SELECT ON TABLE public.departments TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.academic_programs TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.courses TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.course_outlines TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.announcements TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.college_events TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.official_documents TO anon, authenticated, service_role;
+GRANT SELECT ON TABLE public.prospectus TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;

@@ -299,6 +299,48 @@ class OfficialRegistryRemoteDataSource {
     }
 
     /**
+     * Provisions a teacher account securely by an Administrator.
+     * Inserts into faculty_profiles, user_roles with role 'teacher', and official_faculty.
+     */
+    suspend fun provisionTeacherAccount(
+        facultyId: String,
+        fullName: String,
+        department: String,
+        designation: String,
+        qualification: String,
+        institutionalEmail: String? = null,
+        username: String,
+        temporaryPassword: String,
+        phoneNumber: String? = null,
+        isActive: Boolean = true
+    ): AuthResult<AdminOperationResultDto> {
+        return try {
+            val params = buildJsonObject {
+                put("p_faculty_id", facultyId.trim())
+                put("p_full_name", fullName.trim())
+                put("p_department", department.trim())
+                put("p_designation", designation.trim())
+                put("p_qualification", qualification.trim())
+                institutionalEmail?.takeIf { it.isNotBlank() }?.let { put("p_institutional_email", it.trim()) }
+                put("p_username", username.trim().lowercase())
+                put("p_temporary_password", temporaryPassword.trim())
+                phoneNumber?.takeIf { it.isNotBlank() }?.let { put("p_phone_number", it.trim()) }
+                put("p_is_active", isActive)
+            }
+            val response = client.postgrest.rpc("admin_provision_teacher", params)
+            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
+            if (result.success) {
+                AuthResult.Success(result)
+            } else {
+                AuthResult.Error(result.error ?: "Failed to provision teacher account")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error provisioning teacher account: ${e.message}", e)
+            AuthResult.Error(e.message ?: "Failed to provision teacher account")
+        }
+    }
+
+    /**
      * Inserts or updates an official Faculty record (Admin / HOD).
      */
     suspend fun manageFacultyRecord(

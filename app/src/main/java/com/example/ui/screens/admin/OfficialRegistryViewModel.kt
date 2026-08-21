@@ -268,6 +268,43 @@ class OfficialRegistryViewModel(
     // FACULTY ACTIONS
     // =========================================================================
 
+    fun provisionTeacher(
+        facultyId: String,
+        fullName: String,
+        department: String,
+        designation: String,
+        qualification: String,
+        institutionalEmail: String? = null,
+        username: String,
+        temporaryPassword: String,
+        phoneNumber: String? = null,
+        isActive: Boolean = true,
+        onSuccess: (() -> Unit)? = null
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true, errorMessage = null, successMessage = null) }
+            val result = repository.provisionTeacherAccount(
+                facultyId, fullName, department, designation, qualification,
+                institutionalEmail, username, temporaryPassword, phoneNumber, isActive
+            )
+            when (result) {
+                is AuthResult.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            successMessage = result.data.message ?: "Teacher account provisioned successfully."
+                        )
+                    }
+                    loadFaculty()
+                    onSuccess?.invoke()
+                }
+                is AuthResult.Error -> {
+                    _uiState.update { it.copy(isSaving = false, errorMessage = result.message) }
+                }
+            }
+        }
+    }
+
     fun saveFaculty(
         id: String? = null,
         facultyId: String,
