@@ -73,7 +73,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.UserProfileManager
+import com.example.ui.screens.admin.OfficialRegistryScreen
+import com.example.ui.screens.admin.OfficialRegistryTab
 import com.example.ui.screens.admin.content.ContentManagementScreen
+import com.example.ui.screens.admin.content.ContentSectionTab
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandNavyDark = Color(0xFF030D2B)
@@ -348,11 +351,35 @@ fun AdminDashboardScreen(
                         onResetClaim = { type, id, reason -> viewModel.resetClaimedRecord(type, id, reason) },
                         onToggleActive = { type, id, active -> viewModel.toggleRecordActive(type, id, active) }
                     )
-                    AdminNavSection.STUDENTS, AdminNavSection.FACULTY -> OfficialRegistryScreen(
-                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) }
+                    AdminNavSection.STUDENTS -> OfficialRegistryScreen(
+                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                        initialTab = OfficialRegistryTab.BS_STUDENTS,
+                        showTopBar = false
                     )
-                    AdminNavSection.ACADEMICS, AdminNavSection.CONTENT, AdminNavSection.EVENTS, AdminNavSection.DOCUMENTS -> ContentManagementScreen(
-                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) }
+                    AdminNavSection.FACULTY -> OfficialRegistryScreen(
+                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                        initialTab = OfficialRegistryTab.FACULTY,
+                        showTopBar = false
+                    )
+                    AdminNavSection.ACADEMICS -> ContentManagementScreen(
+                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                        initialTab = ContentSectionTab.COURSE_OUTLINES,
+                        showTopBar = false
+                    )
+                    AdminNavSection.CONTENT -> ContentManagementScreen(
+                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                        initialTab = ContentSectionTab.ANNOUNCEMENTS,
+                        showTopBar = false
+                    )
+                    AdminNavSection.EVENTS -> ContentManagementScreen(
+                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                        initialTab = ContentSectionTab.EVENTS,
+                        showTopBar = false
+                    )
+                    AdminNavSection.DOCUMENTS -> ContentManagementScreen(
+                        onBack = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                        initialTab = ContentSectionTab.DOCUMENTS,
+                        showTopBar = false
                     )
                     AdminNavSection.NOTIFICATIONS -> AdminNotificationManagerView(
                         uiState = uiState,

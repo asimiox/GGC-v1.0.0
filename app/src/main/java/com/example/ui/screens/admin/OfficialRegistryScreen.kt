@@ -201,6 +201,8 @@ val INTER_SESSION_OPTIONS = listOf(
 @Composable
 fun OfficialRegistryScreen(
     onBack: () -> Unit,
+    initialTab: OfficialRegistryTab = OfficialRegistryTab.BS_STUDENTS,
+    showTopBar: Boolean = true,
     viewModel: OfficialRegistryViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -230,8 +232,9 @@ fun OfficialRegistryScreen(
         mutableStateOf<Pair<String, String>?>(null) // type, id
     }
 
-    // Load initial data on mount
-    LaunchedEffect(Unit) {
+    // Initial Tab trigger & load data
+    LaunchedEffect(initialTab) {
+        viewModel.selectTab(initialTab)
         viewModel.loadCurrentTab()
     }
 
@@ -259,51 +262,53 @@ fun OfficialRegistryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "Registry Management",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandNavy
-                        )
-                        Text(
-                            text = if (userProfile.isAdmin) "Official System Admin Portal" else "Departmental Registry (${userProfile.department ?: "HOD"})",
-                            fontSize = 11.sp,
-                            color = BrandTextMuted
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("admin_registry_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = BrandNavy
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { viewModel.loadCurrentTab() },
-                        modifier = Modifier.testTag("admin_registry_refresh_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh Data",
-                            tint = BrandNavy
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = BrandNavy
+            if (showTopBar) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = "Registry Management",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandNavy
+                            )
+                            Text(
+                                text = if (userProfile.isAdmin) "Official System Admin Portal" else "Departmental Registry (${userProfile.department ?: "HOD"})",
+                                fontSize = 11.sp,
+                                color = BrandTextMuted
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.testTag("admin_registry_back_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = BrandNavy
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { viewModel.loadCurrentTab() },
+                            modifier = Modifier.testTag("admin_registry_refresh_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh Data",
+                                tint = BrandNavy
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = BrandNavy
+                    )
                 )
-            )
+            }
         },
         floatingActionButton = {
             if (isAuthorized) {

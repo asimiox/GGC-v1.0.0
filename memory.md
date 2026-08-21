@@ -35,10 +35,11 @@ Phase 2 — Academic (COMPLETE & VERIFIED)
 
 ## UI Identity
 Primary Visual Reference: https://www.ggcmbdin.edu.pk/
-- Primary Color: GGC Green `#005A2B`
-- Secondary Color: GGC Navy `#0A2E5C`
-- Accent Color: GGC Gold `#B8860B`
-- Background: Warm Light Neutral `#F8FAFC`
+- Primary Color: GGC Deep Navy `#061B52`
+- Primary Dark: GGC Navy Dark `#030D2B`
+- Secondary / Surface: Crisp White `#FFFFFF` / Soft Light `#F6F6F6`
+- Accent / Sub-Highlights: GGC Official Gold `#C59B27`
+- Theme System: Strict Navy + White professional academic theme with high contrast, pure vector icons, and Bento-grid layouts (Zero emojis).
 - Official College Crest Emblem & Campus Hero Banner integrated.
 
 ## Completed Work

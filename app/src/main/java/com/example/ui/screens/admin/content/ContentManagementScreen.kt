@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Refresh
@@ -124,6 +125,7 @@ private val BrandGoldContainer = Color(0xFFFFF8E1)
 fun ContentManagementScreen(
     onBack: () -> Unit,
     initialTab: ContentSectionTab = ContentSectionTab.ANNOUNCEMENTS,
+    showTopBar: Boolean = true,
     viewModel: ContentManagementViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -167,54 +169,56 @@ fun ContentManagementScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "Content Portal",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            text = when {
-                                userProfile.isAdmin -> "College Administrator • Full Access"
-                                userProfile.isHod -> "HOD Portal • ${userProfile.department ?: "Department"} Scope"
-                                userProfile.isFaculty -> "Faculty Portal • ${userProfile.department ?: "Academic Management"}"
-                                else -> "Unauthorized"
-                            },
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = BrandGold
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("btn_content_back")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { viewModel.loadCurrentTab() },
-                        modifier = Modifier.testTag("btn_content_refresh")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh Content",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandNavyDark)
-            )
+            if (showTopBar) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = "Content Portal",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Text(
+                                text = when {
+                                    userProfile.isAdmin -> "College Administrator • Full Access"
+                                    userProfile.isHod -> "HOD Portal • ${userProfile.department ?: "Department"} Scope"
+                                    userProfile.isFaculty -> "Faculty Portal • ${userProfile.department ?: "Academic Management"}"
+                                    else -> "Unauthorized"
+                                },
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = BrandGold
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.testTag("btn_content_back")
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { viewModel.loadCurrentTab() },
+                            modifier = Modifier.testTag("btn_content_refresh")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh Content",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandNavyDark)
+                )
+            }
         },
         floatingActionButton = {
             if (isAuthorized) {
@@ -970,20 +974,39 @@ private fun EventsListSection(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "📅 ${item.eventDate} ${item.eventTime ?: ""}".trim(),
-                            fontSize = 12.sp,
-                            color = BrandNavy,
-                            fontWeight = FontWeight.Medium
-                        )
-                        item.venue?.let {
-                            Text(
-                                text = "📍 $it",
-                                fontSize = 12.sp,
-                                color = BrandTextMuted
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Event,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(14.dp)
                             )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${item.eventDate} ${item.eventTime ?: ""}".trim(),
+                                fontSize = 12.sp,
+                                color = BrandNavy,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        item.venue?.let {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = BrandTextMuted,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = it,
+                                    fontSize = 12.sp,
+                                    color = BrandTextMuted
+                                )
+                            }
                         }
                     }
 
@@ -1091,12 +1114,21 @@ private fun DocumentsListSection(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "📎 ${item.fileName}",
-                            fontSize = 12.sp,
-                            color = BrandNavy,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AttachFile,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = item.fileName,
+                                fontSize = 12.sp,
+                                color = BrandNavy,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
 
                         item.academicSession?.let {
                             Text(
@@ -1374,12 +1406,21 @@ private fun ProspectusListSection(
                             onClick = { onToggleCurrent(item) },
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                         ) {
-                            Text(
-                                text = if (item.isCurrent) "★ Active Prospectus" else "☆ Make Current",
-                                fontSize = 12.sp,
-                                color = if (item.isCurrent) BrandGold else BrandTextMuted,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = if (item.isCurrent) BrandGold else BrandTextMuted.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (item.isCurrent) "Active Prospectus" else "Make Current",
+                                    fontSize = 12.sp,
+                                    color = if (item.isCurrent) BrandGold else BrandTextMuted,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
 
                         Row {

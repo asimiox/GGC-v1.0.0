@@ -519,8 +519,15 @@ fun IntermediateAuthContent(
                         .padding(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = BrandNavy,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "🔒 Student Account Registration: Ensure your Roll Number, Registration Number, and Username are unique. You can log in immediately after creating your account.",
+                        text = "Student Account Registration: Ensure your Roll Number, Registration Number, and Username are unique. You can log in immediately after creating your account.",
                         fontSize = 11.sp,
                         color = Color(0xFF4A5568),
                         lineHeight = 15.sp
