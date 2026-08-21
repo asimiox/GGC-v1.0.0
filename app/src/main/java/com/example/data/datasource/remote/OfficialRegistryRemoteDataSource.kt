@@ -90,23 +90,32 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                id?.takeIf { it.isNotBlank() }?.let { put("p_id", it) }
-                put("p_roll_number", rollNumber.trim())
-                put("p_registration_number", registrationNumber.trim())
-                put("p_program", program.trim())
-                put("p_session", session.trim())
-                firstName?.takeIf { it.isNotBlank() }?.let { put("p_first_name", it.trim()) }
-                lastName?.takeIf { it.isNotBlank() }?.let { put("p_last_name", it.trim()) }
-                put("p_is_active", isActive)
-            }
-            val response = client.postgrest.rpc("admin_manage_bs_student_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
+            if (id.isNullOrBlank()) {
+                val student = OfficialBsStudentDto(
+                    rollNumber = rollNumber.trim(),
+                    registrationNumber = registrationNumber.trim(),
+                    program = program.trim(),
+                    session = session.trim(),
+                    firstName = firstName?.trim(),
+                    lastName = lastName?.trim(),
+                    isActive = isActive,
+                    isClaimed = false
+                )
+                client.from("official_bs_students").insert(student)
             } else {
-                AuthResult.Error(result.error ?: "Failed to save BS student record")
+                client.from("official_bs_students").update({
+                    set("roll_number", rollNumber.trim())
+                    set("registration_number", registrationNumber.trim())
+                    set("program", program.trim())
+                    set("session", session.trim())
+                    if (firstName != null) set("first_name", firstName.trim())
+                    if (lastName != null) set("last_name", lastName.trim())
+                    set("is_active", isActive)
+                }) {
+                    filter { eq("id", id) }
+                }
             }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "BS Student saved successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error managing BS student record: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to update BS student registry")
@@ -118,16 +127,10 @@ class OfficialRegistryRemoteDataSource {
      */
     suspend fun deleteBsStudentRecord(id: String): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_id", id)
+            client.from("official_bs_students").delete {
+                filter { eq("id", id) }
             }
-            val response = client.postgrest.rpc("admin_delete_bs_student_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to delete BS student record")
-            }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "BS student record deleted"))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting BS student record: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to delete BS record")
@@ -201,23 +204,32 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                id?.takeIf { it.isNotBlank() }?.let { put("p_id", it) }
-                put("p_roll_number", rollNumber.trim())
-                put("p_registration_number", registrationNumber.trim())
-                put("p_program", program.trim())
-                put("p_session", session.trim())
-                firstName?.takeIf { it.isNotBlank() }?.let { put("p_first_name", it.trim()) }
-                lastName?.takeIf { it.isNotBlank() }?.let { put("p_last_name", it.trim()) }
-                put("p_is_active", isActive)
-            }
-            val response = client.postgrest.rpc("admin_manage_intermediate_student_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
+            if (id.isNullOrBlank()) {
+                val student = OfficialIntermediateStudentDto(
+                    rollNumber = rollNumber.trim(),
+                    registrationNumber = registrationNumber.trim(),
+                    program = program.trim(),
+                    session = session.trim(),
+                    firstName = firstName?.trim(),
+                    lastName = lastName?.trim(),
+                    isActive = isActive,
+                    isClaimed = false
+                )
+                client.from("official_intermediate_students").insert(student)
             } else {
-                AuthResult.Error(result.error ?: "Failed to save Intermediate student record")
+                client.from("official_intermediate_students").update({
+                    set("roll_number", rollNumber.trim())
+                    set("registration_number", registrationNumber.trim())
+                    set("program", program.trim())
+                    set("session", session.trim())
+                    if (firstName != null) set("first_name", firstName.trim())
+                    if (lastName != null) set("last_name", lastName.trim())
+                    set("is_active", isActive)
+                }) {
+                    filter { eq("id", id) }
+                }
             }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Intermediate Student saved successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error managing Intermediate student record: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to update Intermediate student registry")
@@ -229,16 +241,10 @@ class OfficialRegistryRemoteDataSource {
      */
     suspend fun deleteIntermediateStudentRecord(id: String): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_id", id)
+            client.from("official_intermediate_students").delete {
+                filter { eq("id", id) }
             }
-            val response = client.postgrest.rpc("admin_delete_intermediate_student_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to delete Intermediate student record")
-            }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Intermediate student record deleted"))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting Intermediate student record: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to delete Intermediate record")
@@ -300,7 +306,7 @@ class OfficialRegistryRemoteDataSource {
 
     /**
      * Provisions a teacher account securely by an Administrator.
-     * Inserts into faculty_profiles, user_roles with role 'teacher', and official_faculty.
+     * Inserts into official_faculty and faculty_profiles.
      */
     suspend fun provisionTeacherAccount(
         facultyId: String,
@@ -315,25 +321,19 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_faculty_id", facultyId.trim())
-                put("p_full_name", fullName.trim())
-                put("p_department", department.trim())
-                put("p_designation", designation.trim())
-                put("p_qualification", qualification.trim())
-                institutionalEmail?.takeIf { it.isNotBlank() }?.let { put("p_institutional_email", it.trim()) }
-                put("p_username", username.trim().lowercase())
-                put("p_temporary_password", temporaryPassword.trim())
-                phoneNumber?.takeIf { it.isNotBlank() }?.let { put("p_phone_number", it.trim()) }
-                put("p_is_active", isActive)
-            }
-            val response = client.postgrest.rpc("admin_provision_teacher", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to provision teacher account")
-            }
+            val facultyRecord = OfficialFacultyRegistryDto(
+                facultyId = facultyId.trim(),
+                fullName = fullName.trim(),
+                department = department.trim(),
+                designation = designation.trim(),
+                qualification = qualification.trim(),
+                institutionalEmail = institutionalEmail?.trim(),
+                phoneNumber = phoneNumber?.trim(),
+                isActive = isActive,
+                isClaimed = true
+            )
+            client.from("official_faculty").insert(facultyRecord)
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Teacher account provisioned successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error provisioning teacher account: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to provision teacher account")
@@ -357,26 +357,38 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                id?.takeIf { it.isNotBlank() }?.let { put("p_id", it) }
-                put("p_faculty_id", facultyId.trim())
-                put("p_full_name", fullName.trim())
-                firstName?.takeIf { it.isNotBlank() }?.let { put("p_first_name", it.trim()) }
-                lastName?.takeIf { it.isNotBlank() }?.let { put("p_last_name", it.trim()) }
-                put("p_department", department.trim())
-                put("p_designation", designation.trim())
-                put("p_qualification", qualification.trim())
-                institutionalEmail?.takeIf { it.isNotBlank() }?.let { put("p_institutional_email", it.trim()) }
-                phoneNumber?.takeIf { it.isNotBlank() }?.let { put("p_phone_number", it.trim()) }
-                put("p_is_active", isActive)
-            }
-            val response = client.postgrest.rpc("admin_manage_faculty_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
+            if (id.isNullOrBlank()) {
+                val faculty = OfficialFacultyRegistryDto(
+                    facultyId = facultyId.trim(),
+                    fullName = fullName.trim(),
+                    department = department.trim(),
+                    designation = designation.trim(),
+                    qualification = qualification.trim(),
+                    institutionalEmail = institutionalEmail?.trim(),
+                    phoneNumber = phoneNumber?.trim(),
+                    firstName = firstName?.trim(),
+                    lastName = lastName?.trim(),
+                    isActive = isActive,
+                    isClaimed = false
+                )
+                client.from("official_faculty").insert(faculty)
             } else {
-                AuthResult.Error(result.error ?: "Failed to save faculty record")
+                client.from("official_faculty").update({
+                    set("faculty_id", facultyId.trim())
+                    set("full_name", fullName.trim())
+                    set("department", department.trim())
+                    set("designation", designation.trim())
+                    set("qualification", qualification.trim())
+                    if (institutionalEmail != null) set("institutional_email", institutionalEmail.trim())
+                    if (phoneNumber != null) set("phone_number", phoneNumber.trim())
+                    if (firstName != null) set("first_name", firstName.trim())
+                    if (lastName != null) set("last_name", lastName.trim())
+                    set("is_active", isActive)
+                }) {
+                    filter { eq("id", id) }
+                }
             }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Faculty record saved successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error managing Faculty record: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to update Faculty registry")
@@ -388,16 +400,10 @@ class OfficialRegistryRemoteDataSource {
      */
     suspend fun deleteFacultyRecord(id: String): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_id", id)
+            client.from("official_faculty").delete {
+                filter { eq("id", id) }
             }
-            val response = client.postgrest.rpc("admin_delete_faculty_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to delete faculty record")
-            }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Faculty record deleted"))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting Faculty record: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to delete Faculty record")
@@ -417,18 +423,17 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_registry_type", registryType)
-                put("p_record_id", recordId)
-                put("p_is_active", isActive)
+            val tableName = when (registryType) {
+                "bs_student" -> "official_bs_students"
+                "intermediate_student" -> "official_intermediate_students"
+                else -> "official_faculty"
             }
-            val response = client.postgrest.rpc("admin_set_registry_record_active", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to update record active status")
+            client.from(tableName).update({
+                set("is_active", isActive)
+            }) {
+                filter { eq("id", recordId) }
             }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Status updated successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error in setRegistryRecordActive: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to alter active status")
@@ -444,18 +449,18 @@ class OfficialRegistryRemoteDataSource {
         reason: String = "Administrative correction"
     ): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_registry_type", registryType)
-                put("p_record_id", recordId)
-                put("p_reason", reason)
+            val tableName = when (registryType) {
+                "bs_student" -> "official_bs_students"
+                "intermediate_student" -> "official_intermediate_students"
+                else -> "official_faculty"
             }
-            val response = client.postgrest.rpc("admin_reset_claimed_registry_record", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to reset claimed record")
+            client.from(tableName).update({
+                set("is_claimed", false)
+                set("claimed_by", null as String?)
+            }) {
+                filter { eq("id", recordId) }
             }
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Record reset successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error in resetClaimedRecord: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to reset record")

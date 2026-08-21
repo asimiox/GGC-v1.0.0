@@ -3,10 +3,9 @@ package com.example.ui.screens.admin
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,26 +17,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -45,11 +35,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -65,13 +53,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.R
 import com.example.data.UserProfileManager
 import com.example.ui.screens.admin.OfficialRegistryScreen
 import com.example.ui.screens.admin.OfficialRegistryTab
@@ -79,11 +68,10 @@ import com.example.ui.screens.admin.content.ContentManagementScreen
 import com.example.ui.screens.admin.content.ContentSectionTab
 
 private val BrandNavy = Color(0xFF061B52)
-private val BrandNavyDark = Color(0xFF030D2B)
 private val BrandGold = Color(0xFFC59B27)
-private val BrandGoldLight = Color(0xFFF3D372)
+private val BrandGoldLight = Color(0xFFE5C058)
 private val CardBg = Color(0xFFFFFFFF)
-private val BackgroundSurface = Color(0xFFF6F8FB)
+private val BackgroundSurface = Color(0xFFF6F6F6)
 private val BorderColor = Color(0xFFE2E8F0)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,70 +84,153 @@ fun AdminDashboardScreen(
     val context = LocalContext.current
     var showLogoutConfirm by remember { mutableStateOf(false) }
 
+    val isRootDashboard = uiState.activeSection == AdminNavSection.DASHBOARD
+
+    val sectionTitle = when (uiState.activeSection) {
+        AdminNavSection.DASHBOARD -> "Super Admin Portal"
+        AdminNavSection.USERS -> "User & Roles Governance"
+        AdminNavSection.STUDENTS -> "Student Official Registry"
+        AdminNavSection.FACULTY -> "Faculty Official Registry"
+        AdminNavSection.ACADEMICS -> "Course Outlines & Syllabi"
+        AdminNavSection.CONTENT -> "Announcements & Circulars"
+        AdminNavSection.EVENTS -> "College Events & Seminars"
+        AdminNavSection.DOCUMENTS -> "Official Documents & Rules"
+        AdminNavSection.NOTIFICATIONS -> "Broadcast Alert Center"
+        AdminNavSection.SETTINGS -> "System Settings & Diagnostics"
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(BrandGold.copy(alpha = 0.2f))
-                                .border(1.dp, BrandGoldLight, CircleShape),
-                            contentAlignment = Alignment.Center
+            if (isRootDashboard) {
+                // Official Root Admin Top Bar (Matches Faculty & Student Header style)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(BackgroundSurface)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                contentDescription = "GGC Logo",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .testTag("admin_header_logo")
+                            )
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+                                Text(
+                                    text = "GGC M.B.Din",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(BrandGold)
+                                    )
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = "Super Admin Portal",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = BrandGold
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { viewModel.refreshAll() },
+                                modifier = Modifier.testTag("admin_topbar_refresh")
+                            ) {
+                                if (uiState.isLoading || uiState.isRefreshing) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = BrandNavy,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Refresh Data",
+                                        tint = BrandNavy,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = { showLogoutConfirm = true },
+                                modifier = Modifier.testTag("admin_topbar_logout")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ExitToApp,
+                                    contentDescription = "Logout Admin",
+                                    tint = BrandNavy,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+                }
+            } else {
+                // Child Section Top Bar with Back Navigation
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(
+                            onClick = { viewModel.selectSection(AdminNavSection.DASHBOARD) },
+                            modifier = Modifier.testTag("admin_subscreen_back_btn")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.AdminPanelSettings,
-                                contentDescription = null,
-                                tint = BrandGoldLight,
-                                modifier = Modifier.size(20.dp)
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back to Dashboard",
+                                tint = Color.White
                             )
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "GGC Super Control",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Text(
-                                text = "Central Administration",
-                                fontSize = 10.sp,
-                                color = BrandGoldLight,
-                                fontWeight = FontWeight.Medium
+                    },
+                    title = {
+                        Text(
+                            text = sectionTitle,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { viewModel.refreshAll() },
+                            modifier = Modifier.testTag("admin_subscreen_refresh")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh",
+                                tint = Color.White
                             )
                         }
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { viewModel.refreshAll() },
-                        modifier = Modifier.testTag("admin_topbar_refresh")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(
-                        onClick = { showLogoutConfirm = true },
-                        modifier = Modifier.testTag("admin_topbar_logout")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout Admin",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BrandNavyDark,
-                    titleContentColor = Color.White
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = BrandNavy,
+                        titleContentColor = Color.White
+                    )
                 )
-            )
+            }
         },
         containerColor = BackgroundSurface
     ) { innerPadding ->
@@ -168,77 +239,6 @@ fun AdminDashboardScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Horizontal Navigation Ribbon for Administrative Sections
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BrandNavy)
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                AdminNavSectionTab(
-                    title = "Dashboard",
-                    icon = Icons.Default.Dashboard,
-                    selected = uiState.activeSection == AdminNavSection.DASHBOARD,
-                    onClick = { viewModel.selectSection(AdminNavSection.DASHBOARD) }
-                )
-                AdminNavSectionTab(
-                    title = "Users & Roles",
-                    icon = Icons.Default.Group,
-                    selected = uiState.activeSection == AdminNavSection.USERS,
-                    onClick = { viewModel.selectSection(AdminNavSection.USERS) }
-                )
-                AdminNavSectionTab(
-                    title = "Student Registry",
-                    icon = Icons.Default.School,
-                    selected = uiState.activeSection == AdminNavSection.STUDENTS,
-                    onClick = { viewModel.selectSection(AdminNavSection.STUDENTS) }
-                )
-                AdminNavSectionTab(
-                    title = "Faculty Registry",
-                    icon = Icons.Default.SupervisorAccount,
-                    selected = uiState.activeSection == AdminNavSection.FACULTY,
-                    onClick = { viewModel.selectSection(AdminNavSection.FACULTY) }
-                )
-                AdminNavSectionTab(
-                    title = "Academics",
-                    icon = Icons.Default.Book,
-                    selected = uiState.activeSection == AdminNavSection.ACADEMICS,
-                    onClick = { viewModel.selectSection(AdminNavSection.ACADEMICS) }
-                )
-                AdminNavSectionTab(
-                    title = "Notices",
-                    icon = Icons.Default.Campaign,
-                    selected = uiState.activeSection == AdminNavSection.CONTENT,
-                    onClick = { viewModel.selectSection(AdminNavSection.CONTENT) }
-                )
-                AdminNavSectionTab(
-                    title = "Events",
-                    icon = Icons.Default.Event,
-                    selected = uiState.activeSection == AdminNavSection.EVENTS,
-                    onClick = { viewModel.selectSection(AdminNavSection.EVENTS) }
-                )
-                AdminNavSectionTab(
-                    title = "Documents",
-                    icon = Icons.Default.Description,
-                    selected = uiState.activeSection == AdminNavSection.DOCUMENTS,
-                    onClick = { viewModel.selectSection(AdminNavSection.DOCUMENTS) }
-                )
-                AdminNavSectionTab(
-                    title = "Broadcasts",
-                    icon = Icons.Default.NotificationsActive,
-                    selected = uiState.activeSection == AdminNavSection.NOTIFICATIONS,
-                    onClick = { viewModel.selectSection(AdminNavSection.NOTIFICATIONS) }
-                )
-                AdminNavSectionTab(
-                    title = "Settings",
-                    icon = Icons.Default.Settings,
-                    selected = uiState.activeSection == AdminNavSection.SETTINGS,
-                    onClick = { viewModel.selectSection(AdminNavSection.SETTINGS) }
-                )
-            }
-
             // Global Message Banners
             AnimatedVisibility(
                 visible = uiState.errorMessage != null,
@@ -275,7 +275,7 @@ fun AdminDashboardScreen(
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ExitToApp,
+                                    imageVector = Icons.Default.Close,
                                     contentDescription = "Dismiss",
                                     tint = Color(0xFFC62828),
                                     modifier = Modifier.size(14.dp)
@@ -321,7 +321,7 @@ fun AdminDashboardScreen(
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ExitToApp,
+                                    imageVector = Icons.Default.Close,
                                     contentDescription = "Dismiss",
                                     tint = Color(0xFF2E7D32),
                                     modifier = Modifier.size(14.dp)
@@ -432,41 +432,6 @@ fun AdminDashboardScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-fun AdminNavSectionTab(
-    title: String,
-    icon: ImageVector,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                if (selected) BrandGoldLight else Color.White.copy(alpha = 0.12f)
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = if (selected) BrandNavyDark else Color.White,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                color = if (selected) BrandNavyDark else Color.White
-            )
-        }
     }
 }
 

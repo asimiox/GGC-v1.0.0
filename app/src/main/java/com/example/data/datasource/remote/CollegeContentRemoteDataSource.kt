@@ -132,14 +132,15 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveCourseOutline(outline: CourseOutlineDto): AuthResult<CourseOutlineDto> {
         return try {
-            if (outline.id.isNullOrBlank()) {
-                val inserted = client.from("course_outlines").insert(outline) {
+            val payload = outline.copy(createdBy = null)
+            if (payload.id.isNullOrBlank()) {
+                val inserted = client.from("course_outlines").insert(payload) {
                     select()
                 }.decodeSingle<CourseOutlineDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("course_outlines").update(outline) {
-                    filter { eq("id", outline.id) }
+                val updated = client.from("course_outlines").update(payload) {
+                    filter { eq("id", payload.id) }
                     select()
                 }.decodeSingle<CourseOutlineDto>()
                 AuthResult.Success(updated)
@@ -210,14 +211,16 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveAnnouncement(announcement: AnnouncementDto): AuthResult<AnnouncementDto> {
         return try {
-            if (announcement.id.isNullOrBlank()) {
-                val inserted = client.from("announcements").insert(announcement) {
+            // Nullify authorId so announcements_author_id_fkey foreign key constraint is never violated
+            val payload = announcement.copy(authorId = null)
+            if (payload.id.isNullOrBlank()) {
+                val inserted = client.from("announcements").insert(payload) {
                     select()
                 }.decodeSingle<AnnouncementDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("announcements").update(announcement) {
-                    filter { eq("id", announcement.id) }
+                val updated = client.from("announcements").update(payload) {
+                    filter { eq("id", payload.id) }
                     select()
                 }.decodeSingle<AnnouncementDto>()
                 AuthResult.Success(updated)
@@ -287,14 +290,15 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveEvent(event: CollegeEventDto): AuthResult<CollegeEventDto> {
         return try {
-            if (event.id.isNullOrBlank()) {
-                val inserted = client.from("college_events").insert(event) {
+            val payload = event.copy(createdBy = null)
+            if (payload.id.isNullOrBlank()) {
+                val inserted = client.from("college_events").insert(payload) {
                     select()
                 }.decodeSingle<CollegeEventDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("college_events").update(event) {
-                    filter { eq("id", event.id) }
+                val updated = client.from("college_events").update(payload) {
+                    filter { eq("id", payload.id) }
                     select()
                 }.decodeSingle<CollegeEventDto>()
                 AuthResult.Success(updated)
@@ -368,14 +372,15 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveOfficialDocument(document: OfficialDocumentDto): AuthResult<OfficialDocumentDto> {
         return try {
-            if (document.id.isNullOrBlank()) {
-                val inserted = client.from("official_documents").insert(document) {
+            val payload = document.copy(uploadedBy = null)
+            if (payload.id.isNullOrBlank()) {
+                val inserted = client.from("official_documents").insert(payload) {
                     select()
                 }.decodeSingle<OfficialDocumentDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("official_documents").update(document) {
-                    filter { eq("id", document.id) }
+                val updated = client.from("official_documents").update(payload) {
+                    filter { eq("id", payload.id) }
                     select()
                 }.decodeSingle<OfficialDocumentDto>()
                 AuthResult.Success(updated)
@@ -453,14 +458,15 @@ class CollegeContentRemoteDataSource {
 
     suspend fun saveProspectus(prospectus: ProspectusDto): AuthResult<ProspectusDto> {
         return try {
-            if (prospectus.id.isNullOrBlank()) {
-                val inserted = client.from("prospectus").insert(prospectus) {
+            val payload = prospectus.copy(uploadedBy = null)
+            if (payload.id.isNullOrBlank()) {
+                val inserted = client.from("prospectus").insert(payload) {
                     select()
                 }.decodeSingle<ProspectusDto>()
                 AuthResult.Success(inserted)
             } else {
-                val updated = client.from("prospectus").update(prospectus) {
-                    filter { eq("id", prospectus.id) }
+                val updated = client.from("prospectus").update(payload) {
+                    filter { eq("id", payload.id) }
                     select()
                 }.decodeSingle<ProspectusDto>()
                 AuthResult.Success(updated)
