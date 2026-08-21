@@ -189,7 +189,7 @@ $$;
 ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------------------------
--- 3.1 PUBLIC & STUDENT READ POLICIES (SELECT)
+-- 3.1 PUBLIC READ POLICIES (SELECT)
 -- ------------------------------------------------------------------------------
 
 DROP POLICY IF EXISTS "Public can view college storage files" ON storage.objects;
@@ -207,190 +207,57 @@ USING (
 );
 
 -- ------------------------------------------------------------------------------
--- 3.2 ADMIN GLOBAL STORAGE ACCESS (INSERT, UPDATE, DELETE)
+-- 3.2 COLLEGE ASSET UPLOADS & MANAGEMENT (INSERT, UPDATE, DELETE)
 -- ------------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Admins have full storage management access" ON storage.objects;
-CREATE POLICY "Admins have full storage management access"
-ON storage.objects FOR ALL
-USING (public.is_admin())
-WITH CHECK (public.is_admin());
-
--- ------------------------------------------------------------------------------
--- 3.3 COURSE OUTLINES POLICIES (Teachers & HODs for their department)
--- ------------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Faculty can upload course outlines for their department" ON storage.objects;
-CREATE POLICY "Faculty can upload course outlines for their department"
+DROP POLICY IF EXISTS "College files insert access" ON storage.objects;
+CREATE POLICY "College files insert access"
 ON storage.objects FOR INSERT
 WITH CHECK (
-    bucket_id = 'course-outlines' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-);
-
-DROP POLICY IF EXISTS "Faculty can update course outlines for their department" ON storage.objects;
-CREATE POLICY "Faculty can update course outlines for their department"
-ON storage.objects FOR UPDATE
-USING (
-    bucket_id = 'course-outlines' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-)
-WITH CHECK (
-    bucket_id = 'course-outlines' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-);
-
-DROP POLICY IF EXISTS "Faculty can delete course outlines for their department" ON storage.objects;
-CREATE POLICY "Faculty can delete course outlines for their department"
-ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'course-outlines' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-);
-
--- ------------------------------------------------------------------------------
--- 3.4 ANNOUNCEMENT ATTACHMENTS POLICIES (Department-scoped uploads for Faculty/HOD)
--- ------------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Faculty can upload announcement attachments for their department" ON storage.objects;
-CREATE POLICY "Faculty can upload announcement attachments for their department"
-ON storage.objects FOR INSERT
-WITH CHECK (
-    bucket_id = 'announcement-attachments' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-);
-
-DROP POLICY IF EXISTS "Faculty can update announcement attachments for their department" ON storage.objects;
-CREATE POLICY "Faculty can update announcement attachments for their department"
-ON storage.objects FOR UPDATE
-USING (
-    bucket_id = 'announcement-attachments' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-)
-WITH CHECK (
-    bucket_id = 'announcement-attachments' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-);
-
-DROP POLICY IF EXISTS "Faculty can delete announcement attachments for their department" ON storage.objects;
-CREATE POLICY "Faculty can delete announcement attachments for their department"
-ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'announcement-attachments' AND
-    auth.role() = 'authenticated' AND
-    public.can_manage_storage_folder(public.get_storage_root_folder(name))
-);
-
--- ------------------------------------------------------------------------------
--- 3.5 OFFICIAL DOCUMENTS POLICIES (HOD departmental docs, Admins handle college-wide)
--- ------------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "HODs can upload departmental official documents" ON storage.objects;
-CREATE POLICY "HODs can upload departmental official documents"
-ON storage.objects FOR INSERT
-WITH CHECK (
-    bucket_id = 'official-documents' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        (public.is_hod() AND public.can_manage_storage_folder(split_part(name, '/', 2)))
+    bucket_id IN (
+        'college-prospectus',
+        'official-documents',
+        'announcement-attachments',
+        'course-outlines',
+        'profile-photos',
+        'college-media'
     )
 );
 
-DROP POLICY IF EXISTS "HODs can update departmental official documents" ON storage.objects;
-CREATE POLICY "HODs can update departmental official documents"
+DROP POLICY IF EXISTS "College files update access" ON storage.objects;
+CREATE POLICY "College files update access"
 ON storage.objects FOR UPDATE
 USING (
-    bucket_id = 'official-documents' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        (public.is_hod() AND public.can_manage_storage_folder(split_part(name, '/', 2)))
+    bucket_id IN (
+        'college-prospectus',
+        'official-documents',
+        'announcement-attachments',
+        'course-outlines',
+        'profile-photos',
+        'college-media'
     )
 )
 WITH CHECK (
-    bucket_id = 'official-documents' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        (public.is_hod() AND public.can_manage_storage_folder(split_part(name, '/', 2)))
+    bucket_id IN (
+        'college-prospectus',
+        'official-documents',
+        'announcement-attachments',
+        'course-outlines',
+        'profile-photos',
+        'college-media'
     )
 );
 
-DROP POLICY IF EXISTS "HODs can delete departmental official documents" ON storage.objects;
-CREATE POLICY "HODs can delete departmental official documents"
+DROP POLICY IF EXISTS "College files delete access" ON storage.objects;
+CREATE POLICY "College files delete access"
 ON storage.objects FOR DELETE
 USING (
-    bucket_id = 'official-documents' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        (public.is_hod() AND public.can_manage_storage_folder(split_part(name, '/', 2)))
+    bucket_id IN (
+        'college-prospectus',
+        'official-documents',
+        'announcement-attachments',
+        'course-outlines',
+        'profile-photos',
+        'college-media'
     )
 );
-
--- ------------------------------------------------------------------------------
--- 3.6 PROFILE PHOTOS POLICIES (Users manage their own user-scoped avatar folder)
--- Path format: 'faculty/{user_id}/avatar.jpg' or 'students/{user_id}/avatar.jpg'
--- ------------------------------------------------------------------------------
-
-DROP POLICY IF EXISTS "Users can upload their own profile photo" ON storage.objects;
-CREATE POLICY "Users can upload their own profile photo"
-ON storage.objects FOR INSERT
-WITH CHECK (
-    bucket_id = 'profile-photos' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        name LIKE 'faculty/' || auth.uid()::text || '/%' OR
-        name LIKE 'students/' || auth.uid()::text || '/%'
-    )
-);
-
-DROP POLICY IF EXISTS "Users can update their own profile photo" ON storage.objects;
-CREATE POLICY "Users can update their own profile photo"
-ON storage.objects FOR UPDATE
-USING (
-    bucket_id = 'profile-photos' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        name LIKE 'faculty/' || auth.uid()::text || '/%' OR
-        name LIKE 'students/' || auth.uid()::text || '/%'
-    )
-)
-WITH CHECK (
-    bucket_id = 'profile-photos' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        name LIKE 'faculty/' || auth.uid()::text || '/%' OR
-        name LIKE 'students/' || auth.uid()::text || '/%'
-    )
-);
-
-DROP POLICY IF EXISTS "Users can delete their own profile photo" ON storage.objects;
-CREATE POLICY "Users can delete their own profile photo"
-ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'profile-photos' AND
-    auth.role() = 'authenticated' AND
-    (
-        public.is_admin() OR
-        name LIKE 'faculty/' || auth.uid()::text || '/%' OR
-        name LIKE 'students/' || auth.uid()::text || '/%'
-    )
-);
-
--- ------------------------------------------------------------------------------
--- 3.7 PROSPECTUS & MEDIA POLICIES (Admin Only for Writes)
--- ------------------------------------------------------------------------------
--- Prospectus and College Media writes are covered exclusively by Policy 3.2 ("Admins have full storage management access").
--- No student or unprivileged user can upload or mutate files in these buckets.

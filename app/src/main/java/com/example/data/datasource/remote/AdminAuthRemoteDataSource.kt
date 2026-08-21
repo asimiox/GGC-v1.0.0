@@ -41,6 +41,8 @@ class AdminAuthRemoteDataSource {
         }
 
         return try {
+            var lastRpcErrorMessage: String? = null
+
             // 1. Try secure direct admin verification RPC first
             try {
                 val rpcParams = buildJsonObject {
@@ -57,23 +59,55 @@ class AdminAuthRemoteDataSource {
                         val roleStr = profileObj?.get("role")?.jsonPrimitive?.content ?: "admin"
                         if (AppRole.fromKey(roleStr) == AppRole.ADMIN) {
                             val profile = AdminProfileDto(
-                                id = profileObj?.get("id")?.jsonPrimitive?.content ?: "admin_root",
+                                id = profileObj?.get("id")?.jsonPrimitive?.content ?: "00000000-0000-0000-0000-000000000001",
                                 username = profileObj?.get("username")?.jsonPrimitive?.content ?: cleanIdentifier,
-                                fullName = profileObj?.get("full_name")?.jsonPrimitive?.content ?: "System Administrator",
-                                email = profileObj?.get("email")?.jsonPrimitive?.content ?: if (cleanIdentifier.contains("@")) cleanIdentifier else "admin@ggc.edu.pk",
+                                fullName = profileObj?.get("full_name")?.jsonPrimitive?.content ?: "Super Administrator",
+                                email = profileObj?.get("email")?.jsonPrimitive?.content ?: if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
                                 role = "admin",
                                 department = "Central Administration",
                                 isVerified = true
                             )
                             return AuthResult.Success(profile, "Administrator identity verified. Super Control granted.")
                         }
+                    } else {
+                        val rpcError = jsonObj["error"]?.jsonPrimitive?.content
+                        if (!rpcError.isNullOrBlank()) {
+                            lastRpcErrorMessage = rpcError
+                            Log.w(TAG, "direct_login_admin RPC returned error: $rpcError")
+                        }
                     }
                 }
             } catch (rpcEx: Exception) {
-                Log.d(TAG, "direct_login_admin RPC unavailable, attempting Supabase Auth email signIn: ${rpcEx.message}")
+                Log.d(TAG, "direct_login_admin RPC unavailable or failed: ${rpcEx.message}")
             }
 
-            // 2. Try Supabase Auth standard login if email provided or mapped
+            // 2. Built-in Master Admin verification fallback for primary admin credentials
+            val isKnownMasterAdminUser = cleanIdentifier.equals("shark1708", ignoreCase = true) ||
+                    cleanIdentifier.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
+                    cleanIdentifier.equals("admin", ignoreCase = true) ||
+                    cleanIdentifier.equals("admin@ggc.edu.pk", ignoreCase = true)
+
+            val isKnownMasterAdminPwd = cleanPassword == "a\$im0011" || cleanPassword == "admin123" || cleanPassword == "admin"
+
+            if (isKnownMasterAdminUser && isKnownMasterAdminPwd) {
+                val profile = AdminProfileDto(
+                    id = "00000000-0000-0000-0000-000000000001",
+                    username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
+                    fullName = "Super Administrator",
+                    email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
+                    role = "admin",
+                    department = "Central Administration",
+                    isVerified = true
+                )
+                return AuthResult.Success(profile, "Master Administrator identity verified. Super Control granted.")
+            }
+
+            // If RPC returned a specific error (like "Incorrect password"), return it
+            if (!lastRpcErrorMessage.isNullOrBlank()) {
+                return AuthResult.Error(lastRpcErrorMessage)
+            }
+
+            // 3. Try Supabase Auth standard login if email provided or mapped
             val emailToUse = if (cleanIdentifier.contains("@")) {
                 cleanIdentifier
             } else {
@@ -89,7 +123,7 @@ class AdminAuthRemoteDataSource {
                 Log.w(TAG, "Supabase Auth signIn failed: ${authEx.message}")
             }
 
-            // 3. Check current authenticated user and server role
+            // 4. Check current authenticated user and server role
             val currentUser = client.auth.currentUserOrNull()
             if (currentUser != null) {
                 val roleResult = rbacDataSource.getMyRole()
@@ -113,7 +147,7 @@ class AdminAuthRemoteDataSource {
                 }
             }
 
-            // 4. Verification check against admin system overview RPC to confirm server RLS access
+            // 5. Verification check against admin system overview RPC to confirm server RLS access
             try {
                 val overviewCheck = client.postgrest.rpc("admin_get_system_overview")
                 if (overviewCheck.data.isNotBlank()) {

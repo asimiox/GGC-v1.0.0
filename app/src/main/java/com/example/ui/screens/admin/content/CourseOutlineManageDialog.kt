@@ -1,5 +1,8 @@
 package com.example.ui.screens.admin.content
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
@@ -40,10 +44,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -54,6 +60,10 @@ import com.example.data.model.AppRole
 import com.example.data.model.CourseDto
 import com.example.data.model.CourseOutlineDto
 import com.example.data.model.DepartmentDto
+import com.example.ui.util.FileUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandTextMuted = Color(0xFF5A6A85)
@@ -131,6 +141,29 @@ fun CourseOutlineManageDialog(
 
     var titleError by remember { mutableStateOf<String?>(null) }
     var courseError by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isReadingFile by remember { mutableStateOf(false) }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            isReadingFile = true
+            coroutineScope.launch(Dispatchers.IO) {
+                val realName = FileUtils.getFileName(context, uri)
+                val bytes = FileUtils.getFileBytes(context, uri)
+                withContext(Dispatchers.Main) {
+                    isReadingFile = false
+                    if (bytes != null && bytes.isNotEmpty()) {
+                        fileName = realName
+                        fileBytes = bytes
+                    }
+                }
+            }
+        }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -455,28 +488,57 @@ fun CourseOutlineManageDialog(
 
                             Button(
                                 onClick = {
-                                    val safeCode = currentCourse?.code?.replace(" ", "_") ?: "outline"
-                                    val sampleName = "${safeCode}_syllabus_${System.currentTimeMillis() % 1000}.pdf"
-                                    fileName = sampleName
-                                    fileBytes = "GGC Official Course Outline PDF Stream".toByteArray()
+                                    filePickerLauncher.launch("*/*")
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                                 modifier = Modifier.testTag("btn_select_outline_pdf")
                             ) {
-                                Text(if (fileName == null) "Attach PDF" else "Change", fontSize = 11.sp)
+                                Text(
+                                    text = if (isReadingFile) "Reading..." else if (fileName == null) "Attach PDF" else "Change",
+                                    fontSize = 11.sp
+                                )
                             }
                         }
 
                         if (!fileName.isNullOrBlank()) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "File: $fileName",
-                                fontSize = 12.sp,
-                                color = BrandNavy,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "File: $fileName",
+                                        fontSize = 12.sp,
+                                        color = BrandNavy,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    if (fileBytes != null) {
+                                        Text(
+                                            text = "Size: ${FileUtils.formatFileSize(fileBytes?.size?.toLong() ?: 0L)}",
+                                            fontSize = 10.sp,
+                                            color = BrandTextMuted
+                                        )
+                                    }
+                                }
+                                IconButton(
+                                    onClick = {
+                                        fileName = null
+                                        fileBytes = null
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove PDF",
+                                        tint = Color(0xFFBA1A1A),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
