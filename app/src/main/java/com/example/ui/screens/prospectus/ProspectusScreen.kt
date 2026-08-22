@@ -63,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.R
 import com.example.data.model.ProspectusDto
 import com.example.ui.theme.GgcGoldTertiary
+import com.example.ui.util.FileUtils
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandTextMuted = Color(0xFF5A6A85)
@@ -212,12 +213,7 @@ fun ProspectusScreen(
                             prospectus = current,
                             onDownload = {
                                 val url = viewModel.getProspectusDownloadUrl(current.storagePath)
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                try {
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Opening prospectus in browser: $url", Toast.LENGTH_SHORT).show()
-                                }
+                                FileUtils.openFileInSystem(context, url, current.fileName)
                             }
                         )
                     }
@@ -252,12 +248,7 @@ fun ProspectusScreen(
                             prospectus = edition,
                             onDownload = {
                                 val url = viewModel.getProspectusDownloadUrl(edition.storagePath)
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                try {
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Opening prospectus: $url", Toast.LENGTH_SHORT).show()
-                                }
+                                FileUtils.openFileInSystem(context, url, edition.fileName)
                             }
                         )
                     }

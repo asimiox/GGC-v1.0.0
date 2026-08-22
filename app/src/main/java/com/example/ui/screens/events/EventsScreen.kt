@@ -49,6 +49,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +62,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.SubcomposeAsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.ZoomIn
 import com.example.data.model.CollegeEventDto
+import com.example.ui.components.FileAttachmentCard
+import com.example.ui.components.ImageViewerDialog
+import com.example.ui.util.FileUtils
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandTextMuted = Color(0xFF5A6A85)
@@ -79,6 +89,7 @@ fun EventsScreen(
         CollegeEventDetailScreen(
             event = uiState.selectedEvent!!,
             bannerUrl = bannerUrl,
+            attachmentUrl = bannerUrl,
             onBack = { viewModel.selectEvent(null) }
         )
         return
@@ -504,9 +515,20 @@ fun PublishedEventCard(
 fun CollegeEventDetailScreen(
     event: CollegeEventDto,
     bannerUrl: String?,
+    attachmentUrl: String? = null,
     onBack: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var showFullBannerViewer by remember { mutableStateOf(false) }
+
+    if (showFullBannerViewer && !bannerUrl.isNullOrBlank()) {
+        ImageViewerDialog(
+            imageUrl = bannerUrl,
+            title = event.title,
+            fileName = "Event_Banner.png",
+            onDismiss = { showFullBannerViewer = false }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -550,6 +572,7 @@ fun CollegeEventDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // Event Main Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -561,6 +584,72 @@ fun CollegeEventDetailScreen(
                         .fillMaxWidth()
                         .padding(18.dp)
                 ) {
+                    // Event Banner Image with Tap to Zoom
+                    if (!bannerUrl.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(190.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFF1F5F9))
+                                .clickable { showFullBannerViewer = true }
+                                .testTag("event_banner_image_container"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SubcomposeAsyncImage(
+                                model = bannerUrl,
+                                contentDescription = "Event Banner Image",
+                                loading = {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator(color = BrandNavy, modifier = Modifier.size(28.dp))
+                                    }
+                                },
+                                error = {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            imageVector = Icons.Default.Image,
+                                            contentDescription = null,
+                                            tint = BrandTextMuted,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text("Tap to view full banner", fontSize = 11.sp, color = BrandTextMuted)
+                                    }
+                                },
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            // Tap to Zoom Badge
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(8.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.Black.copy(alpha = 0.7f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.ZoomIn,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "View Banner",
+                                        color = Color.White,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                    }
+
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
@@ -672,43 +761,16 @@ fun CollegeEventDetailScreen(
                         color = BrandNavy,
                         lineHeight = 20.sp
                     )
-
-                    if (!event.attachmentName.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFEEF3FF))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Attachment,
-                                contentDescription = null,
-                                tint = BrandNavy,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Official Attachment",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BrandNavy
-                                )
-                                Text(
-                                    text = event.attachmentName,
-                                    fontSize = 12.sp,
-                                    color = BrandTextMuted
-                                )
-                            }
-                        }
-                    }
                 }
+            }
+
+            // Attached Documents or Event Flyer Section
+            if (!event.attachmentName.isNullOrBlank() || !event.bannerStoragePath.isNullOrBlank()) {
+                FileAttachmentCard(
+                    fileUrl = attachmentUrl,
+                    fileName = event.attachmentName ?: "Event_Flyer.png",
+                    title = event.title
+                )
             }
         }
     }

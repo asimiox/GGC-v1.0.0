@@ -62,10 +62,13 @@ class CollegeStorageRemoteDataSource {
      * Obtains the public URL for a published college file.
      */
     fun getPublicUrl(bucketId: String, path: String): String {
+        val cleanPath = path.trim()
+        if (cleanPath.isBlank()) return ""
+        if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) return cleanPath
         return try {
-            client.storage.from(bucketId).publicUrl(path)
+            client.storage.from(bucketId).publicUrl(cleanPath)
         } catch (e: Exception) {
-            Log.e(TAG, "Error resolving public URL for $bucketId/$path: ${e.message}", e)
+            Log.e(TAG, "Error resolving public URL for $bucketId/$cleanPath: ${e.message}", e)
             ""
         }
     }

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Refresh
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.AnnouncementDto
 import com.example.ui.theme.GgcGoldTertiary
+import com.example.ui.util.FileUtils
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandTextMuted = Color(0xFF5A6A85)
@@ -394,19 +396,20 @@ fun PublishedNoticeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (!notice.attachmentStoragePath.isNullOrBlank() || !notice.attachmentName.isNullOrBlank()) {
+                    val isImage = FileUtils.isImageFileName(notice.attachmentName, notice.attachmentStoragePath)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Attachment,
+                            imageVector = if (isImage) Icons.Default.Image else Icons.Default.Attachment,
                             contentDescription = "Attachment",
-                            tint = Color(0xFF1B873F),
+                            tint = if (isImage) Color(0xFF0284C7) else Color(0xFF1B873F),
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "PDF Attachment Included",
+                            text = if (isImage) "Image Attached" else "Document Attached",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1B873F)
+                            color = if (isImage) Color(0xFF0284C7) else Color(0xFF1B873F)
                         )
                     }
                 } else {

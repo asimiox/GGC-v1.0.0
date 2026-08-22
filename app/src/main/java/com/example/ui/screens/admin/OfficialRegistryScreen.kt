@@ -1019,9 +1019,7 @@ private fun BsStudentCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    val displayName = listOfNotNull(student.firstName, student.lastName)
-                        .joinToString(" ")
-                        .ifBlank { "BS Student Record" }
+                    val displayName = student.effectiveDisplayName
 
                     Text(
                         text = displayName,
@@ -1033,7 +1031,7 @@ private fun BsStudentCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = student.program,
+                        text = student.effectiveProgram.ifBlank { "BS Program" },
                         fontSize = 12.sp,
                         color = BrandTextMuted,
                         fontWeight = FontWeight.Medium
@@ -1182,9 +1180,7 @@ private fun IntermediateStudentCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    val displayName = listOfNotNull(student.firstName, student.lastName)
-                        .joinToString(" ")
-                        .ifBlank { "Intermediate Student Record" }
+                    val displayName = student.effectiveDisplayName
 
                     Text(
                         text = displayName,
@@ -1196,7 +1192,7 @@ private fun IntermediateStudentCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = student.program,
+                        text = student.effectiveProgram.ifBlank { "Intermediate Program" },
                         fontSize = 12.sp,
                         color = BrandTextMuted,
                         fontWeight = FontWeight.Medium
@@ -1654,10 +1650,14 @@ fun BsStudentFormDialog(
 ) {
     var rollNumber by remember { mutableStateOf(initial?.rollNumber ?: "") }
     var regNumber by remember { mutableStateOf(initial?.registrationNumber ?: "") }
-    var program by remember { mutableStateOf(initial?.program ?: BS_PROGRAM_OPTIONS.first()) }
-    var session by remember { mutableStateOf(initial?.session ?: SESSION_OPTIONS.last()) }
-    var firstName by remember { mutableStateOf(initial?.firstName ?: "") }
-    var lastName by remember { mutableStateOf(initial?.lastName ?: "") }
+    var program by remember { mutableStateOf(initial?.effectiveProgram?.ifBlank { null } ?: BS_PROGRAM_OPTIONS.first()) }
+    var session by remember { mutableStateOf(initial?.effectiveSession?.ifBlank { null } ?: SESSION_OPTIONS.last()) }
+    var firstName by remember {
+        mutableStateOf(initial?.firstName ?: initial?.studentName?.split(" ")?.firstOrNull() ?: "")
+    }
+    var lastName by remember {
+        mutableStateOf(initial?.lastName ?: initial?.studentName?.split(" ")?.drop(1)?.joinToString(" ") ?: "")
+    }
     var isActive by remember { mutableStateOf(initial?.isActive ?: true) }
 
     var programExpanded by remember { mutableStateOf(false) }
@@ -1912,10 +1912,14 @@ fun IntermediateStudentFormDialog(
 ) {
     var rollNumber by remember { mutableStateOf(initial?.rollNumber ?: "") }
     var regNumber by remember { mutableStateOf(initial?.registrationNumber ?: "") }
-    var program by remember { mutableStateOf(initial?.program ?: INTER_PROGRAM_OPTIONS.first()) }
-    var session by remember { mutableStateOf(initial?.session ?: INTER_SESSION_OPTIONS.last()) }
-    var firstName by remember { mutableStateOf(initial?.firstName ?: "") }
-    var lastName by remember { mutableStateOf(initial?.lastName ?: "") }
+    var program by remember { mutableStateOf(initial?.effectiveProgram?.ifBlank { null } ?: INTER_PROGRAM_OPTIONS.first()) }
+    var session by remember { mutableStateOf(initial?.effectiveSession?.ifBlank { null } ?: INTER_SESSION_OPTIONS.last()) }
+    var firstName by remember {
+        mutableStateOf(initial?.firstName ?: initial?.studentName?.split(" ")?.firstOrNull() ?: "")
+    }
+    var lastName by remember {
+        mutableStateOf(initial?.lastName ?: initial?.studentName?.split(" ")?.drop(1)?.joinToString(" ") ?: "")
+    }
     var isActive by remember { mutableStateOf(initial?.isActive ?: true) }
 
     var programExpanded by remember { mutableStateOf(false) }

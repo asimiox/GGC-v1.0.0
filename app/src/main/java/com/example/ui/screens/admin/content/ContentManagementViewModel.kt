@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.UserProfileManager
 import com.example.data.datasource.remote.CollegeStorageRemoteDataSource
+import com.example.data.model.AcademicCatalogDefaults
 import com.example.data.model.AcademicProgramDto
 import com.example.data.model.AnnouncementDto
 import com.example.data.model.AppRole
@@ -148,21 +149,22 @@ class ContentManagementViewModel(
 
     fun loadPrograms() {
         viewModelScope.launch {
-            val deptId = _uiState.value.selectedDepartmentFilter
-            val result = contentRepository.getPrograms(departmentId = deptId, includeUnpublished = true)
-            if (result is AuthResult.Success) {
+            val result = contentRepository.getPrograms(departmentId = null, includeUnpublished = true)
+            if (result is AuthResult.Success && result.data.isNotEmpty()) {
                 _uiState.update { it.copy(programs = result.data) }
+            } else {
+                _uiState.update { it.copy(programs = AcademicCatalogDefaults.defaultPrograms) }
             }
         }
     }
 
     fun loadCourses() {
         viewModelScope.launch {
-            val progId = _uiState.value.selectedProgramFilter
-            val deptId = _uiState.value.selectedDepartmentFilter
-            val result = contentRepository.getCourses(programId = progId, departmentId = deptId, includeUnpublished = true)
-            if (result is AuthResult.Success) {
+            val result = contentRepository.getCourses(programId = null, departmentId = null, includeUnpublished = true)
+            if (result is AuthResult.Success && result.data.isNotEmpty()) {
                 _uiState.update { it.copy(courses = result.data) }
+            } else {
+                _uiState.update { it.copy(courses = AcademicCatalogDefaults.defaultCourses) }
             }
         }
     }

@@ -81,6 +81,11 @@ class EventsViewModel(
         return storageRepository.getCollegeMediaUrl(bannerPath)
     }
 
+    fun getAttachmentUrl(attachmentPath: String?): String? {
+        if (attachmentPath.isNullOrBlank()) return null
+        return storageRepository.getAnnouncementAttachmentUrl(attachmentPath)
+    }
+
     fun getFilteredEvents(): List<CollegeEventDto> {
         val currentList = if (_uiState.value.selectedTab == 0) _uiState.value.upcomingEvents else _uiState.value.pastEvents
         val query = _uiState.value.searchQuery.trim()

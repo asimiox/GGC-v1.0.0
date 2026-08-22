@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,6 +50,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,8 +64,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.SubcomposeAsyncImage
+import androidx.compose.ui.layout.ContentScale
 import com.example.data.model.OfficialDocumentDto
+import com.example.ui.components.ImageViewerDialog
 import com.example.ui.theme.GgcGoldTertiary
+import com.example.ui.util.FileUtils
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandTextMuted = Color(0xFF5A6A85)
@@ -271,16 +280,12 @@ fun OfficialDocumentsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.filteredDocuments, key = { it.id ?: it.fileName }) { doc ->
+                    val docUrl = viewModel.getDocumentUrl(doc.storagePath)
                     PublishedDocumentCard(
                         doc = doc,
+                        docUrl = docUrl,
                         onOpen = {
-                            val url = viewModel.getDocumentUrl(doc.storagePath)
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                            try {
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Opening document in browser: $url", Toast.LENGTH_SHORT).show()
-                            }
+                            FileUtils.openFileInSystem(context, docUrl, doc.fileName)
                         }
                     )
                 }
@@ -292,8 +297,23 @@ fun OfficialDocumentsScreen(
 @Composable
 fun PublishedDocumentCard(
     doc: OfficialDocumentDto,
+    docUrl: String,
     onOpen: () -> Unit
 ) {
+    var showFullImageViewer by remember { mutableStateOf(false) }
+    val isImage = remember(doc.fileName, doc.storagePath) {
+        FileUtils.isImageFileName(doc.fileName, doc.storagePath)
+    }
+
+    if (showFullImageViewer && docUrl.isNotBlank()) {
+        ImageViewerDialog(
+            imageUrl = docUrl,
+            title = doc.title,
+            fileName = doc.fileName,
+            onDismiss = { showFullImageViewer = false }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -356,6 +376,66 @@ fun PublishedDocumentCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // If image document, show Coil AsyncImage preview
+            if (isImage && docUrl.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFF1F5F9))
+                        .clickable { showFullImageViewer = true }
+                        .testTag("doc_image_preview_${doc.id}"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    SubcomposeAsyncImage(
+                        model = docUrl,
+                        contentDescription = doc.title,
+                        loading = {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = BrandNavy, modifier = Modifier.size(26.dp))
+                            }
+                        },
+                        error = {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = null,
+                                    tint = BrandTextMuted,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("Click to view full image", fontSize = 11.sp, color = BrandTextMuted)
+                            }
+                        },
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color.Black.copy(alpha = 0.7f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.ZoomIn,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Tap to Enlarge", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
@@ -364,13 +444,13 @@ fun PublishedDocumentCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFFEBEE)),
+                        .background(if (isImage) Color(0xFFE0F2FE) else Color(0xFFFFEBEE)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.PictureAsPdf,
-                        contentDescription = "PDF Document",
-                        tint = Color(0xFFC62828),
+                        imageVector = if (isImage) Icons.Default.Image else Icons.Default.PictureAsPdf,
+                        contentDescription = if (isImage) "Image File" else "PDF Document",
+                        tint = if (isImage) Color(0xFF0284C7) else Color(0xFFC62828),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -403,7 +483,7 @@ fun PublishedDocumentCard(
 
                     val sizeText = doc.fileSizeBytes?.let {
                         "${it / (1024 * 1024)} MB (${it / 1024} KB)"
-                    } ?: "Verified Official PDF"
+                    } ?: "Verified Official Document"
 
                     Text(
                         text = "${doc.fileName} • $sizeText",
@@ -421,28 +501,57 @@ fun PublishedDocumentCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                if (isImage) {
+                    Button(
+                        onClick = { showFullImageViewer = true },
+                        modifier = Modifier.weight(1f).testTag("btn_view_image_${doc.id}"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.ZoomIn,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "View Image",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+
                 Button(
                     onClick = onOpen,
-                    modifier = Modifier.testTag("btn_download_doc_${doc.id ?: doc.fileName.hashCode()}"),
+                    modifier = Modifier.then(if (isImage) Modifier.weight(1f) else Modifier.fillMaxWidth()).testTag("btn_download_doc_${doc.id ?: doc.fileName.hashCode()}"),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isImage) Color(0xFFF1F5F9) else BrandNavy,
+                        contentColor = if (isImage) BrandNavy else Color.White
+                    ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.OpenInBrowser,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = Color.White
+                            tint = if (isImage) BrandNavy else Color.White
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "View / Download PDF",
+                            text = if (isImage) "Open in Browser" else "View / Download PDF",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = if (isImage) BrandNavy else Color.White
                         )
                     }
                 }

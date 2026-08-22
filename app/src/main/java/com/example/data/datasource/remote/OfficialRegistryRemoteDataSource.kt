@@ -41,9 +41,6 @@ class OfficialRegistryRemoteDataSource {
         return try {
             val list = client.from("official_bs_students").select {
                 filter {
-                    if (!program.isNullOrBlank()) {
-                        eq("program", program)
-                    }
                     if (isClaimed != null) {
                         eq("is_claimed", isClaimed)
                     }
@@ -56,23 +53,27 @@ class OfficialRegistryRemoteDataSource {
                 range(offset, offset + limit - 1)
             }.decodeList<OfficialBsStudentDto>()
 
-            val filteredList = if (!searchQuery.isNullOrBlank()) {
-                val query = searchQuery.trim().lowercase()
-                list.filter { student ->
-                    student.rollNumber.lowercase().contains(query) ||
-                    student.registrationNumber.lowercase().contains(query) ||
-                    (student.firstName?.lowercase()?.contains(query) == true) ||
-                    (student.lastName?.lowercase()?.contains(query) == true) ||
-                    student.program.lowercase().contains(query)
-                }
+            var filteredList = if (!program.isNullOrBlank()) {
+                val prog = program.trim().lowercase()
+                list.filter { it.effectiveProgram.lowercase() == prog || it.effectiveProgram.lowercase().contains(prog) }
             } else {
                 list
+            }
+
+            if (!searchQuery.isNullOrBlank()) {
+                val query = searchQuery.trim().lowercase()
+                filteredList = filteredList.filter { student ->
+                    student.rollNumber.lowercase().contains(query) ||
+                    student.registrationNumber.lowercase().contains(query) ||
+                    student.effectiveDisplayName.lowercase().contains(query) ||
+                    student.effectiveProgram.lowercase().contains(query)
+                }
             }
 
             AuthResult.Success(filteredList)
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching BS students registry: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to fetch official BS students list")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to fetch official BS students list"))
         }
     }
 
@@ -90,31 +91,78 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
+            val cleanRoll = rollNumber.trim().uppercase()
+            val cleanReg = registrationNumber.trim().uppercase()
+            val cleanProgram = program.trim()
+            val cleanSession = session.trim().ifBlank { "2024-2028" }
+            val studentFullName = listOfNotNull(firstName?.trim(), lastName?.trim())
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { "BS Student ($cleanRoll)" }
+
             if (id.isNullOrBlank()) {
                 val payload = buildJsonObject {
-                    put("roll_number", rollNumber.trim())
-                    put("registration_number", registrationNumber.trim())
-                    put("program", program.trim())
-                    put("session", session.trim())
+                    put("roll_number", cleanRoll)
+                    put("registration_number", cleanReg)
+                    put("student_name", studentFullName)
+                    put("program_name", cleanProgram)
+                    put("session_year", cleanSession)
                     put("is_claimed", false)
                     put("is_active", isActive)
                 }
-                client.from("official_bs_students").insert(payload)
+                try {
+                    client.from("official_bs_students").insert(payload)
+                } catch (e: Exception) {
+                    val err = e.message ?: ""
+                    if (err.contains("program_name", ignoreCase = true) || err.contains("schema cache", ignoreCase = true) || err.contains("student_name", ignoreCase = true)) {
+                        val fallbackPayload = buildJsonObject {
+                            put("roll_number", cleanRoll)
+                            put("registration_number", cleanReg)
+                            put("program", cleanProgram)
+                            put("session", cleanSession)
+                            if (!firstName.isNullOrBlank()) put("first_name", firstName.trim())
+                            if (!lastName.isNullOrBlank()) put("last_name", lastName.trim())
+                            put("is_claimed", false)
+                            put("is_active", isActive)
+                        }
+                        client.from("official_bs_students").insert(fallbackPayload)
+                    } else {
+                        throw e
+                    }
+                }
             } else {
-                client.from("official_bs_students").update({
-                    set("roll_number", rollNumber.trim())
-                    set("registration_number", registrationNumber.trim())
-                    set("program", program.trim())
-                    set("session", session.trim())
-                    set("is_active", isActive)
-                }) {
-                    filter { eq("id", id) }
+                try {
+                    client.from("official_bs_students").update({
+                        set("roll_number", cleanRoll)
+                        set("registration_number", cleanReg)
+                        set("student_name", studentFullName)
+                        set("program_name", cleanProgram)
+                        set("session_year", cleanSession)
+                        set("is_active", isActive)
+                    }) {
+                        filter { eq("id", id) }
+                    }
+                } catch (e: Exception) {
+                    val err = e.message ?: ""
+                    if (err.contains("program_name", ignoreCase = true) || err.contains("schema cache", ignoreCase = true) || err.contains("student_name", ignoreCase = true)) {
+                        client.from("official_bs_students").update({
+                            set("roll_number", cleanRoll)
+                            set("registration_number", cleanReg)
+                            set("program", cleanProgram)
+                            set("session", cleanSession)
+                            set("is_active", isActive)
+                        }) {
+                            filter { eq("id", id) }
+                        }
+                    } else {
+                        throw e
+                    }
                 }
             }
-            AuthResult.Success(AdminOperationResultDto(success = true, message = "BS Student saved successfully"))
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "BS Student record saved successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error managing BS student record: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to update BS student registry")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to update BS student registry"))
         }
     }
 
@@ -129,7 +177,7 @@ class OfficialRegistryRemoteDataSource {
             AuthResult.Success(AdminOperationResultDto(success = true, message = "BS student record deleted"))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting BS student record: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to delete BS record")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to delete BS record"))
         }
     }
 
@@ -151,9 +199,6 @@ class OfficialRegistryRemoteDataSource {
         return try {
             val list = client.from("official_intermediate_students").select {
                 filter {
-                    if (!program.isNullOrBlank()) {
-                        eq("program", program)
-                    }
                     if (isClaimed != null) {
                         eq("is_claimed", isClaimed)
                     }
@@ -166,23 +211,27 @@ class OfficialRegistryRemoteDataSource {
                 range(offset, offset + limit - 1)
             }.decodeList<OfficialIntermediateStudentDto>()
 
-            val filteredList = if (!searchQuery.isNullOrBlank()) {
-                val query = searchQuery.trim().lowercase()
-                list.filter { student ->
-                    student.rollNumber.lowercase().contains(query) ||
-                    student.registrationNumber.lowercase().contains(query) ||
-                    (student.firstName?.lowercase()?.contains(query) == true) ||
-                    (student.lastName?.lowercase()?.contains(query) == true) ||
-                    student.program.lowercase().contains(query)
-                }
+            var filteredList = if (!program.isNullOrBlank()) {
+                val prog = program.trim().lowercase()
+                list.filter { it.effectiveProgram.lowercase() == prog || it.effectiveProgram.lowercase().contains(prog) }
             } else {
                 list
+            }
+
+            if (!searchQuery.isNullOrBlank()) {
+                val query = searchQuery.trim().lowercase()
+                filteredList = filteredList.filter { student ->
+                    student.rollNumber.lowercase().contains(query) ||
+                    student.registrationNumber.lowercase().contains(query) ||
+                    student.effectiveDisplayName.lowercase().contains(query) ||
+                    student.effectiveProgram.lowercase().contains(query)
+                }
             }
 
             AuthResult.Success(filteredList)
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching Intermediate students registry: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to fetch official Intermediate students list")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to fetch official Intermediate students list"))
         }
     }
 
@@ -200,31 +249,78 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
+            val cleanRoll = rollNumber.trim().uppercase()
+            val cleanReg = registrationNumber.trim().uppercase()
+            val cleanProgram = program.trim()
+            val cleanSession = session.trim().ifBlank { "2024-2026" }
+            val studentFullName = listOfNotNull(firstName?.trim(), lastName?.trim())
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+                .ifBlank { "Intermediate Student ($cleanRoll)" }
+
             if (id.isNullOrBlank()) {
                 val payload = buildJsonObject {
-                    put("roll_number", rollNumber.trim())
-                    put("registration_number", registrationNumber.trim())
-                    put("program", program.trim())
-                    put("session", session.trim())
+                    put("roll_number", cleanRoll)
+                    put("registration_number", cleanReg)
+                    put("student_name", studentFullName)
+                    put("program_name", cleanProgram)
+                    put("session_year", cleanSession)
                     put("is_claimed", false)
                     put("is_active", isActive)
                 }
-                client.from("official_intermediate_students").insert(payload)
+                try {
+                    client.from("official_intermediate_students").insert(payload)
+                } catch (e: Exception) {
+                    val err = e.message ?: ""
+                    if (err.contains("program_name", ignoreCase = true) || err.contains("schema cache", ignoreCase = true) || err.contains("student_name", ignoreCase = true)) {
+                        val fallbackPayload = buildJsonObject {
+                            put("roll_number", cleanRoll)
+                            put("registration_number", cleanReg)
+                            put("program", cleanProgram)
+                            put("session", cleanSession)
+                            if (!firstName.isNullOrBlank()) put("first_name", firstName.trim())
+                            if (!lastName.isNullOrBlank()) put("last_name", lastName.trim())
+                            put("is_claimed", false)
+                            put("is_active", isActive)
+                        }
+                        client.from("official_intermediate_students").insert(fallbackPayload)
+                    } else {
+                        throw e
+                    }
+                }
             } else {
-                client.from("official_intermediate_students").update({
-                    set("roll_number", rollNumber.trim())
-                    set("registration_number", registrationNumber.trim())
-                    set("program", program.trim())
-                    set("session", session.trim())
-                    set("is_active", isActive)
-                }) {
-                    filter { eq("id", id) }
+                try {
+                    client.from("official_intermediate_students").update({
+                        set("roll_number", cleanRoll)
+                        set("registration_number", cleanReg)
+                        set("student_name", studentFullName)
+                        set("program_name", cleanProgram)
+                        set("session_year", cleanSession)
+                        set("is_active", isActive)
+                    }) {
+                        filter { eq("id", id) }
+                    }
+                } catch (e: Exception) {
+                    val err = e.message ?: ""
+                    if (err.contains("program_name", ignoreCase = true) || err.contains("schema cache", ignoreCase = true) || err.contains("student_name", ignoreCase = true)) {
+                        client.from("official_intermediate_students").update({
+                            set("roll_number", cleanRoll)
+                            set("registration_number", cleanReg)
+                            set("program", cleanProgram)
+                            set("session", cleanSession)
+                            set("is_active", isActive)
+                        }) {
+                            filter { eq("id", id) }
+                        }
+                    } else {
+                        throw e
+                    }
                 }
             }
-            AuthResult.Success(AdminOperationResultDto(success = true, message = "Intermediate Student saved successfully"))
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Intermediate Student record saved successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error managing Intermediate student record: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to update Intermediate student registry")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to update Intermediate student registry"))
         }
     }
 
@@ -239,7 +335,7 @@ class OfficialRegistryRemoteDataSource {
             AuthResult.Success(AdminOperationResultDto(success = true, message = "Intermediate student record deleted"))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting Intermediate student record: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to delete Intermediate record")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to delete Intermediate record"))
         }
     }
 
@@ -292,13 +388,13 @@ class OfficialRegistryRemoteDataSource {
             AuthResult.Success(filteredList)
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching Faculty registry: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to fetch official faculty list")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to fetch official faculty list"))
         }
     }
 
     /**
      * Provisions a teacher account securely by an Administrator.
-     * Inserts into official_faculty.
+     * Inserts into official_faculty and provisions login credentials in faculty_profiles.
      */
     suspend fun provisionTeacherAccount(
         facultyId: String,
@@ -313,21 +409,53 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
+            val cleanFacultyId = facultyId.trim().uppercase()
+            val cleanFullName = fullName.trim()
+            val cleanDept = department.trim()
+            val cleanDesig = designation.trim()
+            val cleanQual = qualification.trim()
+            val cleanUsername = username.trim().lowercase().ifBlank { cleanFacultyId.lowercase() }
+            val cleanEmail = if (!institutionalEmail.isNullOrBlank()) {
+                institutionalEmail.trim().lowercase()
+            } else {
+                "${cleanUsername.replace("-", ".").replace(" ", ".")}@ggcmbdin.edu.pk"
+            }
+
+            // 1. Insert / Upsert into official_faculty table
             val payload = buildJsonObject {
-                put("faculty_id", facultyId.trim())
-                put("full_name", fullName.trim())
-                put("department", department.trim())
-                put("designation", designation.trim())
-                if (!institutionalEmail.isNullOrBlank()) put("institutional_email", institutionalEmail.trim())
+                put("faculty_id", cleanFacultyId)
+                put("full_name", cleanFullName)
+                put("department", cleanDept)
+                put("designation", cleanDesig)
+                put("institutional_email", cleanEmail)
                 if (!phoneNumber.isNullOrBlank()) put("phone_number", phoneNumber.trim())
-                put("is_claimed", false)
+                put("is_claimed", true)
                 put("is_active", isActive)
             }
             client.from("official_faculty").insert(payload)
-            AuthResult.Success(AdminOperationResultDto(success = true, message = "Teacher account provisioned successfully"))
+
+            // 2. Direct register login credentials if password was provided
+            if (temporaryPassword.isNotBlank()) {
+                try {
+                    val regParams = buildJsonObject {
+                        put("p_faculty_id", cleanFacultyId)
+                        put("p_department", cleanDept)
+                        put("p_designation", cleanDesig)
+                        put("p_qualification", cleanQual)
+                        put("p_username", cleanUsername)
+                        put("p_full_name", cleanFullName)
+                        put("p_password", temporaryPassword.trim())
+                    }
+                    client.postgrest.rpc("direct_register_faculty", regParams)
+                } catch (rpcErr: Exception) {
+                    Log.w(TAG, "direct_register_faculty note: ${rpcErr.message}")
+                }
+            }
+
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Teacher account \"$cleanFullName\" provisioned successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error provisioning teacher account: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to provision teacher account")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to provision teacher account"))
         }
     }
 
@@ -348,13 +476,25 @@ class OfficialRegistryRemoteDataSource {
         isActive: Boolean = true
     ): AuthResult<AdminOperationResultDto> {
         return try {
+            val cleanFacultyId = facultyId.trim().uppercase()
+            val cleanFullName = fullName.trim().ifBlank {
+                listOfNotNull(firstName?.trim(), lastName?.trim()).joinToString(" ")
+            }.ifBlank { "Faculty Member ($cleanFacultyId)" }
+            val cleanDept = department.trim()
+            val cleanDesig = designation.trim()
+            val cleanEmail = if (!institutionalEmail.isNullOrBlank()) {
+                institutionalEmail.trim().lowercase()
+            } else {
+                "${cleanFacultyId.lowercase().replace("-", ".").replace(" ", ".")}@ggcmbdin.edu.pk"
+            }
+
             if (id.isNullOrBlank()) {
                 val payload = buildJsonObject {
-                    put("faculty_id", facultyId.trim())
-                    put("full_name", fullName.trim())
-                    put("department", department.trim())
-                    put("designation", designation.trim())
-                    if (!institutionalEmail.isNullOrBlank()) put("institutional_email", institutionalEmail.trim())
+                    put("faculty_id", cleanFacultyId)
+                    put("full_name", cleanFullName)
+                    put("department", cleanDept)
+                    put("designation", cleanDesig)
+                    put("institutional_email", cleanEmail)
                     if (!phoneNumber.isNullOrBlank()) put("phone_number", phoneNumber.trim())
                     put("is_claimed", false)
                     put("is_active", isActive)
@@ -362,11 +502,11 @@ class OfficialRegistryRemoteDataSource {
                 client.from("official_faculty").insert(payload)
             } else {
                 client.from("official_faculty").update({
-                    set("faculty_id", facultyId.trim())
-                    set("full_name", fullName.trim())
-                    set("department", department.trim())
-                    set("designation", designation.trim())
-                    if (institutionalEmail != null) set("institutional_email", institutionalEmail.trim())
+                    set("faculty_id", cleanFacultyId)
+                    set("full_name", cleanFullName)
+                    set("department", cleanDept)
+                    set("designation", cleanDesig)
+                    set("institutional_email", cleanEmail)
                     if (phoneNumber != null) set("phone_number", phoneNumber.trim())
                     set("is_active", isActive)
                 }) {
@@ -376,7 +516,7 @@ class OfficialRegistryRemoteDataSource {
             AuthResult.Success(AdminOperationResultDto(success = true, message = "Faculty record saved successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error managing Faculty record: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to update Faculty registry")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to update Faculty registry"))
         }
     }
 
@@ -391,7 +531,7 @@ class OfficialRegistryRemoteDataSource {
             AuthResult.Success(AdminOperationResultDto(success = true, message = "Faculty record deleted"))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting Faculty record: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to delete Faculty record")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to delete Faculty record"))
         }
     }
 
@@ -421,7 +561,7 @@ class OfficialRegistryRemoteDataSource {
             AuthResult.Success(AdminOperationResultDto(success = true, message = "Status updated successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error in setRegistryRecordActive: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to alter active status")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to alter active status"))
         }
     }
 
@@ -439,16 +579,30 @@ class OfficialRegistryRemoteDataSource {
                 "intermediate_student" -> "official_intermediate_students"
                 else -> "official_faculty"
             }
-            client.from(tableName).update({
-                set("is_claimed", false)
-                set("claimed_by", null as String?)
-            }) {
-                filter { eq("id", recordId) }
+            try {
+                client.from(tableName).update({
+                    set("is_claimed", false)
+                    set("claimed_by_user_id", null as String?)
+                    set("claimed_at", null as String?)
+                }) {
+                    filter { eq("id", recordId) }
+                }
+            } catch (e: Exception) {
+                val err = e.message ?: ""
+                if (err.contains("claimed_by_user_id", ignoreCase = true) || err.contains("schema cache", ignoreCase = true)) {
+                    client.from(tableName).update({
+                        set("is_claimed", false)
+                    }) {
+                        filter { eq("id", recordId) }
+                    }
+                } else {
+                    throw e
+                }
             }
-            AuthResult.Success(AdminOperationResultDto(success = true, message = "Record reset successfully"))
+            AuthResult.Success(AdminOperationResultDto(success = true, message = "Record claim reset successfully"))
         } catch (e: Exception) {
             Log.e(TAG, "Error in resetClaimedRecord: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Failed to reset record")
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to reset record"))
         }
     }
 }

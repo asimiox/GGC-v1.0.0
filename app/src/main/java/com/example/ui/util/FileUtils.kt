@@ -70,4 +70,32 @@ object FileUtils {
         val formatted = String.format(java.util.Locale.US, "%.1f", bytes / Math.pow(1024.0, digitGroups.toDouble()))
         return "$formatted ${units.getOrElse(digitGroups) { "MB" }}"
     }
+
+    fun isImageFileName(name: String?, url: String? = null): Boolean {
+        val checkTarget = (name ?: url ?: "").lowercase().trim()
+        val imageExtensions = listOf(".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg")
+        return imageExtensions.any { checkTarget.contains(it) } || checkTarget.contains("/college-media/") || checkTarget.contains("/profile-photos/")
+    }
+
+    fun isPdfFileName(name: String?, url: String? = null): Boolean {
+        val checkTarget = (name ?: url ?: "").lowercase().trim()
+        return checkTarget.contains(".pdf") || checkTarget.contains("/college-prospectus/") || checkTarget.contains("/official-documents/")
+    }
+
+    fun openFileInSystem(context: Context, url: String, fileName: String? = null) {
+        if (url.isBlank()) return
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch intent for URL $url: ${e.message}", e)
+            android.widget.Toast.makeText(
+                context,
+                "Unable to open file. URL: $url",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 }

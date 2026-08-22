@@ -24,16 +24,34 @@ data class OfficialBsStudentDto(
     @SerialName("roll_number") val rollNumber: String = "",
     @SerialName("registration_number") val registrationNumber: String = "",
     val program: String = "",
+    @SerialName("program_name") val programName: String? = null,
     val session: String? = null,
+    @SerialName("session_year") val sessionYear: String? = null,
+    @SerialName("student_name") val studentName: String? = null,
+    @SerialName("father_name") val fatherName: String? = null,
     @SerialName("first_name") val firstName: String? = null,
     @SerialName("last_name") val lastName: String? = null,
+    @SerialName("semester_number") val semesterNumber: Int? = null,
     @SerialName("is_claimed") val isClaimed: Boolean = false,
     @SerialName("claimed_by_user_id") val claimedByUserId: String? = null,
     @SerialName("claimed_at") val claimedAt: String? = null,
     @SerialName("is_active") val isActive: Boolean = true,
     @SerialName("created_at") val createdAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null
-)
+) {
+    val effectiveProgram: String
+        get() = if (program.isNotBlank()) program else (programName ?: "")
+
+    val effectiveSession: String
+        get() = if (!session.isNullOrBlank()) session else (sessionYear ?: "2024-2028")
+
+    val effectiveDisplayName: String
+        get() = when {
+            !studentName.isNullOrBlank() -> studentName
+            !firstName.isNullOrBlank() || !lastName.isNullOrBlank() -> "${firstName.orEmpty()} ${lastName.orEmpty()}".trim()
+            else -> "BS Student Record"
+        }
+}
 
 data class BsRegistrationForm(
     val firstName: String = "",
