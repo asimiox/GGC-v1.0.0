@@ -48,6 +48,10 @@ class OfficialRegistryRepository(
         return remoteDataSource.deleteBsStudentRecord(id)
     }
 
+    suspend fun batchInsertBsStudents(students: List<OfficialBsStudentDto>): AuthResult<Int> {
+        return remoteDataSource.batchInsertBsStudents(students)
+    }
+
     // =========================================================================
     // 2. INTERMEDIATE STUDENTS REGISTRY
     // =========================================================================
@@ -61,6 +65,10 @@ class OfficialRegistryRepository(
         offset: Long = 0
     ): AuthResult<List<OfficialIntermediateStudentDto>> {
         return remoteDataSource.fetchOfficialIntermediateStudents(program, isClaimed, isActive, searchQuery, limit, offset)
+    }
+
+    suspend fun batchInsertIntermediateStudents(students: List<OfficialIntermediateStudentDto>): AuthResult<Int> {
+        return remoteDataSource.batchInsertIntermediateStudents(students)
     }
 
     suspend fun manageIntermediateStudentRecord(

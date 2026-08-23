@@ -181,6 +181,9 @@ fun MainScreen() {
                 NavRoutes.CONTENT_MANAGEMENT -> ContentManagementScreen(
                     onBack = { currentRoute = previousRoute }
                 )
+                NavRoutes.HOD_DASHBOARD -> com.example.ui.screens.hod.HodDashboardScreen(
+                    onNavigateBack = { currentRoute = previousRoute }
+                )
                 else -> HomeScreen(
                     onNavigateToPrograms = {
                         previousRoute = NavRoutes.HOME

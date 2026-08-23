@@ -167,6 +167,117 @@ class OfficialRegistryRemoteDataSource {
     }
 
     /**
+     * Batch inserts a list of BS student records into the official registry.
+     */
+    suspend fun batchInsertBsStudents(students: List<OfficialBsStudentDto>): AuthResult<Int> {
+        return try {
+            var insertedCount = 0
+            for (student in students) {
+                val cleanRoll = student.rollNumber.trim().uppercase()
+                val cleanReg = student.registrationNumber.trim().uppercase()
+                val cleanProgram = student.effectiveProgram.trim()
+                val cleanSession = student.effectiveSession.trim().ifBlank { "2024-2028" }
+                val studentFullName = student.effectiveDisplayName.ifBlank { "BS Student ($cleanRoll)" }
+
+                val payload = buildJsonObject {
+                    put("roll_number", cleanRoll)
+                    put("registration_number", cleanReg)
+                    put("student_name", studentFullName)
+                    put("program_name", cleanProgram)
+                    put("session_year", cleanSession)
+                    put("is_claimed", false)
+                    put("is_active", true)
+                }
+
+                try {
+                    client.from("official_bs_students").insert(payload)
+                    insertedCount++
+                } catch (e: Exception) {
+                    val err = e.message ?: ""
+                    if (err.contains("program_name", ignoreCase = true) || err.contains("schema cache", ignoreCase = true) || err.contains("student_name", ignoreCase = true)) {
+                        val fallbackPayload = buildJsonObject {
+                            put("roll_number", cleanRoll)
+                            put("registration_number", cleanReg)
+                            put("program", cleanProgram)
+                            put("session", cleanSession)
+                            if (!student.firstName.isNullOrBlank()) put("first_name", student.firstName.trim())
+                            if (!student.lastName.isNullOrBlank()) put("last_name", student.lastName.trim())
+                            put("is_claimed", false)
+                            put("is_active", true)
+                        }
+                        client.from("official_bs_students").insert(fallbackPayload)
+                        insertedCount++
+                    } else if (err.contains("duplicate", ignoreCase = true) || err.contains("unique", ignoreCase = true) || err.contains("23505", ignoreCase = true)) {
+                        // Duplicate record, continue
+                        Log.d(TAG, "Skipping duplicate roll/reg: $cleanRoll")
+                    } else {
+                        Log.w(TAG, "Error inserting student $cleanRoll: $err")
+                    }
+                }
+            }
+            AuthResult.Success(insertedCount)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in batchInsertBsStudents: ${e.message}", e)
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to batch import students"))
+        }
+    }
+
+    /**
+     * Batch inserts a list of Intermediate student records into the official registry.
+     */
+    suspend fun batchInsertIntermediateStudents(students: List<OfficialIntermediateStudentDto>): AuthResult<Int> {
+        return try {
+            var insertedCount = 0
+            for (student in students) {
+                val cleanRoll = student.rollNumber.trim().uppercase()
+                val cleanReg = student.registrationNumber.trim().uppercase()
+                val cleanProgram = student.effectiveProgram.trim()
+                val cleanSession = student.effectiveSession.trim().ifBlank { "2024-2026" }
+                val studentFullName = student.effectiveDisplayName.ifBlank { "Intermediate Student ($cleanRoll)" }
+
+                val payload = buildJsonObject {
+                    put("roll_number", cleanRoll)
+                    put("registration_number", cleanReg)
+                    put("student_name", studentFullName)
+                    put("program_name", cleanProgram)
+                    put("session_year", cleanSession)
+                    put("is_claimed", false)
+                    put("is_active", true)
+                }
+
+                try {
+                    client.from("official_intermediate_students").insert(payload)
+                    insertedCount++
+                } catch (e: Exception) {
+                    val err = e.message ?: ""
+                    if (err.contains("program_name", ignoreCase = true) || err.contains("schema cache", ignoreCase = true) || err.contains("student_name", ignoreCase = true)) {
+                        val fallbackPayload = buildJsonObject {
+                            put("roll_number", cleanRoll)
+                            put("registration_number", cleanReg)
+                            put("program", cleanProgram)
+                            put("session", cleanSession)
+                            if (!student.firstName.isNullOrBlank()) put("first_name", student.firstName.trim())
+                            if (!student.lastName.isNullOrBlank()) put("last_name", student.lastName.trim())
+                            put("is_claimed", false)
+                            put("is_active", true)
+                        }
+                        client.from("official_intermediate_students").insert(fallbackPayload)
+                        insertedCount++
+                    } else if (err.contains("duplicate", ignoreCase = true) || err.contains("unique", ignoreCase = true) || err.contains("23505", ignoreCase = true)) {
+                        Log.d(TAG, "Skipping duplicate roll/reg: $cleanRoll")
+                    } else {
+                        Log.w(TAG, "Error inserting intermediate student $cleanRoll: $err")
+                    }
+                }
+            }
+            AuthResult.Success(insertedCount)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in batchInsertIntermediateStudents: ${e.message}", e)
+            AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Failed to batch import intermediate students"))
+        }
+    }
+
+    /**
      * Safely deletes an unclaimed official BS student record.
      */
     suspend fun deleteBsStudentRecord(id: String): AuthResult<AdminOperationResultDto> {

@@ -87,7 +87,15 @@ fun ProfileScreen(
     val scrollState = rememberScrollState()
     val userProfile by UserProfileManager.userProfile.collectAsState()
     var showFacultyAuthSheet by remember { mutableStateOf(false) }
+    var showHodDashboard by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    if (showHodDashboard) {
+        com.example.ui.screens.hod.HodDashboardScreen(
+            onNavigateBack = { showHodDashboard = false }
+        )
+        return
+    }
 
     if (showFacultyAuthSheet) {
         ModalBottomSheet(
@@ -486,6 +494,21 @@ fun ProfileScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    ProfileMenuRow(
+                        icon = Icons.Default.AdminPanelSettings,
+                        title = "HOD Command Center",
+                        subtitle = "Autonomous Department Management & Student Roster Ingestion",
+                        tag = "menu_hod_dashboard",
+                        onClick = {
+                            showHodDashboard = true
+                        }
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+
                     if (userProfile.isFaculty && userProfile.isVerified) {
                         ProfileMenuRow(
                             icon = Icons.AutoMirrored.Filled.Logout,

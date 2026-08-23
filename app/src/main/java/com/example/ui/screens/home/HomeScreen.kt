@@ -95,7 +95,8 @@ enum class HomeSubScreen {
     COURSES_OUTLINE,
     EVENTS,
     DOCUMENTS,
-    CONTENT_MANAGEMENT
+    CONTENT_MANAGEMENT,
+    HOD_DASHBOARD
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -183,6 +184,9 @@ fun HomeScreen(
                 onBack = { activeSubScreen = HomeSubScreen.NONE },
                 initialTab = targetContentTab
             )
+            HomeSubScreen.HOD_DASHBOARD -> com.example.ui.screens.hod.HodDashboardScreen(
+                onNavigateBack = { activeSubScreen = HomeSubScreen.NONE }
+            )
             HomeSubScreen.NONE -> {}
         }
         return
@@ -202,7 +206,8 @@ fun HomeScreen(
             onNavigateToEvents = { activeSubScreen = HomeSubScreen.EVENTS },
             onNavigateToDocuments = { activeSubScreen = HomeSubScreen.DOCUMENTS },
             onNavigateToProfile = { activeSubScreen = HomeSubScreen.PROFILE },
-            onNavigateToNotificationCenter = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER }
+            onNavigateToNotificationCenter = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER },
+            onNavigateToHodPanel = { activeSubScreen = HomeSubScreen.HOD_DASHBOARD }
         )
         return
     }
