@@ -18,7 +18,7 @@ enum class BsAuthTab {
 }
 
 data class BsAuthUiState(
-    val selectedTab: BsAuthTab = BsAuthTab.SIGNUP,
+    val selectedTab: BsAuthTab = BsAuthTab.LOGIN,
     val regForm: BsRegistrationForm = BsRegistrationForm(),
     val loginForm: BsLoginForm = BsLoginForm(),
     val isLoading: Boolean = false,

@@ -219,8 +219,16 @@ class AdminControlCenterViewModel(
         }
     }
 
-    // Role Management: Assign HOD
+    // Role Management: Assign HOD (Admin Privilege)
     fun assignHod(facultyUserId: String, departmentName: String) {
+        val currentProfile = UserProfileManager.userProfile.value
+        if (!currentProfile.isAdmin) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Only College Admin has the privilege to assign Head of Department (HOD)."
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val result = adminHodDataSource.assignHod(facultyUserId, departmentName)
@@ -242,8 +250,16 @@ class AdminControlCenterViewModel(
         }
     }
 
-    // Role Management: Revoke HOD
+    // Role Management: Revoke HOD (Admin Privilege)
     fun revokeHod(targetUserId: String) {
+        val currentProfile = UserProfileManager.userProfile.value
+        if (!currentProfile.isAdmin) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Only College Admin has the privilege to revoke Head of Department (HOD)."
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             val result = adminHodDataSource.revokeHod(targetUserId)
@@ -252,6 +268,155 @@ class AdminControlCenterViewModel(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         successMessage = "HOD role revoked. Reverted user to Faculty Teacher."
+                    )
+                    loadUserData()
+                }
+                is AuthResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    // Role Management: Create or Appoint HOD (One Department One HOD strictly enforced)
+    fun createOrAppointHod(
+        name: String,
+        department: String,
+        hodId: String,
+        password: String = "00000"
+    ) {
+        val currentProfile = UserProfileManager.userProfile.value
+        if (!currentProfile.isAdmin) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Only College Admin has the privilege to appoint Head of Department (HOD)."
+            )
+            return
+        }
+
+        if (name.isBlank() || department.isBlank() || hodId.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "HOD Name, Department, and HOD ID are required."
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val result = adminHodDataSource.createOrAppointHod(
+                name = name,
+                department = department,
+                hodId = hodId,
+                password = password.ifBlank { "00000" }
+            )
+            when (result) {
+                is AuthResult.Success -> {
+                    // Update local faculty list state to immediately reflect the new HOD appointment
+                    val currentList = _uiState.value.facultyList.toMutableList()
+                    
+                    // Enforce one HOD per department locally: demote any other HOD in this department
+                    val updatedList = currentList.map { faculty ->
+                        if (faculty.department.equals(department, ignoreCase = true) && 
+                            faculty.designation.contains("HOD", ignoreCase = true) &&
+                            faculty.facultyId != hodId.trim().uppercase()) {
+                            faculty.copy(designation = "Associate Professor")
+                        } else {
+                            faculty
+                        }
+                    }.toMutableList()
+
+                    val existingIndex = updatedList.indexOfFirst { it.facultyId.equals(hodId.trim(), ignoreCase = true) }
+                    val newHodEntry = OfficialFacultyRegistryDto(
+                        facultyId = hodId.trim().uppercase(),
+                        fullName = name.trim(),
+                        department = department.trim(),
+                        designation = "Head of Department (HOD)",
+                        qualification = "Ph.D / Head of Department",
+                        institutionalEmail = "hod.${department.lowercase().replace(" ", "")}@ggcmbdin.edu.pk",
+                        isClaimed = true,
+                        isActive = true
+                    )
+                    if (existingIndex >= 0) {
+                        updatedList[existingIndex] = newHodEntry
+                    } else {
+                        updatedList.add(0, newHodEntry)
+                    }
+
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        facultyList = updatedList,
+                        successMessage = "HOD '${name.trim()}' ($hodId) appointed successfully for Department of ${department.trim()} (Default Password: ${password.ifBlank { "00000" }})."
+                    )
+                    loadUserData()
+                }
+                is AuthResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    // Role Management: Create or Register Teacher (Permissions: Post & CRUD only)
+    fun createOrRegisterTeacher(
+        name: String,
+        department: String,
+        designation: String = "Lecturer",
+        teacherId: String,
+        password: String = "00000"
+    ) {
+        val currentProfile = UserProfileManager.userProfile.value
+        if (!currentProfile.isAdmin) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Only College Admin has privilege to add Faculty Teachers."
+            )
+            return
+        }
+
+        if (name.isBlank() || department.isBlank() || teacherId.isBlank()) {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = "Teacher Name, Department, and Teacher ID are required."
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val result = adminHodDataSource.createOrRegisterTeacher(
+                name = name,
+                department = department,
+                designation = designation.ifBlank { "Lecturer" },
+                teacherId = teacherId,
+                password = password.ifBlank { "00000" }
+            )
+            when (result) {
+                is AuthResult.Success -> {
+                    val currentList = _uiState.value.facultyList.toMutableList()
+                    val newTeacherEntry = OfficialFacultyRegistryDto(
+                        facultyId = teacherId.trim().uppercase(),
+                        fullName = name.trim(),
+                        department = department.trim(),
+                        designation = designation.trim().ifBlank { "Lecturer" },
+                        qualification = "M.Phil / Lecturer",
+                        institutionalEmail = "${teacherId.trim().lowercase()}@ggcmbdin.edu.pk",
+                        isClaimed = true,
+                        isActive = true
+                    )
+                    val existingIndex = currentList.indexOfFirst { it.facultyId.equals(teacherId.trim(), ignoreCase = true) }
+                    if (existingIndex >= 0) {
+                        currentList[existingIndex] = newTeacherEntry
+                    } else {
+                        currentList.add(0, newTeacherEntry)
+                    }
+
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        facultyList = currentList,
+                        successMessage = "Teacher '${name.trim()}' ($teacherId) added successfully for ${department.trim()}. (Role: Teacher - Post & CRUD Permissions, Default Password: ${password.ifBlank { "00000" }})."
                     )
                     loadUserData()
                 }

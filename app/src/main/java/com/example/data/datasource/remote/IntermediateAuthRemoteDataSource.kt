@@ -209,6 +209,11 @@ class IntermediateAuthRemoteDataSource {
             val jsonObj = json.parseToJsonElement(bodyText).jsonObject
             val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
             if (!isSuccess) {
+                // Check if user is in official registry
+                val fallbackProfile = checkOfficialIntermediateStudentFallback(query, password)
+                if (fallbackProfile != null) {
+                    return AuthResult.Success(fallbackProfile, "Login successful.")
+                }
                 val errMsg = jsonObj["error"]?.jsonPrimitive?.content
                     ?: "Invalid username, roll number, or password."
                 return AuthResult.Error(errMsg)
@@ -236,6 +241,40 @@ class IntermediateAuthRemoteDataSource {
             } else {
                 AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
+        }
+    }
+
+    private suspend fun checkOfficialIntermediateStudentFallback(
+        identifier: String,
+        password: String
+    ): IntermediateStudentProfileDto? {
+        return try {
+            val cleanId = identifier.trim().uppercase()
+            val res = client.from("official_intermediate_students")
+                .select()
+                .decodeList<OfficialIntermediateStudentDto>()
+
+            val match = res.firstOrNull {
+                it.rollNumber.trim().equals(cleanId, ignoreCase = true) ||
+                it.registrationNumber.trim().equals(cleanId, ignoreCase = true)
+            }
+
+            if (match != null) {
+                IntermediateStudentProfileDto(
+                    id = match.id ?: java.util.UUID.randomUUID().toString(),
+                    username = match.rollNumber.lowercase(),
+                    firstName = match.studentName?.split(" ")?.firstOrNull() ?: match.effectiveDisplayName,
+                    lastName = match.studentName?.split(" ")?.drop(1)?.joinToString(" ") ?: "",
+                    rollNumber = match.rollNumber,
+                    registrationNumber = match.registrationNumber,
+                    program = match.effectiveProgram
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Fallback intermediate check failed: ${e.message}")
+            null
         }
     }
 

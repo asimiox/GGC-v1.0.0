@@ -487,6 +487,34 @@ class NotificationRemoteDataSource {
                 // Subscribe to channel
                 channel.subscribe()
                 Log.d(TAG, "Supabase Realtime channel subscription active.")
+
+                // Launch companion high-frequency smart poller as safety net
+                launch {
+                    var lastCheckTime = System.currentTimeMillis()
+                    while (true) {
+                        kotlinx.coroutines.delay(15000) // 15s interval
+                        try {
+                            val recentRes = getNotifications(limit = 5, offset = 0)
+                            if (recentRes is AuthResult.Success) {
+                                recentRes.data.forEach { notif ->
+                                    val notifTime = try {
+                                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                                            timeZone = TimeZone.getTimeZone("UTC")
+                                        }.parse(notif.createdAt ?: "")?.time ?: 0L
+                                    } catch (e: Exception) { 0L }
+
+                                    if (notifTime > lastCheckTime) {
+                                        Log.d(TAG, "Live poller detected fresh notification: ${notif.title}")
+                                        _incomingNotifications.emit(notif)
+                                    }
+                                }
+                            }
+                            lastCheckTime = System.currentTimeMillis()
+                        } catch (e: Exception) {
+                            Log.d(TAG, "Background sync tick: ${e.message}")
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize Supabase Realtime channel: ${e.message}", e)
             }

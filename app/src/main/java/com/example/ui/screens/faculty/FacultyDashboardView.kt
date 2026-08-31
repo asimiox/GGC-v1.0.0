@@ -87,6 +87,7 @@ fun FacultyDashboardView(
     onNavigateToProfile: () -> Unit,
     onNavigateToNotificationCenter: () -> Unit,
     onNavigateToHodPanel: () -> Unit = {},
+    onNavigateToStudentsManagement: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Live greeting & date
@@ -349,88 +350,171 @@ fun FacultyDashboardView(
             }
         }
 
-        // 2.5. HOD Command Center Quick Access Card
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp)
-            ) {
-                Card(
+        // 2.5. Role-Specific Banner: HOD Command Center (HOD only) OR Teacher Content Studio (Teacher only)
+        if (userProfile.isHod || userProfile.isAdmin) {
+            item {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
-                        .clickable { onNavigateToHodPanel() }
-                        .testTag("faculty_hod_command_center_card"),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2B66)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        .padding(horizontal = 20.dp, vertical = 4.dp)
                 ) {
-                    Row(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .clip(RoundedCornerShape(18.dp))
+                            .clickable { onNavigateToHodPanel() }
+                            .testTag("faculty_hod_command_center_card"),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2B66)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Box(
+                        Row(
                             modifier = Modifier
-                                .size(46.dp)
-                                .clip(CircleShape)
-                                .background(BrandGold.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AdminPanelSettings,
-                                contentDescription = "HOD Panel",
-                                tint = BrandGoldLight,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "HOD Command Center",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(BrandGold.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AdminPanelSettings,
+                                    contentDescription = "HOD Panel",
+                                    tint = BrandGoldLight,
+                                    modifier = Modifier.size(26.dp)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Surface(
-                                    color = BrandGold.copy(alpha = 0.25f),
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = "NEW",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = BrandGoldLight,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                    )
-                                }
                             }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Add Teacher • Upload Students (.csv/.pdf) • Notice+",
-                                fontSize = 11.sp,
-                                color = Color.White.copy(alpha = 0.8f)
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "HOD Command Center",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        color = BrandGold.copy(alpha = 0.25f),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = "HOD ONLY",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BrandGoldLight,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Manage Department Teachers • Upload Student Roster (.csv/.pdf) • Dept Notices",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = BrandGoldLight,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
+                    }
+                }
+            }
+        } else {
+            // Teacher Publishing & CRUD Hub Banner
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 4.dp)
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(18.dp))
+                            .clickable { onNavigateToContentTab(ContentSectionTab.ANNOUNCEMENTS) }
+                            .testTag("teacher_content_hub_banner"),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2B66)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(BrandGold.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Campaign,
+                                    contentDescription = "Teacher Studio",
+                                    tint = BrandGoldLight,
+                                    modifier = Modifier.size(26.dp)
+                                )
+                            }
 
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = BrandGoldLight,
-                            modifier = Modifier.size(18.dp)
-                        )
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Teacher Posting & CRUD Hub",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        color = Color(0xFF2E7D32),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = "TEACHER",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "Manage Students, Post Notices, Lecture Notes, Outlines, Events",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = BrandGoldLight,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // 3. Quick Content Creation Action Bar
+        // 3. Quick Action Bar (Notices, Outlines, Students, Events)
         item {
             Column(
                 modifier = Modifier
@@ -438,13 +522,13 @@ fun FacultyDashboardView(
                     .padding(horizontal = 20.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = "Quick Publishing Actions",
+                    text = "Quick Actions",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = BrandNavy
                 )
                 Text(
-                    text = "Create authorized academic content with one tap",
+                    text = "Manage department students and academic content with one tap",
                     fontSize = 12.sp,
                     color = BrandTextMuted
                 )
@@ -453,8 +537,34 @@ fun FacultyDashboardView(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // + Student
+                    Button(
+                        onClick = onNavigateToStudentsManagement,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(44.dp)
+                            .testTag("quick_action_add_student"),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandGold),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = null,
+                            tint = BrandNavy,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Students",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
+                    }
+
                     // + Announcement
                     Button(
                         onClick = { onNavigateToContentTab(ContentSectionTab.ANNOUNCEMENTS) },
@@ -464,7 +574,7 @@ fun FacultyDashboardView(
                             .testTag("quick_action_add_notice"),
                         colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
                         shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Campaign,
@@ -472,10 +582,10 @@ fun FacultyDashboardView(
                             tint = BrandGoldLight,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "+ Notice",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
                         )
@@ -490,7 +600,7 @@ fun FacultyDashboardView(
                             .testTag("quick_action_add_outline"),
                         colors = ButtonDefaults.buttonColors(containerColor = BrandNavySecondary),
                         shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.AutoStories,
@@ -498,10 +608,10 @@ fun FacultyDashboardView(
                             tint = BrandGoldLight,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "+ Outline",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
                         )
@@ -516,7 +626,7 @@ fun FacultyDashboardView(
                             .testTag("quick_action_add_event"),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Event,
@@ -524,10 +634,10 @@ fun FacultyDashboardView(
                             tint = BrandNavy,
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "+ Event",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BrandNavy
                         )
@@ -551,22 +661,22 @@ fun FacultyDashboardView(
                     color = BrandNavy
                 )
 
-                // Row 1: My Courses (Navy) & Create Announcement (White)
+                // Row 1: Student Management (Gold/Navy) & Announcements (White)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 1: My Courses & Syllabi (Navy)
+                    // Card 1: Students & Roster Management (Navy with Gold badge)
                     FacultyBentoCard(
-                        title = "My Courses",
-                        subtitle = "Syllabi & Outlines",
-                        icon = Icons.Default.AutoStories,
+                        title = "Students Roster",
+                        subtitle = "Enroll & Manage Records",
+                        icon = Icons.Default.School,
                         isDark = true,
-                        badgeText = "Curriculum",
-                        onClick = onNavigateToCourses,
+                        badgeText = "Students",
+                        onClick = onNavigateToStudentsManagement,
                         modifier = Modifier
                             .weight(1f)
-                            .testTag("faculty_card_courses")
+                            .testTag("faculty_card_students")
                     )
 
                     // Card 2: Create Announcement (White)
@@ -583,44 +693,57 @@ fun FacultyDashboardView(
                     )
                 }
 
-                // Row 2: Manage Notes & Materials (White) & College Events (Navy)
+                // Row 2: My Courses & Syllabi (Navy) & Manage Notes (White)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 3: Manage Notes & Study Materials (White)
+                    // Card 3: My Courses & Syllabi
+                    FacultyBentoCard(
+                        title = "My Courses",
+                        subtitle = "Syllabi & Outlines",
+                        icon = Icons.Default.AutoStories,
+                        isDark = false,
+                        badgeText = "Curriculum",
+                        onClick = onNavigateToCourses,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("faculty_card_courses")
+                    )
+
+                    // Card 4: Manage Notes & Study Materials (White)
                     FacultyBentoCard(
                         title = "Course Notes",
                         subtitle = "Lecture Slides & PDFs",
                         icon = Icons.Default.UploadFile,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Materials",
                         onClick = { onNavigateToContentTab(ContentSectionTab.COURSE_OUTLINES) },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("faculty_card_notes")
                     )
+                }
 
-                    // Card 4: Academic Events & Seminars (Navy)
+                // Row 3: College Events (Navy) & Official Docs (White)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Card 5: Academic Events & Seminars (White)
                     FacultyBentoCard(
                         title = "College Events",
                         subtitle = "Seminars & Workshops",
                         icon = Icons.Default.Event,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Organize",
                         onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("faculty_card_events")
                     )
-                }
 
-                // Row 3: Academic Resources (Navy) & My Faculty Profile (White)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    // Card 5: Official Documents & Resources (Navy)
+                    // Card 6: Official Documents & Resources (Navy)
                     FacultyBentoCard(
                         title = "Official Docs",
                         subtitle = "Rules & Guidelines",
@@ -632,17 +755,22 @@ fun FacultyDashboardView(
                             .weight(1f)
                             .testTag("faculty_card_documents")
                     )
+                }
 
-                    // Card 6: My Profile & Settings (White)
+                // Row 4: My Faculty Profile
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                     FacultyBentoCard(
-                        title = "My Profile",
-                        subtitle = "Staff Credentials",
+                        title = "My Faculty Profile",
+                        subtitle = "Staff ID & Credentials",
                         icon = Icons.Default.Badge,
                         isDark = false,
                         badgeText = "Faculty ID",
                         onClick = onNavigateToProfile,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
                             .testTag("faculty_card_profile")
                     )
                 }

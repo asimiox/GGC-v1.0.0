@@ -1,6 +1,6 @@
 package com.example.ui.screens.hod
 
-import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,32 +14,36 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,10 +52,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -69,15 +73,22 @@ private val BrandBg = Color(0xFFF6F8FB)
 data class HodMainFeatureCardItem(
     val title: String,
     val subtitle: String,
+    val badge: String,
     val icon: ImageVector,
     val iconBgColor: Color,
     val iconTint: Color,
-    val testTag: String,
+    val tag: String,
     val targetScreen: HodFlowScreen
 )
 
 /**
- * Main HOD Command Center & Router Screen.
+ * Master HOD Dashboard Screen:
+ * Strictly limited to the 4 requested HOD departmental operations:
+ * 1. Teachers CRUD
+ * 2. Students Import & CRUD
+ * 3. Posts CRUD
+ * 4. Announcements CRUD
+ * Everything is strictly bound to the HOD's own designated department.
  */
 @Composable
 fun HodDashboardScreen(
@@ -85,28 +96,10 @@ fun HodDashboardScreen(
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    LaunchedEffect(state.statusMessage) {
-        state.statusMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessages()
-        }
-    }
-
-    // Handle Android hardware back press depending on current sub-screen
-    BackHandler(enabled = state.currentScreen != HodFlowScreen.DASHBOARD) {
-        when (state.currentScreen) {
-            HodFlowScreen.DASHBOARD -> onNavigateBack()
-            HodFlowScreen.ADD_TEACHER_FORM -> viewModel.navigateTo(HodFlowScreen.DASHBOARD)
-            HodFlowScreen.TEACHER_CREATED_SUMMARY -> viewModel.navigateTo(HodFlowScreen.DASHBOARD)
-            HodFlowScreen.UPLOAD_STUDENTS -> viewModel.navigateTo(HodFlowScreen.DASHBOARD)
-            HodFlowScreen.STUDENTS_IMPORTED_PREVIEW -> viewModel.navigateTo(HodFlowScreen.UPLOAD_STUDENTS)
-            HodFlowScreen.NOTICE_CATEGORY_SELECT -> viewModel.navigateTo(HodFlowScreen.DASHBOARD)
-            HodFlowScreen.NOTICE_COMPOSE_SEND -> viewModel.navigateTo(HodFlowScreen.NOTICE_CATEGORY_SELECT)
-            HodFlowScreen.PROFILE_SETTINGS -> viewModel.navigateTo(HodFlowScreen.DASHBOARD)
-        }
+    LaunchedEffect(Unit) {
+        viewModel.loadHodProfile()
     }
 
     when (state.currentScreen) {
@@ -114,140 +107,143 @@ fun HodDashboardScreen(
             HodDashboardMainView(
                 state = state,
                 onFeatureClick = { viewModel.navigateTo(it) },
-                onRefresh = { viewModel.refreshDepartmentStats() },
-                onNavigateBack = onNavigateBack,
-                snackbarHostState = snackbarHostState
+                onRefresh = { viewModel.refreshAllData() },
+                onDismissMessage = { viewModel.clearMessages() },
+                onBack = onNavigateBack
             )
         }
-        HodFlowScreen.ADD_TEACHER_FORM -> {
-            HodAddTeacherFormScreen(
+
+        HodFlowScreen.TEACHERS_MANAGEMENT -> {
+            HodTeachersCrudScreen(
                 state = state,
-                onUpdateForm = { n, d, s, id, p -> viewModel.updateTeacherForm(n, d, s, id, p) },
-                onSubmit = { viewModel.createTeacherAccount() },
+                onSearchChange = { viewModel.setTeachersSearchQuery(it) },
+                onRefresh = { viewModel.fetchDepartmentTeachers() },
+                onCreateTeacher = { name, desig, subj, id, pass, phone ->
+                    viewModel.createTeacher(name, desig, subj, id, pass, phone)
+                },
+                onUpdateTeacher = { id, fId, name, desig, subj, phone, isActive ->
+                    viewModel.updateTeacher(id, fId, name, desig, subj, phone, isActive)
+                },
+                onDeleteTeacher = { id, name ->
+                    viewModel.deleteTeacher(id, name)
+                },
                 onBack = { viewModel.navigateTo(HodFlowScreen.DASHBOARD) }
             )
         }
-        HodFlowScreen.TEACHER_CREATED_SUMMARY -> {
-            HodTeacherCreatedSummaryScreen(
-                createdTeacher = state.lastCreatedTeacher,
-                onNavigateToNotice = {
-                    viewModel.setNoticeCategory("General Notice")
-                    viewModel.navigateTo(HodFlowScreen.NOTICE_COMPOSE_SEND)
-                },
-                onNavigateToNewTalk = {
-                    // Handled inside component
-                },
-                onNavigateToProfile = {
-                    viewModel.navigateTo(HodFlowScreen.PROFILE_SETTINGS)
-                },
-                onAddAnotherTeacher = {
-                    viewModel.updateTeacherForm("", "Lecturer", "", "", "00000")
-                    viewModel.navigateTo(HodFlowScreen.ADD_TEACHER_FORM)
-                },
-                onDone = {
-                    viewModel.navigateTo(HodFlowScreen.DASHBOARD)
-                }
-            )
-        }
-        HodFlowScreen.UPLOAD_STUDENTS -> {
-            HodUploadStudentsScreen(
+
+        HodFlowScreen.STUDENTS_MANAGEMENT -> {
+            HodStudentsCrudScreen(
                 state = state,
-                onUpdateConfig = { p, sem, s -> viewModel.updateUploadConfig(p, sem, s) },
-                onFileSelected = { uri -> viewModel.parseStudentFileUri(context, uri) },
-                onParseText = { text -> viewModel.parseStudentDataFromText(text) },
-                onLoadSample = { viewModel.loadSampleGazetteData() },
-                onBack = { viewModel.navigateTo(HodFlowScreen.DASHBOARD) }
-            )
-        }
-        HodFlowScreen.STUDENTS_IMPORTED_PREVIEW -> {
-            HodStudentsImportedPreviewScreen(
-                state = state,
+                onSearchChange = { viewModel.setStudentsSearchQuery(it) },
+                onRefresh = { viewModel.fetchDepartmentStudents() },
+                onCreateStudent = { roll, reg, prog, sess, first, last, active ->
+                    viewModel.createBsStudent(roll, reg, prog, sess, first, last, active)
+                },
+                onUpdateStudent = { id, roll, reg, prog, sess, first, last, active ->
+                    viewModel.updateBsStudent(id, roll, reg, prog, sess, first, last, active)
+                },
+                onDeleteStudent = { id, roll ->
+                    viewModel.deleteBsStudent(id, roll)
+                },
+                onUpdateUploadConfig = { prog, sem, sess ->
+                    viewModel.updateUploadConfig(prog, sem, sess)
+                },
+                onParseText = { viewModel.parseStudentDataFromText(it) },
+                onParseFileUri = { ctx, uri -> viewModel.parseStudentFileUri(ctx, uri) },
+                onToggleSelectStudent = { viewModel.toggleStudentSelection(it) },
                 onToggleSelectAll = { viewModel.toggleSelectAllStudents() },
-                onToggleStudent = { id -> viewModel.toggleStudentSelection(id) },
-                onPushToSupabase = { viewModel.pushSelectedStudentsToSupabase() },
-                onBack = { viewModel.navigateTo(HodFlowScreen.UPLOAD_STUDENTS) }
-            )
-        }
-        HodFlowScreen.NOTICE_CATEGORY_SELECT -> {
-            HodNoticeCategorySelectScreen(
-                state = state,
-                onSelectCategory = { cat -> viewModel.setNoticeCategory(cat) },
-                onProceedToCompose = { viewModel.navigateTo(HodFlowScreen.NOTICE_COMPOSE_SEND) },
+                onPushSelectedToSupabase = { viewModel.pushSelectedStudentsToSupabase() },
                 onBack = { viewModel.navigateTo(HodFlowScreen.DASHBOARD) }
             )
         }
-        HodFlowScreen.NOTICE_COMPOSE_SEND -> {
-            HodNoticeComposeSendScreen(
+
+        HodFlowScreen.POSTS_MANAGEMENT -> {
+            HodPostsCrudScreen(
                 state = state,
-                onUpdateNotice = { dept, sem, t, c -> viewModel.updateNoticeCompose(dept, sem, t, c) },
-                onPost = { viewModel.postNotice() },
-                onBack = { viewModel.navigateTo(HodFlowScreen.NOTICE_CATEGORY_SELECT) }
+                onSearchChange = { viewModel.setPostsSearchQuery(it) },
+                onRefresh = { viewModel.fetchDepartmentPosts() },
+                onCreatePost = { title, content, category, venue, date ->
+                    viewModel.createPost(title, content, category, venue, date)
+                },
+                onUpdatePost = { id, title, content, category, venue, date ->
+                    viewModel.updatePost(id, title, content, category, venue, date)
+                },
+                onDeletePost = { id, title ->
+                    viewModel.deletePost(id, title)
+                },
+                onBack = { viewModel.navigateTo(HodFlowScreen.DASHBOARD) }
             )
         }
-        HodFlowScreen.PROFILE_SETTINGS -> {
-            HodProfileSettingsScreen(
+
+        HodFlowScreen.ANNOUNCEMENTS_MANAGEMENT -> {
+            HodAnnouncementsCrudScreen(
                 state = state,
-                onUpdateForm = { id, cp, np, cfm -> viewModel.updateProfileSettingsForm(id, cp, np, cfm) },
-                onSave = { ctx -> viewModel.saveProfileSettings(ctx) },
+                onSearchChange = { viewModel.setAnnouncementsSearchQuery(it) },
+                onRefresh = { viewModel.fetchDepartmentAnnouncements() },
+                onCreateAnnouncement = { title, content, category, isPinned ->
+                    viewModel.createAnnouncement(title, content, category, isPinned)
+                },
+                onUpdateAnnouncement = { id, title, content, category, isPinned, isPublished ->
+                    viewModel.updateAnnouncement(id, title, content, category, isPinned, isPublished)
+                },
+                onDeleteAnnouncement = { id, title ->
+                    viewModel.deleteAnnouncement(id, title)
+                },
                 onBack = { viewModel.navigateTo(HodFlowScreen.DASHBOARD) }
             )
         }
     }
 }
 
-/**
- * 1st Page: HOD Dashboard
- * Main features shown on dashboard:
- * - Add Teacher
- * - Upload Students Data
- * - Notice+ / Announcements+
- * - Profile Settings
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HodDashboardMainView(
+fun HodDashboardMainView(
     state: HodUiState,
     onFeatureClick: (HodFlowScreen) -> Unit,
     onRefresh: () -> Unit,
-    onNavigateBack: () -> Unit,
-    snackbarHostState: SnackbarHostState
+    onDismissMessage: () -> Unit,
+    onBack: () -> Unit
 ) {
     val features = listOf(
         HodMainFeatureCardItem(
-            title = "Add Teacher",
-            subtitle = "Provision faculty accounts with Subject, ID & Credentials",
-            icon = Icons.Default.PersonAdd,
-            iconBgColor = Color(0xFFE8EAF6),
-            iconTint = BrandNavy,
-            testTag = "hod_feature_add_teacher",
-            targetScreen = HodFlowScreen.ADD_TEACHER_FORM
+            title = "Teachers Management",
+            subtitle = "View, provision, edit & remove department faculty",
+            badge = "${state.totalFacultyCount} Faculty",
+            icon = Icons.Default.Person,
+            iconBgColor = Color(0xFFE8F5E9),
+            iconTint = Color(0xFF2E7D32),
+            tag = "hod_feature_teachers",
+            targetScreen = HodFlowScreen.TEACHERS_MANAGEMENT
         ),
         HodMainFeatureCardItem(
-            title = "Upload Students Data",
-            subtitle = "Ingest .csv, .txt, .pdf rosters with gazette parser & sync to Supabase",
-            icon = Icons.Default.CloudUpload,
-            iconBgColor = Color(0xFFE0F2F1),
-            iconTint = Color(0xFF00796B),
-            testTag = "hod_feature_upload_students",
-            targetScreen = HodFlowScreen.UPLOAD_STUDENTS
+            title = "Students Import & CRUD",
+            subtitle = "Batch import rosters (CSV/Gazette) & manage student records",
+            badge = "${state.totalStudentsCount} Students",
+            icon = Icons.Default.School,
+            iconBgColor = Color(0xFFE3F2FD),
+            iconTint = Color(0xFF1565C0),
+            tag = "hod_feature_students",
+            targetScreen = HodFlowScreen.STUDENTS_MANAGEMENT
         ),
         HodMainFeatureCardItem(
-            title = "Notice+ / Announcements+",
-            subtitle = "Broadcast events, fees, date sheets by department & semester",
-            icon = Icons.Default.Campaign,
+            title = "Department Posts",
+            subtitle = "Create, edit & delete department news and articles",
+            badge = "${state.totalPostsCount} Posts",
+            icon = Icons.Default.Article,
             iconBgColor = Color(0xFFFFF3E0),
             iconTint = Color(0xFFE65100),
-            testTag = "hod_feature_notice",
-            targetScreen = HodFlowScreen.NOTICE_CATEGORY_SELECT
+            tag = "hod_feature_posts",
+            targetScreen = HodFlowScreen.POSTS_MANAGEMENT
         ),
         HodMainFeatureCardItem(
-            title = "Profile Settings",
-            subtitle = "Manage HOD credentials, Teacher ID & Account Password",
-            icon = Icons.Default.ManageAccounts,
+            title = "Announcements & Notices",
+            subtitle = "Broadcast notices, event alerts & date sheets with pinned priority",
+            badge = "${state.totalAnnouncementsCount} Notices",
+            icon = Icons.Default.Campaign,
             iconBgColor = Color(0xFFEDE7F6),
             iconTint = Color(0xFF512DA8),
-            testTag = "hod_feature_profile_settings",
-            targetScreen = HodFlowScreen.PROFILE_SETTINGS
+            tag = "hod_feature_announcements",
+            targetScreen = HodFlowScreen.ANNOUNCEMENTS_MANAGEMENT
         )
     )
 
@@ -257,20 +253,20 @@ private fun HodDashboardMainView(
                 title = {
                     Column {
                         Text(
-                            text = "HOD Command Panel",
+                            text = "HOD Department Portal",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "Govt Graduate College Mandi Bahauddin",
+                            text = state.departmentName,
                             fontSize = 12.sp,
                             color = BrandGoldLight
                         )
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
@@ -282,7 +278,7 @@ private fun HodDashboardMainView(
                     IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh Data",
+                            contentDescription = "Refresh",
                             tint = Color.White
                         )
                     }
@@ -290,71 +286,75 @@ private fun HodDashboardMainView(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandNavy)
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = BrandBg
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
-            item {
-                Spacer(modifier = Modifier.height(6.dp))
+            // Status / Error Banners
+            state.statusMessage?.let { msg ->
+                Surface(
+                    color = Color(0xFFE8F5E9),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF2E7D32))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(msg, fontSize = 13.sp, color = Color(0xFF1B5E20), modifier = Modifier.weight(1f))
+                        IconButton(onClick = onDismissMessage, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Color(0xFF2E7D32), modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // HOD Identity & Department Hero Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = BrandNavy),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            state.errorMessage?.let { err ->
+                Surface(
+                    color = Color(0xFFFFEBEE),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                color = BrandGold.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Verified,
-                                        contentDescription = null,
-                                        tint = BrandGoldLight,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "Official HOD Authority",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = BrandGoldLight
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = "GGC Mandi Bahauddin",
-                                fontSize = 11.sp,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
+                        Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Color(0xFFC62828))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(err, fontSize = 13.sp, color = Color(0xFFB71C1C), modifier = Modifier.weight(1f))
+                        IconButton(onClick = onDismissMessage, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Color(0xFFC62828), modifier = Modifier.size(16.dp))
                         }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-                        Spacer(modifier = Modifier.height(14.dp))
-
+            // HOD Identity Card (Locked to Department)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(BrandNavy, Color(0xFF0D2D7D))
+                            )
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -363,154 +363,153 @@ private fun HodDashboardMainView(
                                 modifier = Modifier
                                     .size(52.dp)
                                     .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.15f)),
+                                    .background(BrandGold.copy(alpha = 0.2f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Person,
+                                    imageVector = Icons.Default.Badge,
                                     contentDescription = null,
                                     tint = BrandGoldLight,
-                                    modifier = Modifier.size(30.dp)
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
+
                             Spacer(modifier = Modifier.width(14.dp))
-                            Column {
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Surface(
+                                    color = BrandGold.copy(alpha = 0.25f),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Lock,
+                                            contentDescription = null,
+                                            tint = BrandGoldLight,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "Head of Department (HOD)",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BrandGoldLight
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = state.hodName,
-                                    fontSize = 19.sp,
+                                    fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
-                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Head of Department • ${state.departmentName}",
+                                    text = "Department of ${state.departmentName}",
                                     fontSize = 13.sp,
-                                    color = BrandGoldLight
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
                         HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // Department Quick Stats
+                        // Quick Stats Row (Strictly for this department)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "${state.totalFacultyCount}",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Faculty Staff",
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.75f)
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "${state.totalStudentsCount}",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Enrolled Students",
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.75f)
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "${state.activeNoticesCount}",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Active Notices",
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.75f)
-                                )
-                            }
+                            HodQuickStatItem("Faculty", "${state.totalFacultyCount}", Color(0xFF81C784))
+                            HodQuickStatItem("Students", "${state.totalStudentsCount}", Color(0xFF64B5F6))
+                            HodQuickStatItem("Posts", "${state.totalPostsCount}", Color(0xFFFFB74D))
+                            HodQuickStatItem("Notices", "${state.totalAnnouncementsCount}", Color(0xFFBA68C8))
                         }
                     }
                 }
             }
 
-            // Features Section Header
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Department Operations",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandNavy
-                    )
-                    Text(
-                        text = "4 Core Features",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = BrandGold
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // The 4 Primary Feature Cards
-            items(features.size) { index ->
-                val feature = features[index]
+            Text(
+                text = "Department Operations",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandNavy
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "All operations are strictly isolated to the ${state.departmentName} department.",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // The 4 Primary Features
+            features.forEach { item ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable { onFeatureClick(feature.targetScreen) }
-                        .testTag(feature.testTag),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                        .padding(vertical = 6.dp)
+                        .testTag(item.tag)
+                        .clickable { onFeatureClick(item.targetScreen) },
                     shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(18.dp),
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                                .background(feature.iconBgColor),
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(item.iconBgColor),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = feature.icon,
+                                imageVector = item.icon,
                                 contentDescription = null,
-                                tint = feature.iconTint,
+                                tint = item.iconTint,
                                 modifier = Modifier.size(26.dp)
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(14.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = item.title,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Surface(
+                                    color = item.iconBgColor,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = item.badge,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = item.iconTint,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = feature.title,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandNavy
-                            )
-                            Spacer(modifier = Modifier.height(3.dp))
-                            Text(
-                                text = feature.subtitle,
+                                text = item.subtitle,
                                 fontSize = 12.sp,
                                 color = Color.Gray,
                                 lineHeight = 16.sp
@@ -519,27 +518,38 @@ private fun HodDashboardMainView(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(BrandNavy.copy(alpha = 0.05f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint = BrandNavy,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open",
+                            tint = Color.LightGray,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            Spacer(modifier = Modifier.height(40.dp))
         }
+    }
+}
+
+@Composable
+private fun HodQuickStatItem(
+    label: String,
+    value: String,
+    accentColor: Color
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = accentColor
+        )
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            color = Color.White.copy(alpha = 0.7f)
+        )
     }
 }

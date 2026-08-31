@@ -41,6 +41,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.example.data.datasource.RegisteredAccount
+import com.example.data.datasource.RegisteredFacultyStore
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -239,7 +242,43 @@ fun FacultyAuthContent(
                     color = Color(0xFF7A879D)
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Quick credentials helper row
+                val savedAccounts: List<RegisteredAccount> = remember { RegisteredFacultyStore.getAllAccounts() }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (savedAccounts.isNotEmpty()) {
+                        for (acc in savedAccounts.take(2)) {
+                            androidx.compose.material3.AssistChip(
+                                onClick = {
+                                    viewModel.updateLoginUsernameOrFacultyId(acc.facultyId)
+                                    viewModel.updateLoginPassword(acc.password)
+                                },
+                                label = { Text("${acc.facultyId} · ${acc.password}", fontSize = 11.sp) }
+                            )
+                        }
+                    } else {
+                        androidx.compose.material3.AssistChip(
+                            onClick = {
+                                viewModel.updateLoginUsernameOrFacultyId("IT-T-01")
+                                viewModel.updateLoginPassword("00000")
+                            },
+                            label = { Text("IT-T-01 · 00000", fontSize = 11.sp) }
+                        )
+                        androidx.compose.material3.AssistChip(
+                            onClick = {
+                                viewModel.updateLoginUsernameOrFacultyId("CS-04")
+                                viewModel.updateLoginPassword("00000")
+                            },
+                            label = { Text("CS-04 · 00000", fontSize = 11.sp) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Username / Faculty ID / Email
                 OutlinedTextField(

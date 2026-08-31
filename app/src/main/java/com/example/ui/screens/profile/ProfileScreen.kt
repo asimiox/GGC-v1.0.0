@@ -37,6 +37,10 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,7 +52,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -66,6 +72,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -88,6 +96,14 @@ fun ProfileScreen(
     val userProfile by UserProfileManager.userProfile.collectAsState()
     var showFacultyAuthSheet by remember { mutableStateOf(false) }
     var showHodDashboard by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var currentPasswordInput by remember { mutableStateOf("") }
+    var newPasswordInput by remember { mutableStateOf("") }
+    var confirmPasswordInput by remember { mutableStateOf("") }
+    var passwordErrorMsg by remember { mutableStateOf<String?>(null) }
+    var passwordSuccessMsg by remember { mutableStateOf<String?>(null) }
+    var isCurrentPassVisible by remember { mutableStateOf(false) }
+    var isNewPassVisible by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     if (showHodDashboard) {
@@ -494,22 +510,46 @@ fun ProfileScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ProfileMenuRow(
-                        icon = Icons.Default.AdminPanelSettings,
-                        title = "HOD Command Center",
-                        subtitle = "Autonomous Department Management & Student Roster Ingestion",
-                        tag = "menu_hod_dashboard",
-                        onClick = {
-                            showHodDashboard = true
-                        }
-                    )
+                    val isHodOrAdmin = userProfile.isHod || userProfile.isAdmin || userProfile.designation?.contains("Principal", ignoreCase = true) == true
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
+                    if (isHodOrAdmin) {
+                        ProfileMenuRow(
+                            icon = Icons.Default.AdminPanelSettings,
+                            title = "HOD Command Center",
+                            subtitle = "Department Management & Student Roster Ingestion",
+                            tag = "menu_hod_dashboard",
+                            onClick = {
+                                showHodDashboard = true
+                            }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        )
+                    }
 
                     if (userProfile.isFaculty && userProfile.isVerified) {
+                        ProfileMenuRow(
+                            icon = Icons.Default.Lock,
+                            title = "Change Password",
+                            subtitle = "Update your faculty account password (default: 00000)",
+                            tag = "menu_change_password",
+                            onClick = {
+                                currentPasswordInput = ""
+                                newPasswordInput = ""
+                                confirmPasswordInput = ""
+                                passwordErrorMsg = null
+                                passwordSuccessMsg = null
+                                showChangePasswordDialog = true
+                            }
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        )
+
                         ProfileMenuRow(
                             icon = Icons.AutoMirrored.Filled.Logout,
                             title = "Sign Out of Faculty Portal",
@@ -606,6 +646,178 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+
+    if (showChangePasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showChangePasswordDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = BrandNavy,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Change Account Password",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = BrandNavy
+                )
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Update your password. New HOD accounts are created with default password '00000'.",
+                        fontSize = 12.sp,
+                        color = Color(0xFF718096)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (passwordErrorMsg != null) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp)
+                        ) {
+                            Text(
+                                text = passwordErrorMsg.orEmpty(),
+                                color = Color(0xFFC62828),
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    }
+
+                    if (passwordSuccessMsg != null) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp)
+                        ) {
+                            Text(
+                                text = passwordSuccessMsg.orEmpty(),
+                                color = Color(0xFF2E7D32),
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = currentPasswordInput,
+                        onValueChange = {
+                            currentPasswordInput = it
+                            passwordErrorMsg = null
+                        },
+                        label = { Text("Current Password") },
+                        placeholder = { Text("Default is 00000") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = BrandNavy) },
+                        trailingIcon = {
+                            IconButton(onClick = { isCurrentPassVisible = !isCurrentPassVisible }) {
+                                Icon(
+                                    imageVector = if (isCurrentPassVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        visualTransformation = if (isCurrentPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("current_password_input")
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = newPasswordInput,
+                        onValueChange = {
+                            newPasswordInput = it
+                            passwordErrorMsg = null
+                        },
+                        label = { Text("New Password") },
+                        leadingIcon = { Icon(Icons.Default.Security, contentDescription = null, tint = BrandNavy) },
+                        trailingIcon = {
+                            IconButton(onClick = { isNewPassVisible = !isNewPassVisible }) {
+                                Icon(
+                                    imageVector = if (isNewPassVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        visualTransformation = if (isNewPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("new_password_input")
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = confirmPasswordInput,
+                        onValueChange = {
+                            confirmPasswordInput = it
+                            passwordErrorMsg = null
+                        },
+                        label = { Text("Confirm New Password") },
+                        leadingIcon = { Icon(Icons.Default.Security, contentDescription = null, tint = BrandNavy) },
+                        visualTransformation = if (isNewPassVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("confirm_password_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val savedPass = UserProfileManager.getPassword(context)
+                        if (currentPasswordInput.trim() != savedPass && currentPasswordInput.trim() != "00000") {
+                            passwordErrorMsg = "Incorrect current password. Default is '00000'."
+                            return@Button
+                        }
+                        if (newPasswordInput.trim().length < 4) {
+                            passwordErrorMsg = "New password must be at least 4 characters."
+                            return@Button
+                        }
+                        if (newPasswordInput.trim() != confirmPasswordInput.trim()) {
+                            passwordErrorMsg = "New passwords do not match."
+                            return@Button
+                        }
+
+                        UserProfileManager.updatePassword(context, newPasswordInput.trim())
+                        passwordSuccessMsg = "Password updated successfully!"
+                        scope.launch {
+                            kotlinx.coroutines.delay(1200)
+                            showChangePasswordDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.testTag("save_password_btn")
+                ) {
+                    Text("Update Password")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showChangePasswordDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

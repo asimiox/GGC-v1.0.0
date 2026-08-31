@@ -47,4 +47,16 @@ class AdminHodRepository(
     suspend fun revokeHod(targetUserId: String): AuthResult<AdminOperationResultDto> {
         return remoteDataSource.revokeHod(targetUserId)
     }
+
+    /**
+     * Creates and provisions an HOD account with Name, Department, HOD ID, and Password (default 00000).
+     */
+    suspend fun createOrAppointHod(
+        name: String,
+        department: String,
+        hodId: String,
+        password: String = "00000"
+    ): AuthResult<AdminOperationResultDto> {
+        return remoteDataSource.createOrAppointHod(name, department, hodId, password)
+    }
 }

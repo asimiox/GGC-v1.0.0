@@ -651,7 +651,41 @@ fun IntermediateAuthContent(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                // Quick Hint: Default Password for Imported Students
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(BrandGold.copy(alpha = 0.12f))
+                        .clickable { viewModel.updateLoginPassword("00000") }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Key,
+                            contentDescription = null,
+                            tint = BrandGold,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Default Password: 00000",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
+                    }
+                    Text(
+                        text = "Auto-fill",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandGold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Login Button
                 Button(

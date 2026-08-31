@@ -4,15 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.UserProfileManager
 import com.example.data.datasource.remote.CollegeStorageRemoteDataSource
+import com.example.data.datasource.remote.NotificationRemoteDataSource
 import com.example.data.model.AcademicCatalogDefaults
 import com.example.data.model.AcademicProgramDto
 import com.example.data.model.AnnouncementDto
+import com.example.data.model.AppNotificationDto
 import com.example.data.model.AppRole
 import com.example.data.model.AuthResult
 import com.example.data.model.CollegeEventDto
 import com.example.data.model.CourseDto
 import com.example.data.model.CourseOutlineDto
 import com.example.data.model.DepartmentDto
+import com.example.data.model.NotificationType
 import com.example.data.model.OfficialDocumentDto
 import com.example.data.model.ProspectusDto
 import com.example.data.repository.CollegeContentRepository
@@ -22,6 +25,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 enum class ContentSectionTab(val title: String) {
     ANNOUNCEMENTS("Announcements"),
@@ -62,7 +69,8 @@ data class ContentManagementUiState(
 
 class ContentManagementViewModel(
     private val contentRepository: CollegeContentRepository = CollegeContentRepository(),
-    private val storageRepository: CollegeStorageRepository = CollegeStorageRepository()
+    private val storageRepository: CollegeStorageRepository = CollegeStorageRepository(),
+    private val notificationDataSource: NotificationRemoteDataSource = NotificationRemoteDataSource()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ContentManagementUiState())
@@ -257,6 +265,27 @@ class ContentManagementViewModel(
             val result = contentRepository.saveAnnouncement(announcement)
             when (result) {
                 is AuthResult.Success -> {
+                    if (isPublished) {
+                        try {
+                            val notif = AppNotificationDto(
+                                id = "rt_ann_${System.currentTimeMillis()}",
+                                notificationType = if (isPinned) NotificationType.ANNOUNCEMENT_PRIORITY.key else NotificationType.ANNOUNCEMENT_NEW.key,
+                                title = announcement.title,
+                                message = announcement.content.take(160),
+                                relatedContentId = result.data.id,
+                                contentType = "announcement",
+                                departmentId = departmentId,
+                                isPriority = isPinned,
+                                isPinned = isPinned,
+                                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                                    timeZone = TimeZone.getTimeZone("UTC")
+                                }.format(Date())
+                            )
+                            notificationDataSource.insertNotification(notif)
+                        } catch (e: Exception) {
+                            android.util.Log.w("ContentMgmtVM", "Notification error: ${e.message}")
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isSaving = false,
@@ -386,6 +415,25 @@ class ContentManagementViewModel(
             val result = contentRepository.saveEvent(event)
             when (result) {
                 is AuthResult.Success -> {
+                    if (isPublished) {
+                        try {
+                            val notif = AppNotificationDto(
+                                id = "rt_ev_${System.currentTimeMillis()}",
+                                notificationType = NotificationType.EVENT_NEW.key,
+                                title = "New Event: ${event.title}",
+                                message = "${event.eventDate} at ${event.venue ?: "College Auditorium"}. ${event.description.take(120)}",
+                                relatedContentId = result.data.id,
+                                contentType = "event",
+                                departmentId = departmentId,
+                                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                                    timeZone = TimeZone.getTimeZone("UTC")
+                                }.format(Date())
+                            )
+                            notificationDataSource.insertNotification(notif)
+                        } catch (e: Exception) {
+                            android.util.Log.w("ContentMgmtVM", "Event notification error: ${e.message}")
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isSaving = false,
@@ -524,6 +572,25 @@ class ContentManagementViewModel(
             val result = contentRepository.saveOfficialDocument(doc)
             when (result) {
                 is AuthResult.Success -> {
+                    if (isPublished) {
+                        try {
+                            val notif = AppNotificationDto(
+                                id = "rt_doc_${System.currentTimeMillis()}",
+                                notificationType = NotificationType.DOCUMENT_NEW.key,
+                                title = "Official Document: ${doc.title}",
+                                message = "New official document (${doc.documentType.replace('_', ' ')}): ${doc.fileName}",
+                                relatedContentId = result.data.id,
+                                contentType = "document",
+                                departmentId = departmentId,
+                                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                                    timeZone = TimeZone.getTimeZone("UTC")
+                                }.format(Date())
+                            )
+                            notificationDataSource.insertNotification(notif)
+                        } catch (e: Exception) {
+                            android.util.Log.w("ContentMgmtVM", "Document notification error: ${e.message}")
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isSaving = false,
@@ -665,6 +732,25 @@ class ContentManagementViewModel(
             val result = contentRepository.saveCourseOutline(outline)
             when (result) {
                 is AuthResult.Success -> {
+                    if (isPublished) {
+                        try {
+                            val notif = AppNotificationDto(
+                                id = "rt_out_${System.currentTimeMillis()}",
+                                notificationType = NotificationType.COURSE_OUTLINE_NEW.key,
+                                title = "Syllabus Outline: ${outline.title}",
+                                message = "Course outline for Semester ${outline.semesterNumber} is now available.",
+                                relatedContentId = result.data.id,
+                                contentType = "course_outline",
+                                departmentId = departmentId,
+                                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                                    timeZone = TimeZone.getTimeZone("UTC")
+                                }.format(Date())
+                            )
+                            notificationDataSource.insertNotification(notif)
+                        } catch (e: Exception) {
+                            android.util.Log.w("ContentMgmtVM", "Course outline notification error: ${e.message}")
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isSaving = false,
@@ -797,6 +883,24 @@ class ContentManagementViewModel(
             val result = contentRepository.saveProspectus(prospectus)
             when (result) {
                 is AuthResult.Success -> {
+                    if (isPublished) {
+                        try {
+                            val notif = AppNotificationDto(
+                                id = "rt_pro_${System.currentTimeMillis()}",
+                                notificationType = NotificationType.PROSPECTUS_NEW.key,
+                                title = "Prospectus: ${prospectus.title}",
+                                message = "Official college prospectus for session ${prospectus.academicSession} is now available.",
+                                relatedContentId = result.data.id,
+                                contentType = "prospectus",
+                                createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                                    timeZone = TimeZone.getTimeZone("UTC")
+                                }.format(Date())
+                            )
+                            notificationDataSource.insertNotification(notif)
+                        } catch (e: Exception) {
+                            android.util.Log.w("ContentMgmtVM", "Prospectus notification error: ${e.message}")
+                        }
+                    }
                     _uiState.update {
                         it.copy(
                             isSaving = false,

@@ -18,7 +18,7 @@ enum class IntermediateAuthTab {
 }
 
 data class IntermediateAuthUiState(
-    val selectedTab: IntermediateAuthTab = IntermediateAuthTab.SIGNUP,
+    val selectedTab: IntermediateAuthTab = IntermediateAuthTab.LOGIN,
     val regForm: IntermediateRegistrationForm = IntermediateRegistrationForm(),
     val loginForm: IntermediateLoginForm = IntermediateLoginForm(),
     val isLoading: Boolean = false,

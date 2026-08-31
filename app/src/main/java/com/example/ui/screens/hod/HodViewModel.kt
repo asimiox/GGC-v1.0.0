@@ -7,14 +7,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.UserProfileManager
 import com.example.data.datasource.remote.CollegeContentRemoteDataSource
+import com.example.data.datasource.remote.NotificationRemoteDataSource
 import com.example.data.datasource.remote.SupabaseClientProvider
 import com.example.data.model.AcademicCatalogDefaults
 import com.example.data.model.AnnouncementDto
+import com.example.data.model.AppNotificationDto
 import com.example.data.model.AuthResult
+import com.example.data.model.CollegeEventDto
+import com.example.data.model.NotificationType
 import com.example.data.model.OfficialBsStudentDto
 import com.example.data.model.OfficialFacultyRegistryDto
 import com.example.data.model.OfficialIntermediateStudentDto
-import com.example.data.model.UserProfile
 import com.example.data.repository.OfficialRegistryRepository
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,24 +34,11 @@ import java.util.Locale
 
 enum class HodFlowScreen {
     DASHBOARD,
-    ADD_TEACHER_FORM,
-    TEACHER_CREATED_SUMMARY,
-    UPLOAD_STUDENTS,
-    STUDENTS_IMPORTED_PREVIEW,
-    NOTICE_CATEGORY_SELECT,
-    NOTICE_COMPOSE_SEND,
-    PROFILE_SETTINGS
+    TEACHERS_MANAGEMENT,
+    STUDENTS_MANAGEMENT,
+    POSTS_MANAGEMENT,
+    ANNOUNCEMENTS_MANAGEMENT
 }
-
-data class CreatedTeacherSummary(
-    val teacherId: String,
-    val name: String,
-    val designation: String,
-    val subject: String,
-    val department: String,
-    val defaultPassword: String = "00000",
-    val institutionalEmail: String? = null
-)
 
 data class ParsedStudentItem(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -69,21 +59,21 @@ data class HodUiState(
     val isLoading: Boolean = false,
     val statusMessage: String? = null,
     val errorMessage: String? = null,
-    
+
     // Stats
-    val totalFacultyCount: Int = 8,
-    val totalStudentsCount: Int = 180,
-    val activeNoticesCount: Int = 5,
+    val totalFacultyCount: Int = 0,
+    val totalStudentsCount: Int = 0,
+    val totalPostsCount: Int = 0,
+    val totalAnnouncementsCount: Int = 0,
 
-    // Feature 1: Add Teacher
-    val teacherFormName: String = "",
-    val teacherFormDesignation: String = "Lecturer",
-    val teacherFormSubject: String = "",
-    val teacherFormId: String = "",
-    val teacherFormPassword: String = "00000",
-    val lastCreatedTeacher: CreatedTeacherSummary? = null,
+    // Module 1: Teachers CRUD (Strictly Department Bound)
+    val teachersList: List<OfficialFacultyRegistryDto> = emptyList(),
+    val teachersSearchQuery: String = "",
 
-    // Feature 2: Upload Students Data
+    // Module 2: Students Import & CRUD (Strictly Department Bound)
+    val bsStudentsList: List<OfficialBsStudentDto> = emptyList(),
+    val interStudentsList: List<OfficialIntermediateStudentDto> = emptyList(),
+    val studentsSearchQuery: String = "",
     val uploadTargetProgram: String = "BS Information Technology",
     val uploadTargetSemester: String = "1st Semester",
     val uploadTargetSession: String = "2024-2028",
@@ -91,24 +81,19 @@ data class HodUiState(
     val isAllStudentsSelected: Boolean = true,
     val importedSuccessCount: Int? = null,
 
-    // Feature 3: Notice+ / Announcements+
-    val noticeCategory: String = "College Event", // "College Event", "Fees", "Date Sheet", "General Notice"
-    val noticeTargetDepartment: String = "Whole IT",
-    val noticeTargetSemester: String = "All Semesters",
-    val noticeTitle: String = "",
-    val noticeContent: String = "",
-    val noticePublishSuccess: Boolean = false,
+    // Module 3: Posts CRUD (Strictly Department Bound)
+    val postsList: List<CollegeEventDto> = emptyList(),
+    val postsSearchQuery: String = "",
 
-    // Feature 4: Profile Settings
-    val profileTeacherId: String = "",
-    val profileCurrentPassword: String = "",
-    val profileNewPassword: String = "",
-    val profileConfirmPassword: String = ""
+    // Module 4: Announcements CRUD (Strictly Department Bound)
+    val announcementsList: List<AnnouncementDto> = emptyList(),
+    val announcementsSearchQuery: String = ""
 )
 
 class HodViewModel(
     private val registryRepository: OfficialRegistryRepository = OfficialRegistryRepository(),
-    private val contentDataSource: CollegeContentRemoteDataSource = CollegeContentRemoteDataSource()
+    private val contentDataSource: CollegeContentRemoteDataSource = CollegeContentRemoteDataSource(),
+    private val notificationRemoteDataSource: NotificationRemoteDataSource = NotificationRemoteDataSource()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HodUiState())
@@ -122,40 +107,42 @@ class HodViewModel(
         val profile = UserProfileManager.userProfile.value
         val dept = profile.department?.ifBlank { null } ?: "Information Technology"
         val name = profile.name.ifBlank { "Head of Department" }
-        val fId = profile.facultyId?.ifBlank { null } ?: "HOD-${dept.take(3).uppercase()}-01"
+
+        val defaultProg = if (dept.contains("IT", ignoreCase = true) || dept.contains("Computer", ignoreCase = true)) {
+            "BS Information Technology"
+        } else if (dept.contains("Physics", ignoreCase = true)) {
+            "BS Physics"
+        } else if (dept.contains("Chemistry", ignoreCase = true)) {
+            "BS Chemistry"
+        } else if (dept.contains("Math", ignoreCase = true)) {
+            "BS Mathematics"
+        } else if (dept.contains("English", ignoreCase = true)) {
+            "BS English"
+        } else if (dept.contains("Botany", ignoreCase = true)) {
+            "BS Botany"
+        } else if (dept.contains("Zoology", ignoreCase = true)) {
+            "BS Zoology"
+        } else if (dept.contains("Economics", ignoreCase = true)) {
+            "BS Economics"
+        } else if (dept.contains("Commerce", ignoreCase = true) || dept.contains("B.Com", ignoreCase = true)) {
+            "BS Commerce"
+        } else {
+            "BS $dept"
+        }
 
         _uiState.value = _uiState.value.copy(
             departmentName = dept,
             hodName = name,
-            noticeTargetDepartment = "Whole $dept",
-            profileTeacherId = fId,
-            uploadTargetProgram = if (dept.contains("IT", ignoreCase = true) || dept.contains("Computer", ignoreCase = true)) {
-                "BS Information Technology"
-            } else {
-                "BS $dept"
-            }
+            uploadTargetProgram = defaultProg
         )
-        refreshDepartmentStats()
+        refreshAllData()
     }
 
-    fun refreshDepartmentStats() {
-        viewModelScope.launch {
-            try {
-                val dept = _uiState.value.departmentName
-                val facultyRes = registryRepository.getOfficialFaculty(department = dept)
-                val facultyCount = if (facultyRes is AuthResult.Success) facultyRes.data.size else 6
-
-                val bsRes = registryRepository.getOfficialBsStudents(program = _uiState.value.uploadTargetProgram)
-                val studentCount = if (bsRes is AuthResult.Success) bsRes.data.size else 90
-
-                _uiState.value = _uiState.value.copy(
-                    totalFacultyCount = facultyCount,
-                    totalStudentsCount = studentCount
-                )
-            } catch (e: Exception) {
-                Log.w("HodViewModel", "Stats load error: ${e.message}")
-            }
-        }
+    fun refreshAllData() {
+        fetchDepartmentTeachers()
+        fetchDepartmentStudents()
+        fetchDepartmentPosts()
+        fetchDepartmentAnnouncements()
     }
 
     fun navigateTo(screen: HodFlowScreen) {
@@ -171,95 +158,170 @@ class HodViewModel(
     }
 
     // =========================================================================
-    // FEATURE 1: ADD TEACHER
+    // 1. TEACHERS CRUD (Strictly Department Bound)
     // =========================================================================
 
-    fun updateTeacherForm(
-        name: String? = null,
-        designation: String? = null,
-        subject: String? = null,
-        teacherId: String? = null,
-        password: String? = null
-    ) {
-        _uiState.value = _uiState.value.copy(
-            teacherFormName = name ?: _uiState.value.teacherFormName,
-            teacherFormDesignation = designation ?: _uiState.value.teacherFormDesignation,
-            teacherFormSubject = subject ?: _uiState.value.teacherFormSubject,
-            teacherFormId = teacherId ?: _uiState.value.teacherFormId,
-            teacherFormPassword = password ?: _uiState.value.teacherFormPassword
-        )
+    fun setTeachersSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(teachersSearchQuery = query)
     }
 
-    fun createTeacherAccount() {
-        val state = _uiState.value
-        val name = state.teacherFormName.trim()
-        val designation = state.teacherFormDesignation.trim()
-        val subject = state.teacherFormSubject.trim()
-        val teacherId = state.teacherFormId.trim().uppercase()
-        val password = state.teacherFormPassword.trim().ifBlank { "00000" }
-        val department = state.departmentName
+    fun fetchDepartmentTeachers() {
+        val dept = _uiState.value.departmentName
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val res = registryRepository.getOfficialFaculty(department = dept, limit = 200)
+            if (res is AuthResult.Success) {
+                // Ensure strictly department filtered
+                val deptFaculty = res.data.filter {
+                    it.department.trim().equals(dept.trim(), ignoreCase = true) ||
+                            it.department.trim().contains(dept.trim(), ignoreCase = true)
+                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    teachersList = deptFaculty,
+                    totalFacultyCount = deptFaculty.size
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
 
-        if (name.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter teacher full name")
-            return
-        }
-        if (subject.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter teacher subject / specialization")
-            return
-        }
-        if (teacherId.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter teacher ID (e.g. MATH-01)")
+    fun createTeacher(
+        name: String,
+        designation: String,
+        subject: String,
+        teacherId: String,
+        password: String = "00000",
+        phone: String = ""
+    ) {
+        val dept = _uiState.value.departmentName
+        val cleanName = name.trim()
+        val cleanDesig = designation.trim().ifBlank { "Lecturer" }
+        val cleanSubject = subject.trim()
+        val cleanId = teacherId.trim().uppercase()
+        val cleanPassword = password.trim().ifBlank { "00000" }
+        val cleanPhone = phone.trim()
+
+        if (cleanName.isBlank() || cleanId.isBlank() || cleanSubject.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Please enter Name, Teacher ID, and Subject")
             return
         }
 
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
         viewModelScope.launch {
-            val email = "${teacherId.lowercase().replace("-", ".").replace(" ", ".")}@ggcmbdin.edu.pk"
-            
-            // 1. Provision official teacher account in database
-            val provResult = registryRepository.provisionTeacherAccount(
-                facultyId = teacherId,
-                fullName = name,
-                department = department,
-                designation = designation,
-                qualification = subject,
+            val email = "${cleanId.lowercase().replace("-", ".").replace(" ", ".")}@ggcmbdin.edu.pk"
+
+            val res = registryRepository.provisionTeacherAccount(
+                facultyId = cleanId,
+                fullName = cleanName,
+                department = dept,
+                designation = cleanDesig,
+                qualification = cleanSubject,
                 institutionalEmail = email,
-                username = teacherId.lowercase(),
-                temporaryPassword = password
+                username = cleanId.lowercase(),
+                temporaryPassword = cleanPassword,
+                phoneNumber = cleanPhone.ifBlank { null }
             )
 
-            // 2. Also ensure official faculty registry record exists
+            // Direct registry safety insert
             registryRepository.manageFacultyRecord(
-                facultyId = teacherId,
-                fullName = name,
-                department = department,
-                designation = designation,
-                qualification = subject,
-                institutionalEmail = email
+                facultyId = cleanId,
+                fullName = cleanName,
+                department = dept,
+                designation = cleanDesig,
+                qualification = cleanSubject,
+                institutionalEmail = email,
+                phoneNumber = cleanPhone.ifBlank { null }
+            )
+
+            // Save to persistent RegisteredFacultyStore for instantaneous login
+            com.example.data.datasource.RegisteredFacultyStore.saveAccount(
+                facultyId = cleanId,
+                fullName = cleanName,
+                department = dept,
+                designation = cleanDesig,
+                qualification = cleanSubject,
+                password = cleanPassword,
+                isHod = false
             )
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                lastCreatedTeacher = CreatedTeacherSummary(
-                    teacherId = teacherId,
-                    name = name,
-                    designation = designation,
-                    subject = subject,
-                    department = department,
-                    defaultPassword = password,
-                    institutionalEmail = email
-                ),
-                currentScreen = HodFlowScreen.TEACHER_CREATED_SUMMARY,
-                statusMessage = "Teacher \"$name\" created successfully!"
+                statusMessage = "Teacher \"$cleanName\" ($cleanId) added to $dept successfully!"
             )
-            refreshDepartmentStats()
+            fetchDepartmentTeachers()
+        }
+    }
+
+    fun updateTeacher(
+        id: String,
+        facultyId: String,
+        fullName: String,
+        designation: String,
+        qualification: String,
+        phoneNumber: String?,
+        isActive: Boolean
+    ) {
+        val dept = _uiState.value.departmentName
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+        viewModelScope.launch {
+            val email = "${facultyId.lowercase().replace("-", ".").replace(" ", ".")}@ggcmbdin.edu.pk"
+            val res = registryRepository.manageFacultyRecord(
+                id = id,
+                facultyId = facultyId,
+                fullName = fullName,
+                department = dept,
+                designation = designation,
+                qualification = qualification,
+                institutionalEmail = email,
+                phoneNumber = phoneNumber,
+                isActive = isActive
+            )
+
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Faculty record for \"$fullName\" updated successfully!"
+                )
+                fetchDepartmentTeachers()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to update faculty record"
+                )
+            }
+        }
+    }
+
+    fun deleteTeacher(id: String, facultyName: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val res = registryRepository.deleteFacultyRecord(id)
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Teacher \"$facultyName\" removed from ${_uiState.value.departmentName}."
+                )
+                fetchDepartmentTeachers()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to delete teacher record"
+                )
+            }
         }
     }
 
     // =========================================================================
-    // FEATURE 2: UPLOAD STUDENTS DATA (.CSV, .TXT, .PDF / GAZETTE)
+    // 2. STUDENTS IMPORT & CRUD (Strictly Department Bound)
     // =========================================================================
+
+    fun setStudentsSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(studentsSearchQuery = query)
+    }
 
     fun updateUploadConfig(program: String? = null, semester: String? = null, session: String? = null) {
         _uiState.value = _uiState.value.copy(
@@ -269,6 +331,139 @@ class HodViewModel(
         )
     }
 
+    fun fetchDepartmentStudents() {
+        val dept = _uiState.value.departmentName
+        val targetProg = _uiState.value.uploadTargetProgram
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            // Fetch BS Students
+            val bsRes = registryRepository.getOfficialBsStudents(limit = 300)
+            val bsFiltered = if (bsRes is AuthResult.Success) {
+                bsRes.data.filter { student ->
+                    student.effectiveProgram.contains(dept, ignoreCase = true) ||
+                            (targetProg.isNotBlank() && student.effectiveProgram.contains(targetProg, ignoreCase = true))
+                }
+            } else emptyList()
+
+            // Fetch Intermediate Students if department offers intermediate (e.g. Computer Science, Physics, Chemistry)
+            val interRes = registryRepository.getOfficialIntermediateStudents(limit = 300)
+            val interFiltered = if (interRes is AuthResult.Success) {
+                interRes.data.filter { student ->
+                    student.effectiveProgram.contains(dept, ignoreCase = true) ||
+                            (dept.contains("Computer", ignoreCase = true) && student.effectiveProgram.contains("ICS", ignoreCase = true)) ||
+                            (dept.contains("Physics", ignoreCase = true) && student.effectiveProgram.contains("FSc", ignoreCase = true))
+                }
+            } else emptyList()
+
+            val totalStudents = bsFiltered.size + interFiltered.size
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                bsStudentsList = bsFiltered,
+                interStudentsList = interFiltered,
+                totalStudentsCount = totalStudents
+            )
+        }
+    }
+
+    fun createBsStudent(
+        rollNumber: String,
+        registrationNumber: String,
+        program: String,
+        session: String,
+        firstName: String,
+        lastName: String,
+        isActive: Boolean = true
+    ) {
+        if (rollNumber.isBlank() || registrationNumber.isBlank() || firstName.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Please enter Roll No, Registration No, and Name")
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val res = registryRepository.manageBsStudentRecord(
+                rollNumber = rollNumber,
+                registrationNumber = registrationNumber,
+                program = program,
+                session = session,
+                firstName = firstName,
+                lastName = lastName,
+                isActive = isActive
+            )
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Student $rollNumber added successfully to $program!"
+                )
+                fetchDepartmentStudents()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to add student"
+                )
+            }
+        }
+    }
+
+    fun updateBsStudent(
+        id: String,
+        rollNumber: String,
+        registrationNumber: String,
+        program: String,
+        session: String,
+        firstName: String,
+        lastName: String,
+        isActive: Boolean
+    ) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val res = registryRepository.manageBsStudentRecord(
+                id = id,
+                rollNumber = rollNumber,
+                registrationNumber = registrationNumber,
+                program = program,
+                session = session,
+                firstName = firstName,
+                lastName = lastName,
+                isActive = isActive
+            )
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Student $rollNumber updated successfully!"
+                )
+                fetchDepartmentStudents()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to update student"
+                )
+            }
+        }
+    }
+
+    fun deleteBsStudent(id: String, rollNumber: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val res = registryRepository.deleteBsStudentRecord(id)
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Student $rollNumber deleted successfully."
+                )
+                fetchDepartmentStudents()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to delete student"
+                )
+            }
+        }
+    }
+
+    // Student Roster File / Text Import
     fun parseStudentDataFromText(rawText: String) {
         if (rawText.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "File or text content is empty")
@@ -284,12 +479,10 @@ class HodViewModel(
 
         var rollCounter = 1
         for (line in lines) {
-            // Skip header lines
             if (line.contains("roll", ignoreCase = true) && line.contains("name", ignoreCase = true)) continue
             if (line.contains("govt graduate college", ignoreCase = true)) continue
             if (line.contains("gazette", ignoreCase = true) || line.contains("result", ignoreCase = true)) continue
 
-            // Split by comma, tab, or multiple spaces
             val tokens = when {
                 line.contains(",") -> line.split(",").map { it.trim() }
                 line.contains("\t") -> line.split("\t").map { it.trim() }
@@ -327,7 +520,6 @@ class HodViewModel(
                     rollCounter++
                 }
             } else if (line.isNotBlank()) {
-                // Single line name or roll fallback
                 val autoRoll = "${program.split(" ").mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")}-24-${String.format(Locale.ENGLISH, "%02d", rollCounter)}"
                 val autoReg = "2024-GGC-${String.format(Locale.ENGLISH, "%04d", rollCounter + 100)}"
                 parsedList.add(
@@ -351,7 +543,6 @@ class HodViewModel(
             _uiState.value = _uiState.value.copy(
                 parsedStudents = parsedList,
                 isAllStudentsSelected = true,
-                currentScreen = HodFlowScreen.STUDENTS_IMPORTED_PREVIEW,
                 statusMessage = "Extracted ${parsedList.size} students from document"
             )
         }
@@ -389,23 +580,6 @@ class HodViewModel(
                 )
             }
         }
-    }
-
-    fun loadSampleGazetteData() {
-        val program = _uiState.value.uploadTargetProgram
-        val sampleText = """
-            BSIT-24-01, 2024-GGC-1001, Muhammad Ali, Tariq Mahmood
-            BSIT-24-02, 2024-GGC-1002, Usman Ahmed, Muhammad Aslam
-            BSIT-24-03, 2024-GGC-1003, Hamza Nawaz, Nawazish Ali
-            BSIT-24-04, 2024-GGC-1004, Bilal Hussain, Ghulam Hussain
-            BSIT-24-05, 2024-GGC-1005, Zain Ul Abideen, Rashid Mehmood
-            BSIT-24-06, 2024-GGC-1006, Abdullah Farooq, Farooq Ahmed
-            BSIT-24-07, 2024-GGC-1007, Talha Rehman, Abdul Rehman
-            BSIT-24-08, 2024-GGC-1008, Faizan Qasim, Muhammad Qasim
-            BSIT-24-09, 2024-GGC-1009, Shahzaib Khan, Aurangzeb Khan
-            BSIT-24-10, 2024-GGC-1010, Daniyal Malik, Malik Arshad
-        """.trimIndent()
-        parseStudentDataFromText(sampleText)
     }
 
     fun toggleStudentSelection(studentId: String) {
@@ -473,162 +647,312 @@ class HodViewModel(
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 importedSuccessCount = successCount,
-                statusMessage = "Successfully imported $successCount students into official Supabase registry!",
-                currentScreen = HodFlowScreen.DASHBOARD
+                parsedStudents = emptyList(),
+                statusMessage = "Successfully imported $successCount students into ${_uiState.value.departmentName} official roster!"
             )
-            refreshDepartmentStats()
+            fetchDepartmentStudents()
         }
     }
 
     // =========================================================================
-    // FEATURE 3: NOTICE+ / ANNOUNCEMENTS+
+    // 3. POSTS CRUD (Strictly Department Bound)
     // =========================================================================
 
-    fun setNoticeCategory(category: String) {
-        _uiState.value = _uiState.value.copy(noticeCategory = category)
+    fun setPostsSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(postsSearchQuery = query)
     }
 
-    fun updateNoticeCompose(
-        targetDept: String? = null,
-        targetSem: String? = null,
-        title: String? = null,
-        content: String? = null
+    fun fetchDepartmentPosts() {
+        val dept = _uiState.value.departmentName
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val res = contentDataSource.getEvents(departmentId = dept, includeUnpublished = true)
+            if (res is AuthResult.Success) {
+                val deptPosts = res.data.filter {
+                    it.departmentId.isNullOrBlank() || it.departmentId.equals(dept, ignoreCase = true)
+                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    postsList = deptPosts,
+                    totalPostsCount = deptPosts.size
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun createPost(
+        title: String,
+        content: String,
+        category: String = "Academic",
+        venueOrTarget: String = "Department Hall",
+        dateString: String = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(Date())
     ) {
-        _uiState.value = _uiState.value.copy(
-            noticeTargetDepartment = targetDept ?: _uiState.value.noticeTargetDepartment,
-            noticeTargetSemester = targetSem ?: _uiState.value.noticeTargetSemester,
-            noticeTitle = title ?: _uiState.value.noticeTitle,
-            noticeContent = content ?: _uiState.value.noticeContent
-        )
-    }
+        val dept = _uiState.value.departmentName
+        val cleanTitle = title.trim()
+        val cleanContent = content.trim()
 
-    fun postNotice() {
-        val state = _uiState.value
-        val title = state.noticeTitle.trim()
-        val content = state.noticeContent.trim()
-        val category = state.noticeCategory
-        val dept = state.departmentName
-        val semester = state.noticeTargetSemester
-
-        if (title.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter notice title")
-            return
-        }
-        if (content.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter notice content")
+        if (cleanTitle.isBlank() || cleanContent.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Please enter Post Title and Content")
             return
         }
 
         _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val eventPost = CollegeEventDto(
+                title = cleanTitle,
+                description = cleanContent,
+                eventDate = dateString,
+                venue = venueOrTarget.trim().ifBlank { "Department of $dept" },
+                category = category.trim().ifBlank { "Department Post" },
+                departmentId = dept,
+                isUpcoming = true,
+                isPublished = true,
+                createdBy = "HOD $dept"
+            )
 
+            val res = contentDataSource.saveEvent(eventPost)
+            if (res is AuthResult.Success) {
+                // Dispatch realtime notification
+                try {
+                    val notif = AppNotificationDto(
+                        id = "rt_post_${System.currentTimeMillis()}",
+                        notificationType = NotificationType.EVENT_NEW.key,
+                        title = "[$dept Notice/Event] $cleanTitle",
+                        message = "$dateString at ${venueOrTarget.trim().ifBlank { "Department of $dept" }}. ${cleanContent.take(120)}",
+                        relatedContentId = (res as? AuthResult.Success)?.data?.id,
+                        contentType = "event",
+                        departmentId = dept,
+                        createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                            timeZone = java.util.TimeZone.getTimeZone("UTC")
+                        }.format(Date())
+                    )
+                    notificationRemoteDataSource.insertNotification(notif)
+                } catch (e: Exception) {
+                    Log.w("HodViewModel", "Notification dispatch error: ${e.message}")
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Post \"$cleanTitle\" published in $dept successfully!"
+                )
+                fetchDepartmentPosts()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to create post"
+                )
+            }
+        }
+    }
+
+    fun updatePost(
+        id: String,
+        title: String,
+        content: String,
+        category: String,
+        venueOrTarget: String,
+        dateString: String
+    ) {
+        val dept = _uiState.value.departmentName
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val eventPost = CollegeEventDto(
+                id = id,
+                title = title.trim(),
+                description = content.trim(),
+                eventDate = dateString,
+                venue = venueOrTarget.trim(),
+                category = category.trim(),
+                departmentId = dept,
+                isUpcoming = true,
+                isPublished = true,
+                createdBy = "HOD $dept"
+            )
+
+            val res = contentDataSource.saveEvent(eventPost)
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Post updated successfully!"
+                )
+                fetchDepartmentPosts()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to update post"
+                )
+            }
+        }
+    }
+
+    fun deletePost(id: String, postTitle: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val res = contentDataSource.deleteEvent(id)
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Post \"$postTitle\" deleted successfully."
+                )
+                fetchDepartmentPosts()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to delete post"
+                )
+            }
+        }
+    }
+
+    // =========================================================================
+    // 4. ANNOUNCEMENTS CRUD (Strictly Department Bound)
+    // =========================================================================
+
+    fun setAnnouncementsSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(announcementsSearchQuery = query)
+    }
+
+    fun fetchDepartmentAnnouncements() {
+        val dept = _uiState.value.departmentName
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val res = contentDataSource.getAnnouncements(departmentId = dept, includeUnpublished = true)
+            if (res is AuthResult.Success) {
+                val deptAnnouncements = res.data.filter {
+                    it.departmentId.isNullOrBlank() || it.departmentId.equals(dept, ignoreCase = true)
+                }
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    announcementsList = deptAnnouncements,
+                    totalAnnouncementsCount = deptAnnouncements.size
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun createAnnouncement(
+        title: String,
+        content: String,
+        category: String = "General Notice",
+        isPinned: Boolean = false
+    ) {
+        val dept = _uiState.value.departmentName
+        val cleanTitle = title.trim()
+        val cleanContent = content.trim()
+
+        if (cleanTitle.isBlank() || cleanContent.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Please enter Announcement Title and Content")
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
             val announcement = AnnouncementDto(
-                title = "[$category] $title",
-                content = content,
+                title = cleanTitle,
+                content = cleanContent,
+                category = category.trim().ifBlank { "General Notice" },
                 departmentId = dept,
-                category = category,
                 authorName = "HOD $dept",
+                isPinned = isPinned,
                 isPublished = true,
                 publishedAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH).format(Date())
             )
 
             val res = contentDataSource.saveAnnouncement(announcement)
             if (res is AuthResult.Success) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    noticeTitle = "",
-                    noticeContent = "",
-                    noticePublishSuccess = true,
-                    statusMessage = "Notice posted successfully for $dept ($semester)!",
-                    currentScreen = HodFlowScreen.DASHBOARD
-                )
-            } else {
-                // Also gracefully succeed in offline/preview
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    noticeTitle = "",
-                    noticeContent = "",
-                    statusMessage = "Notice broadcasted to $dept ($semester) students!",
-                    currentScreen = HodFlowScreen.DASHBOARD
-                )
-            }
-            refreshDepartmentStats()
-        }
-    }
-
-    // =========================================================================
-    // FEATURE 4: PROFILE SETTINGS
-    // =========================================================================
-
-    fun updateProfileSettingsForm(teacherId: String? = null, currentPass: String? = null, newPass: String? = null, confirmPass: String? = null) {
-        _uiState.value = _uiState.value.copy(
-            profileTeacherId = teacherId ?: _uiState.value.profileTeacherId,
-            profileCurrentPassword = currentPass ?: _uiState.value.profileCurrentPassword,
-            profileNewPassword = newPass ?: _uiState.value.profileNewPassword,
-            profileConfirmPassword = confirmPass ?: _uiState.value.profileConfirmPassword
-        )
-    }
-
-    fun saveProfileSettings(context: Context) {
-        val state = _uiState.value
-        val newId = state.profileTeacherId.trim()
-        val newPass = state.profileNewPassword.trim()
-        val confirmPass = state.profileConfirmPassword.trim()
-
-        if (newId.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Teacher ID cannot be empty")
-            return
-        }
-
-        if (newPass.isNotBlank()) {
-            if (newPass.length < 5) {
-                _uiState.value = _uiState.value.copy(errorMessage = "Password must be at least 5 characters")
-                return
-            }
-            if (newPass != confirmPass) {
-                _uiState.value = _uiState.value.copy(errorMessage = "New Password and Confirm Password do not match")
-                return
-            }
-        }
-
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
-        viewModelScope.launch {
-            // Update local profile manager
-            val currentProfile = UserProfileManager.userProfile.value
-            UserProfileManager.saveVerifiedFacultyProfile(
-                context = context,
-                fullName = currentProfile.name,
-                department = currentProfile.department ?: _uiState.value.departmentName,
-                designation = currentProfile.designation ?: "Head of Department",
-                qualification = currentProfile.qualification ?: "MSc / MPhil",
-                facultyId = newId,
-                institutionalEmail = currentProfile.institutionalEmail,
-                username = currentProfile.username ?: newId.lowercase(),
-                userId = currentProfile.userId
-            )
-
-            // Try to sync with Supabase profiles table
-            currentProfile.userId?.let { uid ->
+                // Dispatch realtime notification
                 try {
-                    SupabaseClientProvider.client.from("profiles").update({
-                        set("faculty_id", newId)
-                    }) {
-                        filter { eq("id", uid) }
-                    }
+                    val notif = AppNotificationDto(
+                        id = "rt_ann_${System.currentTimeMillis()}",
+                        notificationType = if (isPinned) NotificationType.ANNOUNCEMENT_PRIORITY.key else NotificationType.ANNOUNCEMENT_NEW.key,
+                        title = "[$dept Notice] $cleanTitle",
+                        message = cleanContent.take(160),
+                        relatedContentId = (res as? AuthResult.Success)?.data?.id,
+                        contentType = "announcement",
+                        departmentId = dept,
+                        isPriority = isPinned,
+                        isPinned = isPinned,
+                        createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                            timeZone = java.util.TimeZone.getTimeZone("UTC")
+                        }.format(Date())
+                    )
+                    notificationRemoteDataSource.insertNotification(notif)
                 } catch (e: Exception) {
-                    Log.w("HodViewModel", "Remote profile update sync note: ${e.message}")
+                    Log.w("HodViewModel", "Announcement notification error: ${e.message}")
                 }
-            }
 
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                profileCurrentPassword = "",
-                profileNewPassword = "",
-                profileConfirmPassword = "",
-                statusMessage = "Profile & Credentials updated successfully!",
-                currentScreen = HodFlowScreen.DASHBOARD
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Announcement \"$cleanTitle\" published for $dept successfully!"
+                )
+                fetchDepartmentAnnouncements()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to create announcement"
+                )
+            }
+        }
+    }
+
+    fun updateAnnouncement(
+        id: String,
+        title: String,
+        content: String,
+        category: String,
+        isPinned: Boolean,
+        isPublished: Boolean
+    ) {
+        val dept = _uiState.value.departmentName
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val announcement = AnnouncementDto(
+                id = id,
+                title = title.trim(),
+                content = content.trim(),
+                category = category.trim(),
+                departmentId = dept,
+                authorName = "HOD $dept",
+                isPinned = isPinned,
+                isPublished = isPublished
             )
+
+            val res = contentDataSource.saveAnnouncement(announcement)
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Announcement updated successfully!"
+                )
+                fetchDepartmentAnnouncements()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to update announcement"
+                )
+            }
+        }
+    }
+
+    fun deleteAnnouncement(id: String, title: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val res = contentDataSource.deleteAnnouncement(id)
+            if (res is AuthResult.Success) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    statusMessage = "Announcement \"$title\" deleted successfully."
+                )
+                fetchDepartmentAnnouncements()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to delete announcement"
+                )
+            }
         }
     }
 }

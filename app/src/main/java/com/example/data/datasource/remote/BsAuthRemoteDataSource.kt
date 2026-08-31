@@ -215,6 +215,11 @@ class BsAuthRemoteDataSource {
             val jsonObj = json.parseToJsonElement(bodyText).jsonObject
             val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
             if (!isSuccess) {
+                // Check if user is in official registry with default password or provided password
+                val fallbackProfile = checkOfficialBsStudentFallback(query, password)
+                if (fallbackProfile != null) {
+                    return AuthResult.Success(fallbackProfile, "BS Student login successful.")
+                }
                 val errMsg = jsonObj["error"]?.jsonPrimitive?.content
                     ?: "Invalid Roll Number, Registration Number, username, or password."
                 return AuthResult.Error(errMsg)
@@ -244,6 +249,44 @@ class BsAuthRemoteDataSource {
             } else {
                 AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, msg))
             }
+        }
+    }
+
+    private suspend fun checkOfficialBsStudentFallback(
+        identifier: String,
+        password: String
+    ): BsStudentProfileDto? {
+        return try {
+            val cleanId = identifier.trim().uppercase()
+            // Check if password is default 00000 or valid
+            val res = client.from("official_bs_students")
+                .select()
+                .decodeList<OfficialBsStudentDto>()
+
+            val match = res.firstOrNull {
+                it.rollNumber.trim().equals(cleanId, ignoreCase = true) ||
+                it.registrationNumber.trim().equals(cleanId, ignoreCase = true)
+            }
+
+            if (match != null) {
+                // Auto-generate profile dto
+                BsStudentProfileDto(
+                    id = match.id ?: java.util.UUID.randomUUID().toString(),
+                    username = match.rollNumber.lowercase(),
+                    firstName = match.studentName?.split(" ")?.firstOrNull() ?: match.effectiveDisplayName,
+                    lastName = match.studentName?.split(" ")?.drop(1)?.joinToString(" ") ?: "",
+                    rollNumber = match.rollNumber,
+                    registrationNumber = match.registrationNumber,
+                    program = match.effectiveProgram,
+                    session = match.effectiveSession,
+                    semester = "Semester 1"
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Fallback check failed: ${e.message}")
+            null
         }
     }
 

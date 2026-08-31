@@ -26,6 +26,7 @@ object UserProfileManager {
     private const val KEY_FACULTY_ID = "user_faculty_id"
     private const val KEY_INSTITUTIONAL_EMAIL = "user_institutional_email"
     private const val KEY_APP_ROLE = "user_app_role"
+    private const val KEY_PASSWORD = "user_password"
 
     private val _userProfile = MutableStateFlow(
         UserProfile(
@@ -253,6 +254,42 @@ object UserProfileManager {
             userId = userId,
             appRole = role
         )
+    }
+
+    fun saveHodProfile(
+        context: Context,
+        fullName: String,
+        department: String,
+        hodId: String = "CS-HOD-01",
+        email: String? = null,
+        password: String = "00000"
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_PASSWORD, password.trim().ifBlank { "00000" }).apply()
+
+        saveVerifiedFacultyProfile(
+            context = context,
+            fullName = fullName.ifBlank { "Prof. Dr. Head of Department" },
+            department = department.ifBlank { "Information Technology" },
+            designation = "Head of Department (HOD)",
+            qualification = "Ph.D / Head of Department",
+            facultyId = hodId.trim().uppercase(),
+            institutionalEmail = email ?: "hod.${department.lowercase().replace(" ", "")}@ggcmbdin.edu.pk",
+            username = hodId.trim().lowercase(),
+            userId = hodId
+        )
+    }
+
+    fun getPassword(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_PASSWORD, "00000") ?: "00000"
+    }
+
+    fun updatePassword(context: Context, newPassword: String): Boolean {
+        if (newPassword.isBlank()) return false
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_PASSWORD, newPassword.trim()).apply()
+        return true
     }
 
     fun saveVerifiedAdminProfile(

@@ -87,6 +87,14 @@ import com.example.ui.screens.auth.AdminAuthContent
 import com.example.ui.screens.auth.BsAuthContent
 import com.example.ui.screens.auth.FacultyAuthContent
 import com.example.ui.screens.auth.IntermediateAuthContent
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material.icons.filled.AdminPanelSettings
 
 private val BrandNavy = Color(0xFF061B52)
@@ -104,6 +112,7 @@ enum class OnboardingStep {
     SELECT_SEMESTER,
     BS_AUTH,
     TEACHER_AUTH,
+    HOD_AUTH,
     ADMIN_AUTH
 }
 
@@ -148,6 +157,7 @@ fun OnboardingScreen(
             OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_PROGRAMS
             OnboardingStep.BS_AUTH -> OnboardingStep.SELECT_SEMESTER
             OnboardingStep.TEACHER_AUTH -> OnboardingStep.CONTINUE_AS
+            OnboardingStep.HOD_AUTH -> OnboardingStep.CONTINUE_AS
             OnboardingStep.ADMIN_AUTH -> OnboardingStep.CONTINUE_AS
         }
     }
@@ -183,6 +193,9 @@ fun OnboardingScreen(
                     },
                     onSelectTeacher = {
                         currentStep = OnboardingStep.TEACHER_AUTH
+                    },
+                    onSelectHod = {
+                        currentStep = OnboardingStep.HOD_AUTH
                     },
                     onSelectAdmin = {
                         currentStep = OnboardingStep.ADMIN_AUTH
@@ -233,6 +246,11 @@ fun OnboardingScreen(
                 )
 
                 OnboardingStep.TEACHER_AUTH -> TeacherAuthStepScreen(
+                    onBack = { currentStep = OnboardingStep.CONTINUE_AS },
+                    onAuthSuccess = onOnboardingFinished
+                )
+
+                OnboardingStep.HOD_AUTH -> HodAuthStepScreen(
                     onBack = { currentStep = OnboardingStep.CONTINUE_AS },
                     onAuthSuccess = onOnboardingFinished
                 )
@@ -369,6 +387,7 @@ private fun ContinueAsStepScreen(
     onBack: () -> Unit,
     onSelectStudent: () -> Unit,
     onSelectTeacher: () -> Unit,
+    onSelectHod: () -> Unit,
     onSelectAdmin: () -> Unit,
     onSelectGuest: () -> Unit
 ) {
@@ -571,6 +590,81 @@ private fun ContinueAsStepScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Option 3: Head of Department (HOD)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .clickable { onSelectHod() }
+                    .testTag("role_option_hod"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1B3B7A)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0xFFE5C058).copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountBalance,
+                            contentDescription = "HOD Role",
+                            tint = Color(0xFFF3D372),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Head of Department (HOD)",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Department Command, Teachers & Student Lists",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Add Teachers · Batch Upload · Broadcaster",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF3D372)
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color(0xFFF3D372),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // Option 3: Administrator (Super Control)
             Card(
                 modifier = Modifier
@@ -717,6 +811,212 @@ private fun ContinueAsStepScreen(
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
         )
+    }
+}
+
+// -------------------------------------------------------------
+// HOD AUTH STEP (Head of Department Portal)
+// -------------------------------------------------------------
+@Composable
+private fun HodAuthStepScreen(
+    onBack: () -> Unit,
+    onAuthSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    var selectedDepartment by remember { mutableStateOf(com.example.data.model.GgcOfficialDepartments.LIST.first()) }
+    var hodId by remember { mutableStateOf(com.example.data.model.GgcOfficialDepartments.generateDefaultHodId(selectedDepartment)) }
+    var password by remember { mutableStateOf("00000") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+
+    val departments = com.example.data.model.GgcOfficialDepartments.LIST
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BrandBackground)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        // Top Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.testTag("hod_auth_back_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BrandNavy
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column {
+                Text(
+                    text = "HOD Command Center",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy
+                )
+                Text(
+                    text = "Head of Department Access & Governance",
+                    fontSize = 12.sp,
+                    color = BrandTextMuted
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("hod_auth_card"),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF0C245E).copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountBalance,
+                            contentDescription = null,
+                            tint = Color(0xFF0C245E),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Department Leadership",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
+                        Text(
+                            text = "Manage faculty, import student lists & broadcast notices",
+                            fontSize = 11.sp,
+                            color = BrandTextMuted
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Select Department",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandNavy
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Department Selector Chips
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(departments) { dept ->
+                        val isSelected = selectedDepartment == dept
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                selectedDepartment = dept
+                                hodId = com.example.data.model.GgcOfficialDepartments.generateDefaultHodId(dept)
+                            },
+                            label = { Text(dept, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = BrandNavy,
+                                selectedLabelColor = Color.White
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = hodId,
+                    onValueChange = { hodId = it },
+                    label = { Text("HOD Faculty ID / Username") },
+                    leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = BrandNavy) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrandNavy,
+                        unfocusedBorderColor = Color(0xFFDCE2EE)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = BrandNavy) },
+                    trailingIcon = {
+                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                            Icon(
+                                imageVector = if (isPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrandNavy,
+                        unfocusedBorderColor = Color(0xFFDCE2EE)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = {
+                        UserProfileManager.saveHodProfile(
+                            context = context,
+                            fullName = "Prof. Dr. Head of Department ($selectedDepartment)",
+                            department = selectedDepartment,
+                            hodId = hodId
+                        )
+                        onAuthSuccess()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .testTag("hod_login_submit_btn"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+                ) {
+                    Text(
+                        text = "Enter HOD Command Center",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
     }
 }
 

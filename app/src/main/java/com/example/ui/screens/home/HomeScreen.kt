@@ -96,7 +96,8 @@ enum class HomeSubScreen {
     EVENTS,
     DOCUMENTS,
     CONTENT_MANAGEMENT,
-    HOD_DASHBOARD
+    HOD_DASHBOARD,
+    STUDENTS_MANAGEMENT
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -187,6 +188,33 @@ fun HomeScreen(
             HomeSubScreen.HOD_DASHBOARD -> com.example.ui.screens.hod.HodDashboardScreen(
                 onNavigateBack = { activeSubScreen = HomeSubScreen.NONE }
             )
+            HomeSubScreen.STUDENTS_MANAGEMENT -> {
+                val hodViewModel: com.example.ui.screens.hod.HodViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                val hodState by hodViewModel.uiState.collectAsState()
+                com.example.ui.screens.hod.HodStudentsCrudScreen(
+                    state = hodState,
+                    onSearchChange = { hodViewModel.setStudentsSearchQuery(it) },
+                    onRefresh = { hodViewModel.fetchDepartmentStudents() },
+                    onCreateStudent = { roll, reg, prog, sess, first, last, active ->
+                        hodViewModel.createBsStudent(roll, reg, prog, sess, first, last, active)
+                    },
+                    onUpdateStudent = { id, roll, reg, prog, sess, first, last, active ->
+                        hodViewModel.updateBsStudent(id, roll, reg, prog, sess, first, last, active)
+                    },
+                    onDeleteStudent = { id, roll ->
+                        hodViewModel.deleteBsStudent(id, roll)
+                    },
+                    onUpdateUploadConfig = { prog, sem, sess ->
+                        hodViewModel.updateUploadConfig(prog, sem, sess)
+                    },
+                    onParseText = { hodViewModel.parseStudentDataFromText(it) },
+                    onParseFileUri = { ctx, uri -> hodViewModel.parseStudentFileUri(ctx, uri) },
+                    onToggleSelectStudent = { hodViewModel.toggleStudentSelection(it) },
+                    onToggleSelectAll = { hodViewModel.toggleSelectAllStudents() },
+                    onPushSelectedToSupabase = { hodViewModel.pushSelectedStudentsToSupabase() },
+                    onBack = { activeSubScreen = HomeSubScreen.NONE }
+                )
+            }
             HomeSubScreen.NONE -> {}
         }
         return
@@ -207,7 +235,8 @@ fun HomeScreen(
             onNavigateToDocuments = { activeSubScreen = HomeSubScreen.DOCUMENTS },
             onNavigateToProfile = { activeSubScreen = HomeSubScreen.PROFILE },
             onNavigateToNotificationCenter = { activeSubScreen = HomeSubScreen.NOTIFICATION_CENTER },
-            onNavigateToHodPanel = { activeSubScreen = HomeSubScreen.HOD_DASHBOARD }
+            onNavigateToHodPanel = { activeSubScreen = HomeSubScreen.HOD_DASHBOARD },
+            onNavigateToStudentsManagement = { activeSubScreen = HomeSubScreen.STUDENTS_MANAGEMENT }
         )
         return
     }

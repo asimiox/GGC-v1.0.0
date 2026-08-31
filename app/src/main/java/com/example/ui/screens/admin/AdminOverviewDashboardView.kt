@@ -156,8 +156,9 @@ fun AdminOverviewDashboardView(
                         Spacer(modifier = Modifier.width(14.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
+                            val roleName = if (profile.designation?.contains("Principal", ignoreCase = true) == true) "College Principal" else "Administrator"
                             Text(
-                                text = profile.name.ifBlank { "Super Administrator" },
+                                text = profile.name.ifBlank { roleName },
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
@@ -168,7 +169,7 @@ fun AdminOverviewDashboardView(
                             Spacer(modifier = Modifier.height(3.dp))
 
                             Text(
-                                text = "Super Administrator • Central Administration",
+                                text = "$roleName • Central Governance",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Normal,
                                 color = Color.White.copy(alpha = 0.85f),
@@ -384,11 +385,11 @@ fun AdminOverviewDashboardView(
                     )
 
                     AdminBentoCard(
-                        title = "User & Roles",
-                        subtitle = "Admins, HODs & Claims",
+                        title = "Assign HOD",
+                        subtitle = "Department Heads & Roles",
                         icon = Icons.Default.AdminPanelSettings,
                         isDark = true,
-                        badgeText = "Security",
+                        badgeText = "HOD Setup",
                         onClick = { onNavigateSection(AdminNavSection.USERS) },
                         modifier = Modifier
                             .weight(1f)

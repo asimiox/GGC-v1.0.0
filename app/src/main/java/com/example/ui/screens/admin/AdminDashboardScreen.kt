@@ -84,11 +84,12 @@ fun AdminDashboardScreen(
     val context = LocalContext.current
     var showLogoutConfirm by remember { mutableStateOf(false) }
 
+    val userProfile by UserProfileManager.userProfile.collectAsState()
     val isRootDashboard = uiState.activeSection == AdminNavSection.DASHBOARD
 
     val sectionTitle = when (uiState.activeSection) {
-        AdminNavSection.DASHBOARD -> "Super Admin Portal"
-        AdminNavSection.USERS -> "User & Roles Governance"
+        AdminNavSection.DASHBOARD -> if (userProfile.designation?.contains("Principal", ignoreCase = true) == true) "Principal Portal" else "Administration Portal"
+        AdminNavSection.USERS -> "HOD Assignment & Governance"
         AdminNavSection.STUDENTS -> "Student Official Registry"
         AdminNavSection.FACULTY -> "Faculty Official Registry"
         AdminNavSection.ACADEMICS -> "Course Outlines & Syllabi"
@@ -144,7 +145,7 @@ fun AdminDashboardScreen(
                                     )
                                     Spacer(modifier = Modifier.width(5.dp))
                                     Text(
-                                        text = "Super Admin Portal",
+                                        text = if (userProfile.designation?.contains("Principal", ignoreCase = true) == true) "Principal Portal" else "Admin Portal",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
                                         color = BrandGold
@@ -347,6 +348,8 @@ fun AdminDashboardScreen(
                     AdminNavSection.USERS -> AdminUserManagementView(
                         uiState = uiState,
                         onAssignHod = { fId, dName -> viewModel.assignHod(fId, dName) },
+                        onCreateHod = { name, dept, id, pass -> viewModel.createOrAppointHod(name, dept, id, pass) },
+                        onCreateTeacher = { name, dept, desig, id, pass -> viewModel.createOrRegisterTeacher(name, dept, desig, id, pass) },
                         onRevokeHod = { uId -> viewModel.revokeHod(uId) },
                         onResetClaim = { type, id, reason -> viewModel.resetClaimedRecord(type, id, reason) },
                         onToggleActive = { type, id, active -> viewModel.toggleRecordActive(type, id, active) }
@@ -411,9 +414,9 @@ fun AdminDashboardScreen(
                     modifier = Modifier.size(32.dp)
                 )
             },
-            title = { Text("Exit Super Control?") },
+            title = { Text("Exit Administrative Control?") },
             text = {
-                Text("Are you sure you want to end the Super Administrator session? You will be returned to the Welcome screen.")
+                Text("Are you sure you want to end the session? You will be returned to the Welcome screen.")
             },
             confirmButton = {
                 Button(
@@ -423,7 +426,7 @@ fun AdminDashboardScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
                 ) {
-                    Text("Logout Administrator")
+                    Text("Sign Out")
                 }
             },
             dismissButton = {

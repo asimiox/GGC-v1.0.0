@@ -154,21 +154,7 @@ val INTER_PROGRAM_OPTIONS = listOf(
     "FA (Humanities)"
 )
 
-val DEPARTMENT_OPTIONS = listOf(
-    "Computer Science & IT",
-    "Physics",
-    "Chemistry",
-    "Mathematics",
-    "English",
-    "Botany",
-    "Zoology",
-    "Economics",
-    "Urdu",
-    "Islamiat",
-    "Statistics",
-    "Commerce & Business Administration",
-    "Political Science"
-)
+val DEPARTMENT_OPTIONS = com.example.data.model.GgcOfficialDepartments.LIST
 
 val DESIGNATION_OPTIONS = listOf(
     "Principal",
