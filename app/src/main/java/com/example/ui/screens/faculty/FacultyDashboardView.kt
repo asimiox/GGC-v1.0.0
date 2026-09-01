@@ -69,8 +69,8 @@ import java.util.Locale
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandNavySecondary = Color(0xFF0C235A)
-private val BrandGold = Color(0xFFC59B27)
-private val BrandGoldLight = Color(0xFFE5C058)
+private val BrandAccentBlue = Color(0xFF1E5BB5)
+private val BrandSoftBlue = Color(0xFF90CAF9)
 private val BrandBackground = Color(0xFFF6F6F6)
 private val BrandTextMuted = Color(0xFF7A879D)
 private val BrandIconBadgeBg = Color(0xFFEEF3FF)
@@ -149,14 +149,14 @@ fun FacultyDashboardView(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(BrandGold)
+                                    .background(BrandAccentBlue)
                             )
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = "Faculty & Academic Portal",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = BrandGold
+                                color = BrandAccentBlue
                             )
                         }
                     }
@@ -246,7 +246,7 @@ fun FacultyDashboardView(
                                 text = liveGreeting,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = BrandGoldLight
+                                color = Color.White.copy(alpha = 0.9f)
                             )
 
                             Text(
@@ -273,7 +273,7 @@ fun FacultyDashboardView(
                                 Icon(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Faculty Member",
-                                    tint = BrandGoldLight,
+                                    tint = Color.White,
                                     modifier = Modifier.size(30.dp)
                                 )
                             }
@@ -325,7 +325,7 @@ fun FacultyDashboardView(
                                     Icon(
                                         imageVector = Icons.Default.Verified,
                                         contentDescription = "Verified Staff",
-                                        tint = BrandGoldLight,
+                                        tint = BrandSoftBlue,
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -341,7 +341,7 @@ fun FacultyDashboardView(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = "View Profile",
-                                tint = BrandGoldLight,
+                                tint = Color.White.copy(alpha = 0.85f),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -378,13 +378,13 @@ fun FacultyDashboardView(
                                 modifier = Modifier
                                     .size(46.dp)
                                     .clip(CircleShape)
-                                    .background(BrandGold.copy(alpha = 0.2f)),
+                                    .background(Color.White.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AdminPanelSettings,
                                     contentDescription = "HOD Panel",
-                                    tint = BrandGoldLight,
+                                    tint = Color.White,
                                     modifier = Modifier.size(26.dp)
                                 )
                             }
@@ -401,14 +401,14 @@ fun FacultyDashboardView(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Surface(
-                                        color = BrandGold.copy(alpha = 0.25f),
+                                        color = Color.White.copy(alpha = 0.20f),
                                         shape = RoundedCornerShape(6.dp)
                                     ) {
                                         Text(
                                             text = "HOD ONLY",
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = BrandGoldLight,
+                                            color = Color.White,
                                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                                         )
                                     }
@@ -424,7 +424,7 @@ fun FacultyDashboardView(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
-                                tint = BrandGoldLight,
+                                tint = Color.White.copy(alpha = 0.85f),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -459,13 +459,13 @@ fun FacultyDashboardView(
                                 modifier = Modifier
                                     .size(46.dp)
                                     .clip(CircleShape)
-                                    .background(BrandGold.copy(alpha = 0.2f)),
+                                    .background(Color.White.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Campaign,
                                     contentDescription = "Teacher Studio",
-                                    tint = BrandGoldLight,
+                                    tint = Color.White,
                                     modifier = Modifier.size(26.dp)
                                 )
                             }
@@ -505,7 +505,7 @@ fun FacultyDashboardView(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
-                                tint = BrandGoldLight,
+                                tint = Color.White.copy(alpha = 0.85f),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -546,14 +546,14 @@ fun FacultyDashboardView(
                             .weight(1f)
                             .height(44.dp)
                             .testTag("quick_action_add_student"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandGold),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.School,
                             contentDescription = null,
-                            tint = BrandNavy,
+                            tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -561,7 +561,7 @@ fun FacultyDashboardView(
                             text = "Students",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = BrandNavy
+                            color = Color.White
                         )
                     }
 
@@ -579,7 +579,7 @@ fun FacultyDashboardView(
                         Icon(
                             imageVector = Icons.Default.Campaign,
                             contentDescription = null,
-                            tint = BrandGoldLight,
+                            tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -598,14 +598,14 @@ fun FacultyDashboardView(
                             .weight(1f)
                             .height(44.dp)
                             .testTag("quick_action_add_outline"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavySecondary),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 6.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.AutoStories,
                             contentDescription = null,
-                            tint = BrandGoldLight,
+                            tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -661,12 +661,12 @@ fun FacultyDashboardView(
                     color = BrandNavy
                 )
 
-                // Row 1: Student Management (Gold/Navy) & Announcements (White)
+                // Row 1: Student Management (Navy) & Announcements (White)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 1: Students & Roster Management (Navy with Gold badge)
+                    // Card 1: Students & Roster Management (Navy)
                     FacultyBentoCard(
                         title = "Students Roster",
                         subtitle = "Enroll & Manage Records",
@@ -693,12 +693,12 @@ fun FacultyDashboardView(
                     )
                 }
 
-                // Row 2: My Courses & Syllabi (Navy) & Manage Notes (White)
+                // Row 2: My Courses & Syllabi (White) & Manage Notes (Navy)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 3: My Courses & Syllabi
+                    // Card 3: My Courses & Syllabi (White)
                     FacultyBentoCard(
                         title = "My Courses",
                         subtitle = "Syllabi & Outlines",
@@ -711,7 +711,7 @@ fun FacultyDashboardView(
                             .testTag("faculty_card_courses")
                     )
 
-                    // Card 4: Manage Notes & Study Materials (White)
+                    // Card 4: Manage Notes & Study Materials (Navy)
                     FacultyBentoCard(
                         title = "Course Notes",
                         subtitle = "Lecture Slides & PDFs",
@@ -730,12 +730,12 @@ fun FacultyDashboardView(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 5: Academic Events & Seminars (White)
+                    // Card 5: Academic Events & Seminars (Navy)
                     FacultyBentoCard(
                         title = "College Events",
                         subtitle = "Seminars & Workshops",
                         icon = Icons.Default.Event,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Organize",
                         onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
                         modifier = Modifier
@@ -743,12 +743,12 @@ fun FacultyDashboardView(
                             .testTag("faculty_card_events")
                     )
 
-                    // Card 6: Official Documents & Resources (Navy)
+                    // Card 6: Official Documents & Resources (White)
                     FacultyBentoCard(
                         title = "Official Docs",
                         subtitle = "Rules & Guidelines",
                         icon = Icons.Default.Description,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Registry",
                         onClick = { onNavigateToContentTab(ContentSectionTab.DOCUMENTS) },
                         modifier = Modifier
@@ -803,14 +803,14 @@ fun FacultyDashboardView(
                         Box(
                             modifier = Modifier
                                 .size(50.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                                .clip(RoundedCornerShape(14.dp) )
+                                .background(Color.White.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Content Hub",
-                                tint = BrandGoldLight,
+                                tint = Color.White,
                                 modifier = Modifier.size(26.dp)
                             )
                         }
@@ -836,7 +836,7 @@ fun FacultyDashboardView(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
-                            tint = BrandGoldLight,
+                            tint = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -885,7 +885,7 @@ private fun FacultyBentoCard(
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(
-                            if (isDark) Color(0xFFC59B27).copy(alpha = 0.25f)
+                            if (isDark) Color.White.copy(alpha = 0.15f)
                             else BrandIconBadgeBg
                         ),
                     contentAlignment = Alignment.Center
@@ -893,7 +893,7 @@ private fun FacultyBentoCard(
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = if (isDark) BrandGoldLight else BrandNavy,
+                        tint = if (isDark) Color.White else BrandNavy,
                         modifier = Modifier.size(22.dp)
                     )
                 }

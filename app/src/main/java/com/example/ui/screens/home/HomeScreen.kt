@@ -396,7 +396,7 @@ fun HomeScreen(
                             text = liveGreeting,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFFC59B27)
+                            color = Color.White.copy(alpha = 0.9f)
                         )
 
                         Text(
@@ -495,14 +495,14 @@ fun HomeScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFFC59B27).copy(alpha = 0.25f))
+                                .background(Color.White.copy(alpha = 0.12f))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = "Est. 1959",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFFFF8E1)
+                                color = Color.White
                             )
                         }
                     }
@@ -518,7 +518,7 @@ fun HomeScreen(
                         .clickable { activeSubScreen = HomeSubScreen.PROFILE }
                         .testTag("bento_btn_faculty_teacher_portal"),
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF030D2B)),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2B66)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
@@ -536,13 +536,13 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                                    .background(Color.White.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = if (userProfile.appRole == AppRole.ADMIN) Icons.Default.AdminPanelSettings else Icons.Default.School,
                                     contentDescription = "Faculty Portal",
-                                    tint = Color(0xFFE5C058),
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -569,7 +569,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Open Faculty Portal",
-                            tint = Color(0xFFE5C058),
+                            tint = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -751,13 +751,13 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFC59B27).copy(alpha = 0.2f)),
+                                    .background(Color.White.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Outlined.Campaign,
                                     contentDescription = "Content Management Portal",
-                                    tint = Color(0xFFC59B27),
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -784,7 +784,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Open Content Portal",
-                            tint = Color(0xFFC59B27),
+                            tint = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -798,7 +798,7 @@ fun HomeScreen(
                         .clickable { onNavigateToAdminRegistry() }
                         .testTag("bento_btn_admin_registry"),
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF030D2B)),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2B66)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
@@ -816,13 +816,13 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFC59B27).copy(alpha = 0.2f)),
+                                    .background(Color.White.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AdminPanelSettings,
                                     contentDescription = "Registry Management",
-                                    tint = Color(0xFFC59B27),
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -849,7 +849,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Open Registry Management",
-                            tint = Color(0xFFC59B27),
+                            tint = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.size(20.dp)
                         )
                     }

@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,25 +21,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,31 +47,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 private val BrandNavy = Color(0xFF061B52)
-private val BrandGold = Color(0xFFC59B27)
-private val BrandGoldLight = Color(0xFFE5C058)
-private val BrandBg = Color(0xFFF6F8FB)
+private val BrandNavySecondary = Color(0xFF0C235A)
+private val BrandAccentBlue = Color(0xFF1E5BB5)
+private val BrandBackground = Color(0xFFF6F6F6)
+private val BrandTextMuted = Color(0xFF7A879D)
+private val BrandIconBadgeBg = Color(0xFFEEF3FF)
 
 data class HodMainFeatureCardItem(
     val title: String,
     val subtitle: String,
     val badge: String,
     val icon: ImageVector,
-    val iconBgColor: Color,
-    val iconTint: Color,
+    val isDark: Boolean,
     val tag: String,
     val targetScreen: HodFlowScreen
 )
@@ -204,48 +205,19 @@ fun HodDashboardMainView(
     onDismissMessage: () -> Unit,
     onBack: () -> Unit
 ) {
-    val features = listOf(
-        HodMainFeatureCardItem(
-            title = "Teachers Management",
-            subtitle = "View, provision, edit & remove department faculty",
-            badge = "${state.totalFacultyCount} Faculty",
-            icon = Icons.Default.Person,
-            iconBgColor = Color(0xFFE8F5E9),
-            iconTint = Color(0xFF2E7D32),
-            tag = "hod_feature_teachers",
-            targetScreen = HodFlowScreen.TEACHERS_MANAGEMENT
-        ),
-        HodMainFeatureCardItem(
-            title = "Students Import & CRUD",
-            subtitle = "Batch import rosters (CSV/Gazette) & manage student records",
-            badge = "${state.totalStudentsCount} Students",
-            icon = Icons.Default.School,
-            iconBgColor = Color(0xFFE3F2FD),
-            iconTint = Color(0xFF1565C0),
-            tag = "hod_feature_students",
-            targetScreen = HodFlowScreen.STUDENTS_MANAGEMENT
-        ),
-        HodMainFeatureCardItem(
-            title = "Department Posts",
-            subtitle = "Create, edit & delete department news and articles",
-            badge = "${state.totalPostsCount} Posts",
-            icon = Icons.Default.Article,
-            iconBgColor = Color(0xFFFFF3E0),
-            iconTint = Color(0xFFE65100),
-            tag = "hod_feature_posts",
-            targetScreen = HodFlowScreen.POSTS_MANAGEMENT
-        ),
-        HodMainFeatureCardItem(
-            title = "Announcements & Notices",
-            subtitle = "Broadcast notices, event alerts & date sheets with pinned priority",
-            badge = "${state.totalAnnouncementsCount} Notices",
-            icon = Icons.Default.Campaign,
-            iconBgColor = Color(0xFFEDE7F6),
-            iconTint = Color(0xFF512DA8),
-            tag = "hod_feature_announcements",
-            targetScreen = HodFlowScreen.ANNOUNCEMENTS_MANAGEMENT
-        )
-    )
+    val currentTime = remember { Calendar.getInstance() }
+    val hourOfDay = currentTime.get(Calendar.HOUR_OF_DAY)
+    val liveGreeting = when {
+        hourOfDay in 4..11 -> "Good Morning"
+        hourOfDay in 12..16 -> "Good Afternoon"
+        hourOfDay in 17..21 -> "Good Evening"
+        else -> "Good Night"
+    }
+    val liveDayFormat = remember { SimpleDateFormat("EEEE", Locale.ENGLISH) }
+    val liveDateFormat = remember { SimpleDateFormat("dd MMM, yyyy", Locale.ENGLISH) }
+    val todayDate = remember { Date() }
+    val currentDayName = remember { liveDayFormat.format(todayDate) }
+    val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
 
     Scaffold(
         topBar = {
@@ -253,15 +225,15 @@ fun HodDashboardMainView(
                 title = {
                     Column {
                         Text(
-                            text = "HOD Department Portal",
+                            text = "HOD Command Center",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = state.departmentName,
+                            text = "Department of ${state.departmentName}",
                             fontSize = 12.sp,
-                            color = BrandGoldLight
+                            color = Color.White.copy(alpha = 0.85f)
                         )
                     }
                 },
@@ -286,14 +258,15 @@ fun HodDashboardMainView(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandNavy)
             )
         },
-        containerColor = BrandBg
+        containerColor = BrandBackground
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Status / Error Banners
             state.statusMessage?.let { msg ->
@@ -314,7 +287,6 @@ fun HodDashboardMainView(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
             }
 
             state.errorMessage?.let { err ->
@@ -335,200 +307,298 @@ fun HodDashboardMainView(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // HOD Identity Card (Locked to Department)
+            // 1. Official HOD Identity Card (Matching Faculty/Home Hero Card Style)
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .testTag("hod_identity_card"),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavy),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(BrandNavy, Color(0xFF0D2D7D))
-                            )
-                        )
                         .padding(20.dp)
                 ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(BrandGold.copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Badge,
-                                    contentDescription = null,
-                                    tint = BrandGoldLight,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(14.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Surface(
-                                    color = BrandGold.copy(alpha = 0.25f),
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Lock,
-                                            contentDescription = null,
-                                            tint = BrandGoldLight,
-                                            modifier = Modifier.size(12.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(
-                                            text = "Head of Department (HOD)",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = BrandGoldLight
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = state.hodName,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Department of ${state.departmentName}",
-                                    fontSize = 13.sp,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Quick Stats Row (Strictly for this department)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceAround
-                        ) {
-                            HodQuickStatItem("Faculty", "${state.totalFacultyCount}", Color(0xFF81C784))
-                            HodQuickStatItem("Students", "${state.totalStudentsCount}", Color(0xFF64B5F6))
-                            HodQuickStatItem("Posts", "${state.totalPostsCount}", Color(0xFFFFB74D))
-                            HodQuickStatItem("Notices", "${state.totalAnnouncementsCount}", Color(0xFFBA68C8))
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Department Operations",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "All operations are strictly isolated to the ${state.departmentName} department.",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // The 4 Primary Features
-            features.forEach { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp)
-                        .testTag(item.tag)
-                        .clickable { onFeatureClick(item.targetScreen) },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = liveGreeting,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+
+                        Text(
+                            text = "$currentDayName, $currentDateFormatted",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.75f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(item.iconBgColor),
+                                .size(52.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = item.icon,
-                                contentDescription = null,
-                                tint = item.iconTint,
-                                modifier = Modifier.size(26.dp)
+                                imageVector = Icons.Default.AdminPanelSettings,
+                                contentDescription = "HOD",
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
                             )
                         }
 
                         Spacer(modifier = Modifier.width(14.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = item.title,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BrandNavy
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Surface(
-                                    color = item.iconBgColor,
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = item.badge,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = item.iconTint,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = item.subtitle,
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                lineHeight = 16.sp
+                                text = state.hodName.ifBlank { "Department HOD" },
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Spacer(modifier = Modifier.height(3.dp))
+
+                            Text(
+                                text = "Head of Department • ${state.departmentName}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.White.copy(alpha = 0.85f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+                    }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Open",
-                            tint = Color.LightGray,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    // Verification Badge
+                    Surface(
+                        color = Color.White.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Verified,
+                                contentDescription = "Verified HOD",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Official Department Head • Verified",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.15f), thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Quick Stats Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        HodQuickStatItem("Faculty", "${state.totalFacultyCount}", Color.White)
+                        HodQuickStatItem("Students", "${state.totalStudentsCount}", Color.White)
+                        HodQuickStatItem("Posts", "${state.totalPostsCount}", Color.White)
+                        HodQuickStatItem("Notices", "${state.totalAnnouncementsCount}", Color.White)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            // 2. Department Operations Title
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Department Operations",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Manage department staff, student records and announcements",
+                    fontSize = 12.sp,
+                    color = BrandTextMuted
+                )
+            }
+
+            // 3. 2x2 Bento Operations Grid (Alternating Navy / White matching the rest of the app)
+            // Row 1: Teachers Management (Navy) & Students Management (White)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                HodBentoCard(
+                    title = "Teachers Roster",
+                    subtitle = "Provision & Manage Staff",
+                    badgeText = "${state.totalFacultyCount} Faculty",
+                    icon = Icons.Default.Person,
+                    isDark = true,
+                    testTag = "hod_feature_teachers",
+                    onClick = { onFeatureClick(HodFlowScreen.TEACHERS_MANAGEMENT) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                HodBentoCard(
+                    title = "Students Roster",
+                    subtitle = "Import & Records CRUD",
+                    badgeText = "${state.totalStudentsCount} Students",
+                    icon = Icons.Default.School,
+                    isDark = false,
+                    testTag = "hod_feature_students",
+                    onClick = { onFeatureClick(HodFlowScreen.STUDENTS_MANAGEMENT) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Row 2: Department Posts (White) & Announcements (Navy)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                HodBentoCard(
+                    title = "Department Posts",
+                    subtitle = "News, Articles & Updates",
+                    badgeText = "${state.totalPostsCount} Posts",
+                    icon = Icons.Default.Article,
+                    isDark = false,
+                    testTag = "hod_feature_posts",
+                    onClick = { onFeatureClick(HodFlowScreen.POSTS_MANAGEMENT) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                HodBentoCard(
+                    title = "Announcements",
+                    subtitle = "Alerts, Notices & Dates",
+                    badgeText = "${state.totalAnnouncementsCount} Notices",
+                    icon = Icons.Default.Campaign,
+                    isDark = true,
+                    testTag = "hod_feature_announcements",
+                    onClick = { onFeatureClick(HodFlowScreen.ANNOUNCEMENTS_MANAGEMENT) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun HodBentoCard(
+    title: String,
+    subtitle: String,
+    badgeText: String,
+    icon: ImageVector,
+    isDark: Boolean,
+    testTag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(152.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() }
+            .testTag(testTag),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) BrandNavy else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isDark) Color.White.copy(alpha = 0.15f)
+                            else BrandIconBadgeBg
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = if (isDark) Color.White else BrandNavy,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Surface(
+                    color = if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFFF0F3FA),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = badgeText,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDark) Color.White.copy(alpha = 0.9f) else BrandNavy,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color.White else BrandNavy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = if (isDark) Color.White.copy(alpha = 0.75f) else BrandTextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

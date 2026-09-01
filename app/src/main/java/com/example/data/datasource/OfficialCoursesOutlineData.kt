@@ -6,113 +6,120 @@ import com.example.data.model.SemesterOutline
 
 object OfficialCoursesOutlineData {
 
-    // 1. BS Information Technology
+    // 1. BS Information Technology (University of the Punjab - Official Curriculum)
     val bsInformationTechnology = ProgramCourseOutline(
         id = "bs_it",
         name = "BS Information Technology",
         headOfDepartment = "Prof. Muhammad Faiyaz",
         duration = "4 Years (8 Semesters)",
-        eligibility = "F.Sc (Pre-Engg/ICS/Pre-Med) or equivalent",
-        about = "Dive into computing, programming, and emerging technologies with access to modern IT labs.",
+        eligibility = "F.Sc (Pre-Engg / ICS / Pre-Med) or equivalent with Math",
+        about = "University of the Punjab official 4-Year BS IT curriculum covering Computing Foundations, Software Engineering, AI, Cyber Security, Database Systems, Cloud Computing, and FYP Capstone.",
         isIntermediate = false,
         semesters = listOf(
             SemesterOutline(
                 semesterNumber = 1,
                 courses = listOf(
-                    CourseItem("GE-160-L", "Applications of ICT Lab", 1, "General Education Lab"),
-                    CourseItem("HQ-001", "Translation of Holy Quran", 0, ""),
-                    CourseItem("MD-001", "Math Deficiency - I", 3, "Non-Credit"),
-                    CourseItem("GE-163", "Islamic Studies", 2, "General Education"),
-                    CourseItem("GE-168", "Ideology and Constitution of Pakistan", 2, "General Education"),
-                    CourseItem("GE-190", "Functional English", 3, "General Education"),
-                    CourseItem("CC-110-L", "Digital Logic Design Lab", 1, "Computing Core Lab"),
-                    CourseItem("CC-110", "Digital Logic Design", 2, "Computing Core"),
-                    CourseItem("GE-169", "Applied Physics", 3, "General Education"),
-                    CourseItem("GE-160", "Applications of Information & Communication Technologies", 2, "General Education")
+                    CourseItem("GE-160", "Applications of Information & Communication Tech", 2, "Computing Foundations: ICT hardware, software, office automation, networks & web basics"),
+                    CourseItem("GE-160-L", "Applications of ICT Lab", 1, "Hands-on: Productivity tools, web browsing, command line & productivity software"),
+                    CourseItem("CC-110", "Digital Logic Design", 2, "Binary logic, Boolean algebra, logic gates, combinational & sequential circuits"),
+                    CourseItem("CC-110-L", "Digital Logic Design Lab", 1, "Lab implementations using logic gate ICs, multiplexers, counters & flip-flops"),
+                    CourseItem("GE-190", "Functional English (English-I)", 3, "Grammar, comprehension, academic sentence structures and technical vocabulary"),
+                    CourseItem("GE-163", "Islamic Studies / Ethics", 2, "Quranic teachings, Seerat-un-Nabi (PBUH), ethics and contemporary societal obligations"),
+                    CourseItem("GE-168", "Ideology and Constitution of Pakistan", 2, "Pakistan movement, two-nation theory, 1973 Constitution and state institutions"),
+                    CourseItem("GE-169", "Applied Physics", 3, "Electric circuits, semiconductors, electromagnetism, optics & device physics for computing"),
+                    CourseItem("HQ-001", "Translation of Holy Quran - I", 0, "Non-Credit: Recitation and Tajweed of designated Surahs"),
+                    CourseItem("MD-001", "Mathematics Deficiency - I", 3, "Non-Credit: For pre-medical background students (algebra, trigonometry & functions)")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 2,
                 courses = listOf(
-                    CourseItem("HQ-002", "Translation of Holy Quran", 1, ""),
-                    CourseItem("CC-112-L", "Programming Fundamentals Lab", 1, "Computing Core Lab"),
-                    CourseItem("CC-112", "Programming Fundamentals", 3, "Computing Core"),
-                    CourseItem("MD-002", "Math Deficiency - II", 3, "Non-Credit"),
-                    CourseItem("UE-272", "Introduction to Marketing", 3, "University Elective"),
-                    CourseItem("GE-191", "Expository Writing", 3, "General Education"),
-                    CourseItem("GE-167", "Discrete Structures", 3, "General Education"),
-                    CourseItem("CC-214", "Computer Networks", 3, "Computing Core")
+                    CourseItem("CC-112", "Programming Fundamentals", 3, "C++/Python problem solving, control structures, functions, arrays, pointers & files"),
+                    CourseItem("CC-112-L", "Programming Fundamentals Lab", 1, "IDE coding exercises, algorithmic debugging and structured program design"),
+                    CourseItem("CC-214", "Computer Networks", 3, "OSI & TCP/IP models, routing protocols, subnetting, switching and network sockets"),
+                    CourseItem("CC-214-L", "Computer Networks Lab", 1, "Packet Tracer simulations, Wireshark traffic inspection and LAN configuration"),
+                    CourseItem("GE-167", "Discrete Structures", 3, "Sets, propositional logic, relations, functions, graph theory, trees & combinatorics"),
+                    CourseItem("GE-191", "Expository Writing (English-II)", 3, "Formal academic writing, essays, literature review, argumentation and citations"),
+                    CourseItem("UE-272", "Introduction to Marketing", 3, "Market segmentation, 4Ps of marketing, digital branding and consumer behavior"),
+                    CourseItem("HQ-002", "Translation of Holy Quran - II", 1, "Surah study, contextual understanding and moral values"),
+                    CourseItem("MD-002", "Mathematics Deficiency - II", 3, "Non-Credit: Coordinate geometry, matrices, determinants & limits")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 3,
                 courses = listOf(
-                    CourseItem("HQ-003", "Translation of Holy Quran", 0, ""),
-                    CourseItem("CC-212", "Software Engineering", 3, "Computing Core"),
-                    CourseItem("CC-211-L", "Object Oriented Programming Lab", 1, "Computing Core Lab"),
-                    CourseItem("CC-211", "Object Oriented Programming", 3, "Computing Core"),
-                    CourseItem("CC-215-L", "Database Systems Lab", 1, "Computing Core Lab"),
-                    CourseItem("CC-215", "Database Systems", 3, "Computing Core"),
-                    CourseItem("CC-210", "Computer Organization & Assembly Language", 3, "Computing Core"),
-                    CourseItem("GE-162", "Calculus and Analytical Geometry", 3, "General Education")
+                    CourseItem("CC-211", "Object Oriented Programming (OOP)", 3, "Classes, encapsulation, inheritance, polymorphism, abstract classes & templates"),
+                    CourseItem("CC-211-L", "Object Oriented Programming Lab", 1, "OOP projects in C++/Java: inheritance hierarchies, GUI and exception handling"),
+                    CourseItem("CC-215", "Database Systems", 3, "Relational model, ER diagrams, normalization (1NF-BCNF), SQL DDL/DML, transactions"),
+                    CourseItem("CC-215-L", "Database Systems Lab", 1, "Hands-on MySQL/PostgreSQL schema modeling, complex SQL joins and stored procedures"),
+                    CourseItem("CC-210", "Computer Organization & Assembly Language", 3, "x86 architecture, registers, memory addressing, interrupts & low-level instructions"),
+                    CourseItem("CC-210-L", "Assembly Language Lab", 1, "MASM/NASM assembly programming, bitwise arithmetic and system interrupts"),
+                    CourseItem("CC-212", "Software Engineering", 3, "SDLC methodologies, Agile/Scrum, requirement engineering, UML diagrams and testing"),
+                    CourseItem("GE-162", "Calculus and Analytical Geometry", 3, "Differential & integral calculus, series, vectors, partial derivatives and curve tracing"),
+                    CourseItem("HQ-003", "Translation of Holy Quran - III", 0, "Non-Credit: Selected chapters recitation and comprehensive comprehension")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 4,
                 courses = listOf(
-                    CourseItem("HQ-004", "Translation of Holy Quran", 1, ""),
-                    CourseItem("CC-311", "Operating Systems", 3, "Computing Core"),
-                    CourseItem("MS-253", "Multivariable Calculus", 3, "Mathematics"),
-                    CourseItem("GE-192", "Introduction to Management", 2, "General Education"),
-                    CourseItem("CC-312", "Information Security", 3, "Computing Core"),
-                    CourseItem("CC-213-L", "Data Structures Lab", 1, "Computing Core Lab"),
-                    CourseItem("CC-213", "Data Structures", 3, "Computing Core")
+                    CourseItem("CC-213", "Data Structures & Algorithms", 3, "Stacks, queues, linked lists, binary search trees, AVL trees, graphs & hashing"),
+                    CourseItem("CC-213-L", "Data Structures Lab", 1, "Implementing custom data structures, traversal algorithms and performance benchmarks"),
+                    CourseItem("CC-311", "Operating Systems", 3, "Process synchronization, semaphores, deadlock handling, virtual memory & file systems"),
+                    CourseItem("CC-311-L", "Operating Systems Lab", 1, "Linux shell scripting, POSIX threads, process creation (fork/exec) and mutex locks"),
+                    CourseItem("CC-312", "Information Security", 3, "Symmetric/Asymmetric cryptography, PKI, digital signatures, hashing & access control"),
+                    CourseItem("MS-251", "Probability and Statistics", 3, "Random variables, probability distributions, hypothesis testing, ANOVA & regression"),
+                    CourseItem("GE-192", "Introduction to Management", 2, "Organizational structures, leadership styles, project planning and decision making"),
+                    CourseItem("HQ-004", "Translation of Holy Quran - IV", 1, "Study of societal ethics and commandments in Quranic passages")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 5,
                 courses = listOf(
-                    CourseItem("DI-322", "Web Technologies", 3, "IT Core"),
-                    CourseItem("HQ-005", "Translation of Holy Quran", 0, ""),
-                    CourseItem("GE-262", "Professional Practices", 2, "General Education"),
-                    CourseItem("DI-328", "Parallel & Distributed Computing", 3, "IT Core"),
-                    CourseItem("MS-252", "Linear Algebra", 3, "Mathematics"),
-                    CourseItem("CC-310", "Artificial Intelligence", 2, "Computing Core"),
-                    CourseItem("CC-313", "Analysis of Algorithms", 3, "Computing Core")
+                    CourseItem("DI-322", "Web Technologies", 3, "HTML5, CSS3, modern JavaScript (ES6+), React/Vue, RESTful API endpoints & backend"),
+                    CourseItem("DI-322-L", "Web Technologies Lab", 1, "Building full-stack responsive web apps with backend databases and client state"),
+                    CourseItem("CC-310", "Artificial Intelligence", 3, "Search algorithms (A*, minimax), knowledge representation, NLP, neural networks basics"),
+                    CourseItem("CC-310-L", "Artificial Intelligence Lab", 1, "Python AI programming: scikit-learn, heuristic search and automated agents"),
+                    CourseItem("CC-313", "Analysis of Algorithms", 3, "Asymptotic notation, divide-and-conquer, greedy algorithms, dynamic programming, NP-completeness"),
+                    CourseItem("DI-328", "Parallel & Distributed Computing", 3, "Multi-threading, MPI, OpenMP, cluster computing, cloud virtualization & scalability"),
+                    CourseItem("MS-252", "Linear Algebra", 3, "Vector spaces, matrices, Gaussian elimination, eigenvalues, eigenvectors & transformations"),
+                    CourseItem("HQ-005", "Translation of Holy Quran - V", 0, "Non-Credit: Selected Surah recitation and contextual meaning")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 6,
                 courses = listOf(
-                    CourseItem("HQ-006", "Translation of Holy Quran", 1, ""),
-                    CourseItem("EI-425", "Software Quality Engineering", 3, "IT Elective"),
-                    CourseItem("EI-330", "Software Project Management", 3, "IT Elective"),
-                    CourseItem("EI-331", "Software Construction & Development", 3, "IT Elective"),
-                    CourseItem("EI-333", "Mobile Application Development", 3, "IT Elective"),
-                    CourseItem("EI-335", "Machine Learning", 3, "IT Elective"),
-                    CourseItem("GE-362", "Entrepreneurship", 2, "General Education")
+                    CourseItem("EI-333", "Mobile Application Development", 3, "Android Kotlin / Flutter app architecture, Jetpack Compose, state management & APIs"),
+                    CourseItem("EI-333-L", "Mobile Application Development Lab", 1, "Hands-on building native Android apps with Room database, Retrofit & Material 3 UI"),
+                    CourseItem("EI-335", "Machine Learning & Data Mining", 3, "Supervised & unsupervised learning, classification, clustering, regression and evaluation"),
+                    CourseItem("EI-330", "Software Project Management", 3, "WBS, COCOMO estimation, risk analysis, Gantt schedules, sprint management & QA"),
+                    CourseItem("EI-331", "Software Construction & Architecture", 3, "Design patterns (GoF), architectural styles (Microservices, MVC), refactoring & clean code"),
+                    CourseItem("GE-262", "Professional Practices & Ethics", 2, "IEEE/ACM codes of ethics, intellectual property, cyber laws, privacy and IT contracts"),
+                    CourseItem("GE-362", "Entrepreneurship & Innovation", 2, "Startup lifecycle, business model canvas, pitching, venture capital and commercialization"),
+                    CourseItem("HQ-006", "Translation of Holy Quran - VI", 1, "Moral, legal and socio-economic Quranic principles")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 7,
                 courses = listOf(
-                    CourseItem("HQ-007", "Translation of Holy Quran", 0, ""),
-                    CourseItem("DI-323", "System and Network Administration", 3, "IT Core"),
-                    CourseItem("EI-336", "Global IT Services and Workspace", 3, "IT Elective"),
-                    CourseItem("CC-411", "Final Year Project - I", 2, "Computing Core Project"),
-                    CourseItem("DI-324", "Database Administration and Management", 3, "IT Core"),
-                    CourseItem("EI-339", "Cloud Computing", 3, "IT Elective")
+                    CourseItem("CC-411", "Final Year Project - I (FYP-I)", 3, "Problem formulation, SRS documentation, architectural design, prototyping & defense"),
+                    CourseItem("DI-323", "System and Network Administration", 3, "Linux/Windows server configuration, Active Directory, DNS/DHCP, firewall & monitoring"),
+                    CourseItem("DI-323-L", "System Administration Lab", 1, "Configuring web servers (Nginx/Apache), SSH hardening, user privilege management"),
+                    CourseItem("DI-324", "Database Administration & Management", 3, "Database tuning, backup & recovery strategies, index optimization, clustering & replication"),
+                    CourseItem("EI-339", "Cloud Computing & DevOps", 3, "AWS/GCP infrastructure, Docker containers, Kubernetes, CI/CD pipelines & serverless"),
+                    CourseItem("EI-336", "Global IT Services & Enterprise Systems", 3, "ERP architectures, ITIL service management, outsourcing frameworks & digital workplace"),
+                    CourseItem("HQ-007", "Translation of Holy Quran - VII", 0, "Non-Credit: Tajweed, reading and ideological comprehension")
                 )
             ),
             SemesterOutline(
                 semesterNumber = 8,
                 courses = listOf(
-                    CourseItem("GE-363", "Civics and Community Management", 2, "General Education"),
-                    CourseItem("DI-325", "Cyber Security", 3, "IT Core"),
-                    CourseItem("CC-412", "Final Year Project - II", 4, "Computing Core Project"),
-                    CourseItem("DI-327", "Information Technology Infrastructure", 3, "IT Core"),
-                    CourseItem("MS-254", "Technical and Business Writing", 3, "Support Course"),
-                    CourseItem("HQ-008", "Translation of Holy Quran", 1, "")
+                    CourseItem("CC-412", "Final Year Project - II (FYP-II)", 3, "Full software/system implementation, QA testing, deployment, final thesis and viva voce"),
+                    CourseItem("DI-325", "Cyber Security & Digital Forensics", 3, "Threat modeling, ethical hacking, vulnerability scanning, SIEM, incident response & forensics"),
+                    CourseItem("DI-325-L", "Cyber Security Lab", 1, "Penetration testing labs, Wireshark, Kali Linux toolkits and defensive scripting"),
+                    CourseItem("DI-327", "Information Technology Infrastructure", 3, "Datacenter design, software-defined networking, storage area networks (SAN) & high availability"),
+                    CourseItem("MS-254", "Technical and Business Report Writing", 3, "Research methodology, thesis drafting, technical proposals, executive whitepapers & presentations"),
+                    CourseItem("GE-363", "Civics and Community Engagement", 2, "Community service, civic duties, societal leadership, public policy and environmental awareness"),
+                    CourseItem("HQ-008", "Translation of Holy Quran - VIII", 1, "Concluding comprehensive evaluation of Quranic studies")
                 )
             )
         )

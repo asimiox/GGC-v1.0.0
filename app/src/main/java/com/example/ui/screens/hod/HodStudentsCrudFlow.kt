@@ -86,8 +86,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.OfficialBsStudentDto
 
 private val BrandNavy = Color(0xFF061B52)
-private val BrandGold = Color(0xFFC59B27)
-private val BrandGoldLight = Color(0xFFE5C058)
+private val BrandAccentBlue = Color(0xFF1E5BB5)
 private val BrandBg = Color(0xFFF6F8FB)
 
 /**
@@ -148,7 +147,7 @@ fun HodStudentsCrudScreen(
                         Text(
                             text = "${state.departmentName} Roster",
                             fontSize = 12.sp,
-                            color = BrandGoldLight
+                            color = Color.White.copy(alpha = 0.8f)
                         )
                     }
                 },
@@ -178,7 +177,7 @@ fun HodStudentsCrudScreen(
                 FloatingActionButton(
                     onClick = { showAddDialog = true },
                     containerColor = BrandNavy,
-                    contentColor = BrandGoldLight,
+                    contentColor = Color.White,
                     modifier = Modifier.testTag("hod_fab_add_student")
                 ) {
                     Row(
@@ -257,7 +256,7 @@ fun HodStudentsCrudScreen(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = null,
-                                tint = BrandGold,
+                                tint = BrandAccentBlue,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -672,7 +671,7 @@ fun HodImportRosterTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandGold),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandAccentBlue),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text("Extract & Preview Students", color = Color.White, fontWeight = FontWeight.Bold)
@@ -886,7 +885,7 @@ fun HodAddStudentDialog(
         title = {
             Column {
                 Text("Add Student Record", fontWeight = FontWeight.Bold, color = BrandNavy)
-                Text("Department: $departmentName", fontSize = 12.sp, color = BrandGold)
+                Text("Department: $departmentName", fontSize = 12.sp, color = BrandAccentBlue)
             }
         },
         text = {
@@ -977,7 +976,7 @@ fun HodEditStudentDialog(
         title = {
             Column {
                 Text("Edit Student Record", fontWeight = FontWeight.Bold, color = BrandNavy)
-                Text("Roll: ${student.rollNumber} • $departmentName", fontSize = 12.sp, color = BrandGold)
+                Text("Roll: ${student.rollNumber} • $departmentName", fontSize = 12.sp, color = BrandAccentBlue)
             }
         },
         text = {
