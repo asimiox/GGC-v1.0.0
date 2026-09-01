@@ -1,7 +1,6 @@
 package com.example.ui.screens.profile
 
-import android.content.Intent
-import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,18 +24,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -51,7 +41,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -78,7 +67,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.UserProfileManager
-import com.example.data.repository.FacultyAuthRepository
 import com.example.ui.screens.auth.FacultyAuthContent
 import com.example.ui.theme.GgcGoldTertiary
 import kotlinx.coroutines.launch
@@ -97,6 +85,7 @@ fun ProfileScreen(
     var showFacultyAuthSheet by remember { mutableStateOf(false) }
     var showHodDashboard by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showChangeSemesterDialog by remember { mutableStateOf(false) }
     var currentPasswordInput by remember { mutableStateOf("") }
     var newPasswordInput by remember { mutableStateOf("") }
     var confirmPasswordInput by remember { mutableStateOf("") }
@@ -105,6 +94,20 @@ fun ProfileScreen(
     var isCurrentPassVisible by remember { mutableStateOf(false) }
     var isNewPassVisible by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    BackHandler(enabled = true) {
+        if (showHodDashboard) {
+            showHodDashboard = false
+        } else if (showChangeSemesterDialog) {
+            showChangeSemesterDialog = false
+        } else if (showChangePasswordDialog) {
+            showChangePasswordDialog = false
+        } else if (showFacultyAuthSheet) {
+            showFacultyAuthSheet = false
+        } else if (onBack != null) {
+            onBack()
+        }
+    }
 
     if (showHodDashboard) {
         com.example.ui.screens.hod.HodDashboardScreen(
@@ -165,7 +168,7 @@ fun ProfileScreen(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "User Profile & Portals",
+                    text = "User Profile",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = BrandNavy
@@ -173,6 +176,7 @@ fun ProfileScreen(
             }
             HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
         }
+
         // Profile Header Card
         Card(
             modifier = Modifier
@@ -184,12 +188,12 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
+                        .size(76.dp)
                         .clip(CircleShape)
                         .background(Color.White)
                         .border(3.dp, GgcGoldTertiary, CircleShape)
@@ -203,14 +207,16 @@ fun ProfileScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
                     text = userProfile.name,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = if (userProfile.isFaculty) {
@@ -218,24 +224,24 @@ fun ProfileScreen(
                     } else {
                         "${userProfile.programLevel} Student Portal • ${userProfile.programName}"
                     },
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = GgcGoldTertiary,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 if (userProfile.isVerified) {
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .padding(horizontal = 12.dp, vertical = 5.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Verified Official Record",
                             tint = GgcGoldTertiary,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
@@ -350,7 +356,51 @@ fun ProfileScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Faculty Options (Password change & HOD dashboard if applicable)
+                val isHodOrAdmin = userProfile.isHod || userProfile.isAdmin || userProfile.designation?.contains("Principal", ignoreCase = true) == true
+                if (isHodOrAdmin) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        ProfileMenuRow(
+                            icon = Icons.Default.AdminPanelSettings,
+                            title = "HOD Command Center",
+                            subtitle = "Department Management & Student Roster Ingestion",
+                            tag = "menu_hod_dashboard",
+                            onClick = { showHodDashboard = true }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    ProfileMenuRow(
+                        icon = Icons.Default.Lock,
+                        title = "Change Password",
+                        subtitle = "Update your faculty account password (default: 00000)",
+                        tag = "menu_change_password",
+                        onClick = {
+                            currentPasswordInput = ""
+                            newPasswordInput = ""
+                            confirmPasswordInput = ""
+                            passwordErrorMsg = null
+                            passwordSuccessMsg = null
+                            showChangePasswordDialog = true
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
@@ -376,7 +426,8 @@ fun ProfileScreen(
                         userProfile.rollNumber?.let { roll ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(text = "College Roll Number", fontSize = 13.sp, color = Color(0xFF6B7280))
                                 Text(text = roll, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandNavy)
@@ -390,7 +441,8 @@ fun ProfileScreen(
                         userProfile.registrationNumber?.let { reg ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
                                     text = if (userProfile.programLevel == "BS") "University Reg Number" else "Registration Number",
@@ -405,14 +457,81 @@ fun ProfileScreen(
                             )
                         }
 
+                        // Official Program / Department (Strictly locked to HOD / Admin Import)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(text = "Official Department", fontSize = 13.sp, color = Color(0xFF6B7280))
+                                Text(
+                                    text = "Assigned via Official Import",
+                                    fontSize = 10.sp,
+                                    color = BrandNavy.copy(alpha = 0.6f)
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(BrandNavy.copy(alpha = 0.08f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = userProfile.programName,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 10.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                        )
+
                         userProfile.semester?.let { sem ->
                             if (userProfile.programLevel == "BS") {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { showChangeSemesterDialog = true },
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "Current Semester", fontSize = 13.sp, color = Color(0xFF6B7280))
-                                    Text(text = sem, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandNavy)
+                                    Column {
+                                        Text(text = "Current Semester", fontSize = 13.sp, color = Color(0xFF6B7280))
+                                        Text(
+                                            text = "Tap to update active semester",
+                                            fontSize = 10.sp,
+                                            color = BrandNavy.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(BrandNavy)
+                                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                        ) {
+                                            Text(
+                                                text = sem,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White
+                                            )
+                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.ChevronRight,
+                                            contentDescription = "Change Semester",
+                                            tint = BrandNavy,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
                                 }
                                 HorizontalDivider(
                                     modifier = Modifier.padding(vertical = 10.dp),
@@ -424,7 +543,8 @@ fun ProfileScreen(
                         userProfile.username?.let { user ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(text = "Portal Username", fontSize = 13.sp, color = Color(0xFF6B7280))
                                 Text(text = "@$user", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandNavy)
@@ -433,218 +553,8 @@ fun ProfileScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
-        }
-
-        // Student & Academic Utilities Section
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text(
-                text = "Academic Tools & Services",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ProfileMenuRow(
-                        icon = Icons.Default.Calculate,
-                        title = "GPA / CGPA Calculator",
-                        subtitle = "Calculate semester GPA according to grading scheme",
-                        tag = "menu_gpa_calc",
-                        onClick = { }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-
-                    ProfileMenuRow(
-                        icon = Icons.Default.Bookmark,
-                        title = "Saved Notes & Bookmarks",
-                        subtitle = "Access downloaded course outlines & past papers",
-                        tag = "menu_bookmarks",
-                        onClick = { }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-
-                    ProfileMenuRow(
-                        icon = Icons.Default.Notifications,
-                        title = "Push Notification Settings",
-                        subtitle = "Configure official notice alerts",
-                        tag = "menu_notifications",
-                        onClick = { }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Admin & Faculty Portal Access Section
-            Text(
-                text = "Administration & Staff",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    val isHodOrAdmin = userProfile.isHod || userProfile.isAdmin || userProfile.designation?.contains("Principal", ignoreCase = true) == true
-
-                    if (isHodOrAdmin) {
-                        ProfileMenuRow(
-                            icon = Icons.Default.AdminPanelSettings,
-                            title = "HOD Command Center",
-                            subtitle = "Department Management & Student Roster Ingestion",
-                            tag = "menu_hod_dashboard",
-                            onClick = {
-                                showHodDashboard = true
-                            }
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
-                    }
-
-                    if (userProfile.isFaculty && userProfile.isVerified) {
-                        ProfileMenuRow(
-                            icon = Icons.Default.Lock,
-                            title = "Change Password",
-                            subtitle = "Update your faculty account password (default: 00000)",
-                            tag = "menu_change_password",
-                            onClick = {
-                                currentPasswordInput = ""
-                                newPasswordInput = ""
-                                confirmPasswordInput = ""
-                                passwordErrorMsg = null
-                                passwordSuccessMsg = null
-                                showChangePasswordDialog = true
-                            }
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
-
-                        ProfileMenuRow(
-                            icon = Icons.AutoMirrored.Filled.Logout,
-                            title = "Sign Out of Faculty Portal",
-                            subtitle = "Signed in as ${userProfile.name} (${userProfile.facultyId})",
-                            tag = "menu_faculty_logout",
-                            onClick = {
-                                scope.launch {
-                                    FacultyAuthRepository().logout(context)
-                                }
-                            }
-                        )
-                    } else {
-                        ProfileMenuRow(
-                            icon = Icons.Default.AdminPanelSettings,
-                            title = "Admin & Faculty Portal Login",
-                            subtitle = "Official registration & login for College Faculty",
-                            tag = "menu_admin_portal",
-                            onClick = {
-                                showFacultyAuthSheet = true
-                            }
-                        )
-                    }
-                }
-            }
-
-            if (userProfile.isVerified && !userProfile.isFaculty) {
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            UserProfileManager.clearProfile(context)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .testTag("student_logout_button"),
-                    shape = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = "Sign Out",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sign Out of Student Account")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Official Information Section
-            Text(
-                text = "About Application",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ProfileMenuRow(
-                        icon = Icons.Default.Language,
-                        title = "Official College Web Portal",
-                        subtitle = "www.ggcmbdin.edu.pk",
-                        tag = "menu_official_web",
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.ggcmbdin.edu.pk/"))
-                            context.startActivity(intent)
-                        }
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                    )
-
-                    ProfileMenuRow(
-                        icon = Icons.Default.Info,
-                        title = "Version Information",
-                        subtitle = "v1.0.0 (Build 1) • GGC M.B.Din Official App",
-                        tag = "menu_version",
-                        onClick = { }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
@@ -815,6 +725,72 @@ fun ProfileScreen(
             dismissButton = {
                 TextButton(onClick = { showChangePasswordDialog = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showChangeSemesterDialog) {
+        AlertDialog(
+            onDismissRequest = { showChangeSemesterDialog = false },
+            title = {
+                Column {
+                    Text(
+                        text = "Update Active Semester",
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        fontSize = 18.sp
+                    )
+                    Text(
+                        text = "Department: ${userProfile.programName}",
+                        fontSize = 12.sp,
+                        color = Color(0xFF6B7280)
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    (1..8).map { "Semester $it" }.chunked(2).forEach { rowPair ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowPair.forEach { sem ->
+                                val isSelected = userProfile.semester == sem
+                                Button(
+                                    onClick = {
+                                        UserProfileManager.updateSemester(context, sem)
+                                        showChangeSemesterDialog = false
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isSelected) BrandNavy else Color(0xFFE8EEFA),
+                                        contentColor = if (isSelected) Color.White else BrandNavy
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("dialog_sem_${sem.removePrefix("Semester ")}")
+                                ) {
+                                    Text(
+                                        text = sem,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showChangeSemesterDialog = false }) {
+                    Text("Close")
                 }
             }
         )

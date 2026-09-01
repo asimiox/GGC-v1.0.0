@@ -110,11 +110,41 @@ object RegisteredStudentStore {
         persistToPrefs()
     }
 
+    fun saveBsAccounts(accounts: List<RegisteredBsStudentAccount>) {
+        if (accounts.isEmpty()) return
+        accounts.forEach { account ->
+            memoryBsAccounts[account.rollNumber.uppercase()] = account
+            memoryBsAccounts[account.registrationNumber.uppercase()] = account
+            memoryBsAccounts[account.username.lowercase()] = account
+        }
+        persistToPrefs()
+    }
+
     fun saveIntermediateAccount(account: RegisteredIntermediateStudentAccount) {
         memoryInterAccounts[account.rollNumber.uppercase()] = account
         memoryInterAccounts[account.registrationNumber.uppercase()] = account
         memoryInterAccounts[account.username.lowercase()] = account
         persistToPrefs()
+    }
+
+    fun saveIntermediateAccounts(accounts: List<RegisteredIntermediateStudentAccount>) {
+        if (accounts.isEmpty()) return
+        accounts.forEach { account ->
+            memoryInterAccounts[account.rollNumber.uppercase()] = account
+            memoryInterAccounts[account.registrationNumber.uppercase()] = account
+            memoryInterAccounts[account.username.lowercase()] = account
+        }
+        persistToPrefs()
+    }
+
+    fun findBsAccount(query: String): RegisteredBsStudentAccount? {
+        val cleanQuery = query.trim().uppercase()
+        return memoryBsAccounts[cleanQuery] ?: memoryBsAccounts[query.trim().lowercase()]
+    }
+
+    fun findIntermediateAccount(query: String): RegisteredIntermediateStudentAccount? {
+        val cleanQuery = query.trim().uppercase()
+        return memoryInterAccounts[cleanQuery] ?: memoryInterAccounts[query.trim().lowercase()]
     }
 
     fun authenticateBs(query: String, pass: String): BsStudentProfileDto? {

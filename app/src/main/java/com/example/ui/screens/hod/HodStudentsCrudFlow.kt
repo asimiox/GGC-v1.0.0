@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -678,15 +680,32 @@ fun HodImportRosterTab(
             }
         }
 
-        // Extracted Students Preview
+        // Extracted Students Preview (Full List, up to 1000+ students)
         if (state.parsedStudents.isNotEmpty()) {
             Spacer(modifier = Modifier.height(14.dp))
+
+            var previewSearchQuery by remember { mutableStateOf("") }
+            val filteredStudents = remember(state.parsedStudents, previewSearchQuery) {
+                if (previewSearchQuery.isBlank()) {
+                    state.parsedStudents
+                } else {
+                    val q = previewSearchQuery.trim().lowercase()
+                    state.parsedStudents.filter {
+                        it.studentName.lowercase().contains(q) ||
+                                it.rollNumber.lowercase().contains(q) ||
+                                it.registrationNumber.lowercase().contains(q) ||
+                                it.fatherName.lowercase().contains(q)
+                    }
+                }
+            }
+
+            val selectedCount = state.parsedStudents.count { it.isSelected }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -694,84 +713,147 @@ fun HodImportRosterTab(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Extracted (${state.parsedStudents.size} Students)",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandNavy
-                        )
+                        Column {
+                            Text(
+                                text = "Extracted Roster (${state.parsedStudents.size} Students)",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandNavy
+                            )
+                            Text(
+                                text = "$selectedCount of ${state.parsedStudents.size} selected for import",
+                                fontSize = 12.sp,
+                                color = if (selectedCount > 0) Color(0xFF2E7D32) else Color.Red,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.clickable { onToggleSelectAll() }
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { onToggleSelectAll() }
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Checkbox(
                                 checked = state.isAllStudentsSelected,
                                 onCheckedChange = { onToggleSelectAll() },
                                 colors = CheckboxDefaults.colors(checkedColor = BrandNavy)
                             )
-                            Text("Select All", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Text("Select All", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    state.parsedStudents.take(15).forEach { student ->
-                        Row(
+                    // Search within preview
+                    if (state.parsedStudents.size > 5) {
+                        OutlinedTextField(
+                            value = previewSearchQuery,
+                            onValueChange = { previewSearchQuery = it },
+                            placeholder = { Text("Filter extracted list (e.g. roll no, name)...", fontSize = 12.sp) },
+                            leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            trailingIcon = {
+                                if (previewSearchQuery.isNotBlank()) {
+                                    IconButton(onClick = { previewSearchQuery = "" }, modifier = Modifier.size(24.dp)) {
+                                        Icon(imageVector = Icons.Default.Close, contentDescription = "Clear", modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            },
+                            singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = student.isSelected,
-                                onCheckedChange = { onToggleSelect(student.id) },
-                                colors = CheckboxDefaults.colors(checkedColor = BrandNavy)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = student.studentName,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = BrandNavy
+                                .height(50.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    // Full Scrollable Student List container
+                    val previewScrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 380.dp)
+                            .verticalScroll(previewScrollState)
+                    ) {
+                        filteredStudents.forEachIndexed { index, student ->
+                            val globalIndex = state.parsedStudents.indexOf(student) + 1
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { onToggleSelect(student.id) }
+                                    .padding(vertical = 5.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = student.isSelected,
+                                    onCheckedChange = { onToggleSelect(student.id) },
+                                    colors = CheckboxDefaults.colors(checkedColor = BrandNavy)
                                 )
                                 Text(
-                                    text = "Roll: ${student.rollNumber} • Reg: ${student.registrationNumber}",
+                                    text = "#$globalIndex",
                                     fontSize = 11.sp,
-                                    color = Color.DarkGray
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Gray,
+                                    modifier = Modifier.width(36.dp)
                                 )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = student.studentName,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = BrandNavy
+                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "Roll: ${student.rollNumber}",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = BrandNavy
+                                        )
+                                        if (student.registrationNumber.isNotBlank() && student.registrationNumber != student.rollNumber) {
+                                            Text(
+                                                text = " • Reg: ${student.registrationNumber}",
+                                                fontSize = 11.sp,
+                                                color = Color.DarkGray
+                                            )
+                                        }
+                                        if (student.fatherName.isNotBlank()) {
+                                            Text(
+                                                text = " • S/D/O: ${student.fatherName}",
+                                                fontSize = 11.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
+                                }
                             }
+                            HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 0.8.dp)
                         }
                     }
 
-                    if (state.parsedStudents.size > 15) {
-                        Text(
-                            text = "+ ${state.parsedStudents.size - 15} more students ready to import",
-                            fontSize = 12.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(vertical = 6.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
                         onClick = onPushToDatabase,
-                        enabled = !state.isLoading && state.parsedStudents.any { it.isSelected },
+                        enabled = !state.isLoading && selectedCount > 0,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
+                            .height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         if (state.isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Pushing $selectedCount Students to Database...", color = Color.White, fontWeight = FontWeight.Bold)
                         } else {
                             Icon(imageVector = Icons.Default.CloudUpload, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Push ${state.parsedStudents.count { it.isSelected }} Students to Supabase",
+                                "Push All $selectedCount Students to Database (1-Click)",
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )

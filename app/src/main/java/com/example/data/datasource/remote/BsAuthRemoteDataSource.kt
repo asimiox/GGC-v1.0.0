@@ -239,6 +239,12 @@ class BsAuthRemoteDataSource {
             return AuthResult.Error("Roll Number/Username and Password are required.")
         }
 
+        // 0. Safety: Check if this roll number belongs to an Intermediate Student
+        val interAccount = com.example.data.datasource.RegisteredStudentStore.findIntermediateAccount(query)
+        if (interAccount != null) {
+            return AuthResult.Error("Roll number '$query' is enrolled in Intermediate Program (${interAccount.program}). Please log in using the Intermediate Student Portal.")
+        }
+
         // 1. Stage 1: Check persistent local store first (instant response)
         val localMatch = com.example.data.datasource.RegisteredStudentStore.authenticateBs(query, cleanPassword)
         if (localMatch != null) {
@@ -353,7 +359,7 @@ class BsAuthRemoteDataSource {
                     registrationNumber = match.registrationNumber.ifBlank { "REG-$cleanId" },
                     program = match.effectiveProgram.ifBlank { "BS Program" },
                     session = match.effectiveSession,
-                    semester = if (match.semesterNumber != null) "Semester ${match.semesterNumber}" else "Semester 1"
+                    semester = match.effectiveSemester
                 )
             } else {
                 null

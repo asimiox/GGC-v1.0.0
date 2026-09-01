@@ -474,176 +474,201 @@ class HodViewModel(
         val targetSession = _uiState.value.uploadTargetSession
         val targetSemester = _uiState.value.uploadTargetSemester
 
-        val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
-        val parsedList = mutableListOf<ParsedStudentItem>()
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val lines = rawText.lines().map { it.trim() }.filter { it.isNotBlank() }
+            val parsedList = mutableListOf<ParsedStudentItem>()
 
-        var nameColIdx = -1
-        var fatherColIdx = -1
-        var regColIdx = -1
-        var rollColIdx = -1
-        var sessionColIdx = -1
-        var programColIdx = -1
-        var headerDetected = false
+            var nameColIdx = -1
+            var fatherColIdx = -1
+            var regColIdx = -1
+            var rollColIdx = -1
+            var sessionColIdx = -1
+            var programColIdx = -1
+            var headerDetected = false
 
-        var rollCounter = 1
+            var rollCounter = 1
 
-        for (line in lines) {
-            // Ignore system headings
-            if (line.contains("govt graduate college", ignoreCase = true) && !line.contains("|") && !line.contains(",")) continue
-            if (line.contains("gazette", ignoreCase = true) && !line.contains("|") && !line.contains(",")) continue
+            for (rawLine in lines) {
+                // Ignore obvious title / decorative lines
+                val lowerLine = rawLine.lowercase()
+                if ((lowerLine.contains("govt graduate college") || lowerLine.contains("gazette notification") || lowerLine.contains("page ") || lowerLine.contains("printed on")) && !rawLine.contains(",") && !rawLine.contains("\t") && !rawLine.contains("|")) {
+                    continue
+                }
 
-            // 1. Format 1: Pipe / Colon Key-Value formatted line
-            // Example: Student Name: Sheeba Shoukat | Father Name: Shoukat Ali | University Reg No: 2025-mcm-2 | Roll No: 2025-163706 | Academic Session: 2025-2029
-            if (line.contains("|") && line.contains(":")) {
-                val segments = line.split("|").map { it.trim() }
-                var sName = ""
-                var fName = ""
-                var sReg = ""
-                var sRoll = ""
-                var sSession = ""
-                var sProg = ""
+                // Clean serial prefix e.g. "1.", "91)", "[1]", "#1 ", "1 -"
+                var line = rawLine.replace(Regex("^\\s*#?\\d+[\\.\\)\\:\\-\\s]\\s*"), "").trim()
+                if (line.isBlank()) line = rawLine
 
-                for (segment in segments) {
-                    val key = segment.substringBefore(":").trim().lowercase()
-                    val value = segment.substringAfter(":").trim()
-                    if (value.isBlank()) continue
+                // 1. Format 1: Pipe / Colon Key-Value formatted line
+                // Example: Student Name: Sheeba Shoukat | Father Name: Shoukat Ali | University Reg No: 2025-mcm-2 | Roll No: 2025-163706
+                if (line.contains("|") && line.contains(":")) {
+                    val segments = line.split("|").map { it.trim() }
+                    var sName = ""
+                    var fName = ""
+                    var sReg = ""
+                    var sRoll = ""
+                    var sSession = ""
+                    var sProg = ""
 
-                    when {
-                        key.contains("student name") || key == "name" -> sName = value
-                        key.contains("father name") || key == "father" -> fName = value
-                        key.contains("reg") || key.contains("registration") -> sReg = value.uppercase()
-                        key.contains("roll") -> sRoll = value.uppercase()
-                        key.contains("session") -> sSession = value
-                        key.contains("program") || key.contains("class") -> sProg = value
+                    for (segment in segments) {
+                        val key = segment.substringBefore(":").trim().lowercase()
+                        val value = segment.substringAfter(":").trim()
+                        if (value.isBlank()) continue
+
+                        when {
+                            key.contains("student name") || key == "name" || key.contains("candidate") -> sName = value
+                            key.contains("father name") || key == "father" -> fName = value
+                            key.contains("reg") || key.contains("registration") -> sReg = value.uppercase()
+                            key.contains("roll") -> sRoll = value.uppercase()
+                            key.contains("session") -> sSession = value
+                            key.contains("program") || key.contains("class") || key.contains("dept") -> sProg = value
+                        }
+                    }
+
+                    if (sRoll.isNotBlank() || sReg.isNotBlank() || sName.isNotBlank()) {
+                        parsedList.add(
+                            ParsedStudentItem(
+                                rollNumber = sRoll.ifBlank { sReg }.ifBlank { "ROLL-${String.format(Locale.ENGLISH, "%04d", rollCounter)}" },
+                                registrationNumber = sReg.ifBlank { sRoll },
+                                studentName = sName.ifBlank { "Student (${sRoll.ifBlank { sReg }})" },
+                                fatherName = fName,
+                                program = sProg.ifBlank { targetProgram },
+                                session = sSession.ifBlank { targetSession },
+                                semester = targetSemester,
+                                isSelected = true
+                            )
+                        )
+                        rollCounter++
+                        continue
                     }
                 }
 
-                if (sRoll.isNotBlank() || sReg.isNotBlank() || sName.isNotBlank()) {
-                    parsedList.add(
-                        ParsedStudentItem(
-                            rollNumber = sRoll.ifBlank { sReg }.ifBlank { "ROLL-${String.format(Locale.ENGLISH, "%04d", rollCounter)}" },
-                            registrationNumber = sReg.ifBlank { sRoll },
-                            studentName = sName.ifBlank { "Student ($sRoll)" },
-                            fatherName = fName,
-                            program = sProg.ifBlank { targetProgram },
-                            session = sSession.ifBlank { targetSession },
-                            semester = targetSemester,
-                            isSelected = true
-                        )
-                    )
-                    rollCounter++
-                    continue
-                }
-            }
+                // 2. Tokenize line smartly
+                val tokens = tokenizeRosterLine(line)
+                if (tokens.isEmpty()) continue
 
-            // 2. Format 2: CSV / Tab-separated / Delimited
-            val tokens = parseCsvLineTokens(line)
-            if (tokens.isEmpty()) continue
-
-            // Check if this line is the Header line
-            val isHeaderRow = tokens.any { token ->
-                val lower = token.trim().lowercase()
-                lower in listOf("student name", "father name", "university reg no", "reg no", "registration no", "registration number", "roll no", "roll number", "academic session", "session", "name", "roll")
-            }
-
-            if (isHeaderRow) {
-                headerDetected = true
-                nameColIdx = -1
-                fatherColIdx = -1
-                regColIdx = -1
-                rollColIdx = -1
-                sessionColIdx = -1
-                programColIdx = -1
-
-                tokens.forEachIndexed { index, token ->
+                // Check if this line is the Header line
+                val isHeaderRow = tokens.any { token ->
                     val lower = token.trim().lowercase()
-                    when {
-                        lower.contains("student name") || (lower == "name" && nameColIdx == -1) -> nameColIdx = index
-                        lower.contains("father name") || lower == "father" -> fatherColIdx = index
-                        lower.contains("reg") || lower.contains("registration") -> regColIdx = index
-                        lower.contains("roll") -> rollColIdx = index
-                        lower.contains("session") -> sessionColIdx = index
-                        lower.contains("program") || lower.contains("class") -> programColIdx = index
+                    lower in listOf(
+                        "student name", "father name", "university reg no", "reg no", "registration no",
+                        "registration number", "roll no", "roll number", "academic session", "session",
+                        "name", "roll", "reg", "class", "program", "discipline"
+                    )
+                }
+
+                if (isHeaderRow && !headerDetected) {
+                    headerDetected = true
+                    tokens.forEachIndexed { index, token ->
+                        val lower = token.trim().lowercase()
+                        when {
+                            lower.contains("student name") || (lower == "name" && nameColIdx == -1) -> nameColIdx = index
+                            lower.contains("father name") || lower == "father" -> fatherColIdx = index
+                            lower.contains("reg") || lower.contains("registration") -> regColIdx = index
+                            lower.contains("roll") -> rollColIdx = index
+                            lower.contains("session") -> sessionColIdx = index
+                            lower.contains("program") || lower.contains("class") || lower.contains("discipline") -> programColIdx = index
+                        }
+                    }
+                    continue // Skip processing header row itself
+                }
+
+                // If header mapping is active and matched
+                if (headerDetected && (rollColIdx != -1 || regColIdx != -1 || nameColIdx != -1)) {
+                    val sName = if (nameColIdx in tokens.indices) tokens[nameColIdx].trim() else ""
+                    val fName = if (fatherColIdx in tokens.indices) tokens[fatherColIdx].trim() else ""
+                    val sReg = if (regColIdx in tokens.indices) tokens[regColIdx].trim().uppercase() else ""
+                    val sRoll = if (rollColIdx in tokens.indices) tokens[rollColIdx].trim().uppercase() else ""
+                    val sSession = if (sessionColIdx in tokens.indices) tokens[sessionColIdx].trim() else targetSession
+                    val sProg = if (programColIdx in tokens.indices) tokens[programColIdx].trim() else targetProgram
+
+                    if (sRoll.isNotBlank() || sReg.isNotBlank() || sName.isNotBlank()) {
+                        parsedList.add(
+                            ParsedStudentItem(
+                                rollNumber = sRoll.ifBlank { sReg }.ifBlank { "ROLL-${String.format(Locale.ENGLISH, "%04d", rollCounter)}" },
+                                registrationNumber = sReg.ifBlank { sRoll },
+                                studentName = sName.ifBlank { "Student (${sRoll.ifBlank { sReg }})" },
+                                fatherName = fName,
+                                program = sProg.ifBlank { targetProgram },
+                                session = sSession.ifBlank { targetSession },
+                                semester = targetSemester,
+                                isSelected = true
+                            )
+                        )
+                        rollCounter++
+                        continue
                     }
                 }
-                continue // Skip processing header row as a student
-            }
 
-            if (headerDetected && (rollColIdx != -1 || regColIdx != -1 || nameColIdx != -1)) {
-                val sName = if (nameColIdx in tokens.indices) tokens[nameColIdx].trim() else ""
-                val fName = if (fatherColIdx in tokens.indices) tokens[fatherColIdx].trim() else ""
-                val sReg = if (regColIdx in tokens.indices) tokens[regColIdx].trim().uppercase() else ""
-                val sRoll = if (rollColIdx in tokens.indices) tokens[rollColIdx].trim().uppercase() else ""
-                val sSession = if (sessionColIdx in tokens.indices) tokens[sessionColIdx].trim() else targetSession
-                val sProg = if (programColIdx in tokens.indices) tokens[programColIdx].trim() else targetProgram
-
-                if (sRoll.isNotBlank() || sReg.isNotBlank() || sName.isNotBlank()) {
-                    parsedList.add(
-                        ParsedStudentItem(
-                            rollNumber = sRoll.ifBlank { sReg }.ifBlank { "ROLL-${String.format(Locale.ENGLISH, "%04d", rollCounter)}" },
-                            registrationNumber = sReg.ifBlank { sRoll },
-                            studentName = sName.ifBlank { "Student ($sRoll)" },
-                            fatherName = fName,
-                            program = sProg.ifBlank { targetProgram },
-                            session = sSession.ifBlank { targetSession },
-                            semester = targetSemester,
-                            isSelected = true
-                        )
-                    )
-                    rollCounter++
-                    continue
-                }
-            }
-
-            // 3. Fallback: Pattern-based extraction for lines without recognized header
-            if (tokens.size >= 2) {
+                // 3. Fallback: Universal Pattern-based extraction for unformatted / free-form / gazette lines
                 var foundReg = ""
                 var foundRoll = ""
                 var foundSession = ""
-                var foundName = ""
-                var foundFather = ""
-
-                val unassignedWords = mutableListOf<String>()
+                var foundProgram = ""
+                val textWords = mutableListOf<String>()
 
                 for (token in tokens) {
                     val clean = token.trim()
                     if (clean.isBlank()) continue
 
-                    // Check if token is Registration format (e.g. 2025-mcm-2, 2024-mbw-266, 2024-GGC-1234)
-                    if (clean.matches(Regex("\\d{4}-[a-zA-Z]+-\\d+.*", RegexOption.IGNORE_CASE)) && foundReg.isBlank()) {
-                        foundReg = clean.uppercase()
+                    // Check if token is Registration format (e.g. 2025-mcm-2, 2024-mbw-266, 2024-GGC-1234, REG-101)
+                    if (clean.matches(Regex("\\d{4}-[a-zA-Z0-9]+-\\d+.*", RegexOption.IGNORE_CASE)) || clean.startsWith("REG-", ignoreCase = true)) {
+                        if (foundReg.isBlank()) foundReg = clean.uppercase()
                     }
-                    // Check if token is Academic Session (e.g. 2025-2029, 2024-2028)
-                    else if (clean.matches(Regex("\\d{4}-\\d{4}")) && foundSession.isBlank()) {
-                        foundSession = clean
+                    // Check if token is Academic Session (e.g. 2025-2029, 2024-2028, 2024-2026)
+                    else if (clean.matches(Regex("20\\d{2}-20\\d{2}")) || clean.matches(Regex("20\\d{2}-\\d{2}"))) {
+                        if (foundSession.isBlank()) foundSession = clean
                     }
-                    // Check if token is Roll Number (e.g. 2025-163706, 163706, BS-01, 105)
-                    else if ((clean.matches(Regex("\\d{4}-\\d+")) || clean.matches(Regex("[A-Z0-9]+-\\d+")) || clean.matches(Regex("\\d{3,}"))) && foundRoll.isBlank()) {
-                        foundRoll = clean.uppercase()
+                    // Check if token is Roll Number (e.g. 2025-163706, 163706, BS-01, IT-91, 105)
+                    else if (clean.matches(Regex("\\d{4}-\\d+")) || clean.matches(Regex("[A-Za-z]+-\\d+")) || (clean.matches(Regex("\\d{2,}")) && foundRoll.isBlank())) {
+                        if (foundRoll.isBlank()) foundRoll = clean.uppercase()
                     }
-                    // Numerical stats (GPA, Marks, Credit Hours) -> ignore
-                    else if (clean.matches(Regex("\\d+(\\.\\d+)?")) || clean.equals("Pass", ignoreCase = true) || clean.equals("Fail", ignoreCase = true)) {
-                        // skip marks / results
+                    // Check for Program token
+                    else if (clean.equals("BSCS", true) || clean.equals("BS IT", true) || clean.contains("Chemistry", true) || clean.contains("Physics", true) || clean.contains("FSc", true) || clean.contains("ICS", true)) {
+                        foundProgram = clean
+                    }
+                    // Skip purely numerical marks/grades/results
+                    else if (clean.matches(Regex("\\d+(\\.\\d+)?")) || clean.equals("Pass", true) || clean.equals("Fail", true) || clean.equals("RL", true)) {
+                        // skip marks / status
                     } else {
-                        unassignedWords.add(clean)
+                        // Word tokens for Name / Father Name
+                        textWords.add(clean)
                     }
                 }
 
-                if (unassignedWords.isNotEmpty()) {
-                    foundName = unassignedWords.first()
-                    if (unassignedWords.size > 1) {
-                        foundFather = unassignedWords[1]
+                var foundName = ""
+                var foundFather = ""
+
+                if (textWords.isNotEmpty()) {
+                    if (textWords.size >= 4) {
+                        // e.g. ["Muhammad", "Ali", "Tariq", "Mahmood"]
+                        val mid = textWords.size / 2
+                        foundName = textWords.take(mid).joinToString(" ")
+                        foundFather = textWords.drop(mid).joinToString(" ")
+                    } else if (textWords.size == 3) {
+                        foundName = "${textWords[0]} ${textWords[1]}"
+                        foundFather = textWords[2]
+                    } else if (textWords.size == 2) {
+                        foundName = textWords[0]
+                        foundFather = textWords[1]
+                    } else {
+                        foundName = textWords.first()
                     }
                 }
 
+                // If we found any identifier, construct the record
                 if (foundRoll.isNotBlank() || foundReg.isNotBlank() || foundName.isNotBlank()) {
+                    val finalRoll = foundRoll.ifBlank { foundReg }.ifBlank { "ROLL-${String.format(Locale.ENGLISH, "%04d", rollCounter)}" }
+                    val finalReg = foundReg.ifBlank { finalRoll }
+                    val finalName = foundName.ifBlank { "Student ($finalRoll)" }
+
                     parsedList.add(
                         ParsedStudentItem(
-                            rollNumber = foundRoll.ifBlank { foundReg }.ifBlank { "ROLL-${String.format(Locale.ENGLISH, "%04d", rollCounter)}" },
-                            registrationNumber = foundReg.ifBlank { foundRoll },
-                            studentName = foundName.ifBlank { "Student ($foundRoll)" },
+                            rollNumber = finalRoll,
+                            registrationNumber = finalReg,
+                            studentName = finalName,
                             fatherName = foundFather,
-                            program = targetProgram,
+                            program = foundProgram.ifBlank { targetProgram },
                             session = foundSession.ifBlank { targetSession },
                             semester = targetSemester,
                             isSelected = true
@@ -652,26 +677,39 @@ class HodViewModel(
                     rollCounter++
                 }
             }
-        }
 
-        if (parsedList.isEmpty()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Could not parse student records. Please check file format.")
-        } else {
-            _uiState.value = _uiState.value.copy(
-                parsedStudents = parsedList,
-                isAllStudentsSelected = true,
-                statusMessage = "Extracted ${parsedList.size} students with original Roll Numbers & Reg Numbers"
-            )
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                if (parsedList.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "Could not parse student records. Please ensure file or text contains student roll numbers or names."
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        parsedStudents = parsedList,
+                        isAllStudentsSelected = true,
+                        errorMessage = null,
+                        statusMessage = "Extracted ${parsedList.size} students ready for 1-click database import!"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun tokenizeRosterLine(line: String): List<String> {
+        val cleanLine = line.trim()
+        if (cleanLine.isBlank()) return emptyList()
+
+        return when {
+            cleanLine.contains("\t") -> cleanLine.split("\t").map { it.trim().removeSurrounding("\"") }.filter { it.isNotBlank() }
+            cleanLine.contains(",") -> parseCsvLineTokens(cleanLine)
+            cleanLine.contains(";") -> cleanLine.split(";").map { it.trim().removeSurrounding("\"") }.filter { it.isNotBlank() }
+            cleanLine.contains("|") -> cleanLine.split("|").map { it.trim().removeSurrounding("\"") }.filter { it.isNotBlank() }
+            cleanLine.contains(Regex("\\s{2,}")) -> cleanLine.split(Regex("\\s{2,}")).map { it.trim().removeSurrounding("\"") }.filter { it.isNotBlank() }
+            else -> cleanLine.split(Regex("\\s+")).map { it.trim().removeSurrounding("\"") }.filter { it.isNotBlank() }
         }
     }
 
     private fun parseCsvLineTokens(line: String): List<String> {
-        val delimiter = when {
-            line.contains("\t") -> '\t'
-            line.contains(";") -> ';'
-            else -> ','
-        }
-
         val tokens = mutableListOf<String>()
         val sb = StringBuilder()
         var inQuotes = false
@@ -679,14 +717,16 @@ class HodViewModel(
         for (ch in line) {
             if (ch == '\"') {
                 inQuotes = !inQuotes
-            } else if (ch == delimiter && !inQuotes) {
-                tokens.add(sb.toString().trim().removeSurrounding("\""))
+            } else if (ch == ',' && !inQuotes) {
+                val token = sb.toString().trim().removeSurrounding("\"")
+                if (token.isNotBlank()) tokens.add(token)
                 sb.setLength(0)
             } else {
                 sb.append(ch)
             }
         }
-        tokens.add(sb.toString().trim().removeSurrounding("\""))
+        val lastToken = sb.toString().trim().removeSurrounding("\"")
+        if (lastToken.isNotBlank()) tokens.add(lastToken)
         return tokens
     }
 
@@ -754,6 +794,11 @@ class HodViewModel(
                     _uiState.value.uploadTargetProgram.contains("I.Com", ignoreCase = true)
 
             var successCount = 0
+            val targetProg = _uiState.value.uploadTargetProgram.trim()
+            val targetSess = _uiState.value.uploadTargetSession.trim().ifBlank { "2024-2028" }
+            val targetSem = _uiState.value.uploadTargetSemester.trim().ifBlank { "Semester 1" }
+            val semNum = targetSem.replace(Regex("[^0-9]"), "").toIntOrNull() ?: 1
+
             if (isInter) {
                 val dtoList = selected.map {
                     OfficialIntermediateStudentDto(
@@ -761,8 +806,10 @@ class HodViewModel(
                         registrationNumber = it.registrationNumber,
                         studentName = it.studentName,
                         fatherName = it.fatherName,
-                        program = it.program,
-                        session = it.session,
+                        program = it.program.ifBlank { targetProg },
+                        programName = it.program.ifBlank { targetProg },
+                        session = it.session.ifBlank { targetSess },
+                        sessionYear = it.session.ifBlank { targetSess },
                         isClaimed = false,
                         isActive = true
                     )
@@ -776,8 +823,12 @@ class HodViewModel(
                         registrationNumber = it.registrationNumber,
                         studentName = it.studentName,
                         fatherName = it.fatherName,
-                        programName = it.program,
-                        sessionYear = it.session,
+                        program = it.program.ifBlank { targetProg },
+                        programName = it.program.ifBlank { targetProg },
+                        session = it.session.ifBlank { targetSess },
+                        sessionYear = it.session.ifBlank { targetSess },
+                        semester = targetSem,
+                        semesterNumber = semNum,
                         isClaimed = false,
                         isActive = true
                     )

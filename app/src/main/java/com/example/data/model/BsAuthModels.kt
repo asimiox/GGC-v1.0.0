@@ -27,6 +27,7 @@ data class OfficialBsStudentDto(
     @SerialName("program_name") val programName: String? = null,
     val session: String? = null,
     @SerialName("session_year") val sessionYear: String? = null,
+    val semester: String? = null,
     @SerialName("student_name") val studentName: String? = null,
     @SerialName("father_name") val fatherName: String? = null,
     @SerialName("first_name") val firstName: String? = null,
@@ -44,6 +45,9 @@ data class OfficialBsStudentDto(
 
     val effectiveSession: String
         get() = if (!session.isNullOrBlank()) session else (sessionYear ?: "2024-2028")
+
+    val effectiveSemester: String
+        get() = if (!semester.isNullOrBlank()) semester!! else (semesterNumber?.let { "Semester $it" } ?: "Semester 1")
 
     val effectiveDisplayName: String
         get() = when {

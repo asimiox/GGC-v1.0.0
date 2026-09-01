@@ -66,7 +66,13 @@ fun GgcAppNavigation() {
         }
 
         composable(NavRoutes.MAIN) {
-            MainScreen()
+            MainScreen(
+                onLogout = {
+                    navController.navigate(NavRoutes.ONBOARDING) {
+                        popUpTo(NavRoutes.MAIN) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

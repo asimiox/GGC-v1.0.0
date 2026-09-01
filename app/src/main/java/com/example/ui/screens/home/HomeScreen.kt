@@ -1,5 +1,6 @@
 package com.example.ui.screens.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -119,6 +120,14 @@ fun HomeScreen(
     var showFacultyAuthSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberScrollState()
+
+    BackHandler(enabled = activeSubScreen != HomeSubScreen.NONE || showFacultyAuthSheet) {
+        if (showFacultyAuthSheet) {
+            showFacultyAuthSheet = false
+        } else if (activeSubScreen != HomeSubScreen.NONE) {
+            activeSubScreen = HomeSubScreen.NONE
+        }
+    }
 
     if (showFacultyAuthSheet) {
         ModalBottomSheet(

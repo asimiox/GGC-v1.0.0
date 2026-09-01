@@ -342,6 +342,13 @@ object UserProfileManager {
         )
     }
 
+    fun updateSemester(context: Context, newSemester: String) {
+        val cleanSem = newSemester.trim().ifEmpty { "Semester 1" }
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_SEMESTER, cleanSem).apply()
+        _userProfile.value = _userProfile.value.copy(semester = cleanSem)
+    }
+
     fun updateRole(context: Context, appRole: AppRole) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putString(KEY_APP_ROLE, appRole.roleKey).apply()

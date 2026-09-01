@@ -62,7 +62,7 @@ fun GgcBottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(BrandCanvasBg)
+            .background(Color.Transparent)
             .navigationBarsPadding()
             .testTag("ggc_bottom_nav_container")
     ) {

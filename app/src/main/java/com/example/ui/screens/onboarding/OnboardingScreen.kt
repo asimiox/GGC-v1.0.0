@@ -57,6 +57,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -75,6 +77,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -154,8 +158,8 @@ fun OnboardingScreen(
             OnboardingStep.CHOOSE_LEVEL -> OnboardingStep.CONTINUE_AS
             OnboardingStep.INTERMEDIATE_AUTH -> OnboardingStep.CHOOSE_LEVEL
             OnboardingStep.BS_PROGRAMS -> OnboardingStep.CHOOSE_LEVEL
-            OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_PROGRAMS
-            OnboardingStep.BS_AUTH -> OnboardingStep.SELECT_SEMESTER
+            OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_AUTH
+            OnboardingStep.BS_AUTH -> OnboardingStep.CHOOSE_LEVEL
             OnboardingStep.TEACHER_AUTH -> OnboardingStep.CONTINUE_AS
             OnboardingStep.HOD_AUTH -> OnboardingStep.CONTINUE_AS
             OnboardingStep.ADMIN_AUTH -> OnboardingStep.CONTINUE_AS
@@ -203,7 +207,7 @@ fun OnboardingScreen(
                         if (level == "Intermediate") {
                             currentStep = OnboardingStep.INTERMEDIATE_AUTH
                         } else {
-                            currentStep = OnboardingStep.BS_PROGRAMS
+                            currentStep = OnboardingStep.BS_AUTH
                         }
                     }
                 )
@@ -225,17 +229,23 @@ fun OnboardingScreen(
                 OnboardingStep.SELECT_SEMESTER -> SelectSemesterStepScreen(
                     selectedSemester = selectedSemester,
                     onSelectSemester = { selectedSemester = it },
-                    onBack = { currentStep = OnboardingStep.BS_PROGRAMS },
+                    onBack = { currentStep = OnboardingStep.BS_AUTH },
                     onContinue = {
-                        currentStep = OnboardingStep.BS_AUTH
+                        selectedSemester?.let { sem ->
+                            UserProfileManager.updateSemester(context, sem)
+                        }
+                        onOnboardingFinished()
                     }
                 )
 
                 OnboardingStep.BS_AUTH -> BsAuthStepScreen(
-                    initialProgram = selectedProgram,
-                    initialSemester = selectedSemester,
-                    onBack = { currentStep = OnboardingStep.SELECT_SEMESTER },
-                    onAuthSuccess = onOnboardingFinished
+                    initialProgram = null,
+                    initialSemester = null,
+                    onBack = { currentStep = OnboardingStep.CHOOSE_LEVEL },
+                    onAuthSuccess = {
+                        // After successful login, ask for active semester!
+                        currentStep = OnboardingStep.SELECT_SEMESTER
+                    }
                 )
 
                 OnboardingStep.TEACHER_AUTH -> TeacherAuthStepScreen(
@@ -268,11 +278,15 @@ private fun WelcomeStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
-            Spacer(modifier = Modifier.height(12.dp))
+        Column(
+            modifier = Modifier.verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(10.dp))
 
             // App Identity Header
             Row(
@@ -302,7 +316,7 @@ private fun WelcomeStepScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
                 text = "Welcome",
@@ -320,13 +334,13 @@ private fun WelcomeStepScreen(
                 color = BrandTextMuted
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(22.dp))
 
             // Hero Image with Soft Rounded Corners
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
+                    .height(210.dp),
                 shape = RoundedCornerShape(18.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 colors = CardDefaults.cardColors(containerColor = BrandBackground)
@@ -338,13 +352,48 @@ private fun WelcomeStepScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            // Stylized Quote Below Image
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "“Education is not something\nyou can finish.”",
+                    fontFamily = FontFamily.Serif,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = BrandNavy,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "～ Isaac Asimov",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = BrandTextMuted,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // CTA Button
+        // Elevated CTA Button safely above system navigation bar
         Button(
             onClick = onGetStarted,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(bottom = 12.dp)
                 .height(52.dp)
                 .testTag("welcome_get_started_btn"),
             colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
@@ -1083,7 +1132,7 @@ private fun IntermediateAuthStepScreen(
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Intermediate Registration",
+                text = "Intermediate Student Login",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = BrandNavy
@@ -1217,7 +1266,7 @@ private fun BsProgramsStepScreen(
 }
 
 // -------------------------------------------------------------
-// STEP 5: SELECT SEMESTER (Reference Image: Screen 7 - Unchanged)
+// STEP 5: SELECT SEMESTER (Post-Login Active Semester Selector)
 // -------------------------------------------------------------
 @Composable
 private fun SelectSemesterStepScreen(
@@ -1226,13 +1275,14 @@ private fun SelectSemesterStepScreen(
     onBack: () -> Unit,
     onContinue: () -> Unit
 ) {
+    val userProfile = UserProfileManager.userProfile.value
     val semesters = (1..8).map { "Semester $it" }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
@@ -1251,37 +1301,116 @@ private fun SelectSemesterStepScreen(
                         tint = BrandNavy
                     )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Welcome, ${userProfile.name.ifBlank { "Student" }}",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BrandNavy
+                )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Official Student Identity Card (Department Locked & Verified)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavy),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Official Assigned Department",
+                            fontSize = 11.sp,
+                            color = Color(0xFFC59B27),
+                            fontWeight = FontWeight.Medium
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "LOCKED RECORD",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = userProfile.programName.ifBlank { "BS Information Technology" },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    if (!userProfile.rollNumber.isNullOrBlank() || !userProfile.registrationNumber.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (!userProfile.rollNumber.isNullOrBlank()) {
+                                Text(
+                                    text = "Roll: ${userProfile.rollNumber}",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                            if (!userProfile.registrationNumber.isNullOrBlank()) {
+                                Text(
+                                    text = "•  Reg: ${userProfile.registrationNumber}",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Select Semester",
-                fontSize = 22.sp,
+                text = "Select Active Semester",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = BrandNavy,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "Choose your current semester",
-                fontSize = 13.sp,
+                text = "Choose your current active semester to access the syllabus, timetable, and study materials.",
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
                 color = BrandTextMuted,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 2-Column Grid of 8 Semester Cards
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(semesters) { semester ->
@@ -1291,31 +1420,31 @@ private fun SelectSemesterStepScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(14.dp))
                             .clickable { onSelectSemester(semester) }
                             .testTag("sem_card_$num"),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelected) BrandNavy else Color.White
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 2.dp else 0.dp)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 18.dp),
+                                .padding(vertical = 14.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 text = num,
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isSelected) Color.White else BrandNavy
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = semester,
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Normal,
                                 color = if (isSelected) Color.White.copy(alpha = 0.85f) else BrandTextMuted
                             )
@@ -1331,7 +1460,7 @@ private fun SelectSemesterStepScreen(
             enabled = selectedSemester != null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(50.dp)
                 .testTag("semester_continue_btn"),
             colors = ButtonDefaults.buttonColors(
                 containerColor = BrandNavy,
@@ -1340,9 +1469,9 @@ private fun SelectSemesterStepScreen(
             shape = RoundedCornerShape(14.dp)
         ) {
             Text(
-                text = "Continue",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
+                text = "Confirm Semester & Enter Dashboard",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = Color.White
             )
         }
@@ -1354,8 +1483,8 @@ private fun SelectSemesterStepScreen(
 // -------------------------------------------------------------
 @Composable
 private fun BsAuthStepScreen(
-    initialProgram: String,
-    initialSemester: String?,
+    initialProgram: String? = null,
+    initialSemester: String? = null,
     onBack: () -> Unit,
     onAuthSuccess: () -> Unit
 ) {
@@ -1386,7 +1515,7 @@ private fun BsAuthStepScreen(
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "BS Student Registration",
+                text = "BS Student Login",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = BrandNavy
