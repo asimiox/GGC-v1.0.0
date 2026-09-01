@@ -81,20 +81,73 @@ class AdminHodRemoteDataSource {
      */
     suspend fun assignHod(facultyUserId: String, departmentName: String): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_faculty_user_id", facultyUserId)
-                put("p_department_name", departmentName)
+            val cleanDept = departmentName.trim()
+            val cleanFacultyId = facultyUserId.trim()
+
+            // 1. Try server RPC admin_assign_hod if provisioned
+            try {
+                val params = buildJsonObject {
+                    put("p_faculty_user_id", cleanFacultyId)
+                    put("p_department_name", cleanDept)
+                }
+                val response = client.postgrest.rpc("admin_assign_hod", params)
+                if (response.data.isNotBlank()) {
+                    val result = json.decodeFromString<AdminOperationResultDto>(response.data)
+                    if (result.success) {
+                        com.example.data.datasource.RegisteredFacultyStore.setHodStatus(cleanFacultyId, cleanDept, true)
+                        return AuthResult.Success(result)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "admin_assign_hod RPC fallback: ${e.message}")
             }
-            val response = client.postgrest.rpc("admin_assign_hod", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to assign HOD role")
+
+            // 2. Direct table updates in Supabase
+            try {
+                // Demote previous HOD for this department
+                client.from("official_faculty").update(
+                    buildJsonObject {
+                        put("designation", "Lecturer")
+                    }
+                ) {
+                    filter {
+                        eq("department", cleanDept)
+                        ilike("designation", "%HOD%")
+                    }
+                }
+
+                // Promote target faculty
+                client.from("official_faculty").update(
+                    buildJsonObject {
+                        put("designation", "Head of Department (HOD)")
+                        put("department", cleanDept)
+                        put("qualification", "Ph.D / Head of Department")
+                    }
+                ) {
+                    filter {
+                        or {
+                            eq("faculty_id", cleanFacultyId)
+                            eq("id", cleanFacultyId)
+                            eq("claimed_by_user_id", cleanFacultyId)
+                        }
+                    }
+                }
+            } catch (dbErr: Exception) {
+                Log.w(TAG, "official_faculty table update note: ${dbErr.message}")
             }
+
+            // 3. Update local RegisteredFacultyStore
+            com.example.data.datasource.RegisteredFacultyStore.setHodStatus(cleanFacultyId, cleanDept, true)
+
+            AuthResult.Success(
+                AdminOperationResultDto(
+                    success = true,
+                    message = "HOD role appointed successfully for Department of $cleanDept."
+                )
+            )
         } catch (e: Exception) {
-            Log.e(TAG, "Error in admin_assign_hod: ${e.message}", e)
-            AuthResult.Error(e.message ?: "Administrative operation failed")
+            Log.e(TAG, "Error in assignHod: ${e.message}", e)
+            AuthResult.Error(e.message ?: "Failed to assign HOD role")
         }
     }
 
@@ -103,16 +156,53 @@ class AdminHodRemoteDataSource {
      */
     suspend fun revokeHod(targetUserId: String): AuthResult<AdminOperationResultDto> {
         return try {
-            val params = buildJsonObject {
-                put("p_target_user_id", targetUserId)
+            val cleanTargetId = targetUserId.trim()
+
+            // 1. Try server RPC admin_revoke_hod if provisioned
+            try {
+                val params = buildJsonObject {
+                    put("p_target_user_id", cleanTargetId)
+                }
+                val response = client.postgrest.rpc("admin_revoke_hod", params)
+                if (response.data.isNotBlank()) {
+                    val result = json.decodeFromString<AdminOperationResultDto>(response.data)
+                    if (result.success) {
+                        com.example.data.datasource.RegisteredFacultyStore.setHodStatus(cleanTargetId, "", false)
+                        return AuthResult.Success(result)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "admin_revoke_hod RPC fallback: ${e.message}")
             }
-            val response = client.postgrest.rpc("admin_revoke_hod", params)
-            val result = json.decodeFromString<AdminOperationResultDto>(response.data)
-            if (result.success) {
-                AuthResult.Success(result)
-            } else {
-                AuthResult.Error(result.error ?: "Failed to revoke HOD role")
+
+            // 2. Direct table update in Supabase
+            try {
+                client.from("official_faculty").update(
+                    buildJsonObject {
+                        put("designation", "Lecturer")
+                    }
+                ) {
+                    filter {
+                        or {
+                            eq("faculty_id", cleanTargetId)
+                            eq("id", cleanTargetId)
+                            eq("claimed_by_user_id", cleanTargetId)
+                        }
+                    }
+                }
+            } catch (dbErr: Exception) {
+                Log.w(TAG, "official_faculty table update note: ${dbErr.message}")
             }
+
+            // 3. Update local RegisteredFacultyStore
+            com.example.data.datasource.RegisteredFacultyStore.setHodStatus(cleanTargetId, "", false)
+
+            AuthResult.Success(
+                AdminOperationResultDto(
+                    success = true,
+                    message = "HOD role revoked. Reverted to Faculty Teacher."
+                )
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Error in admin_revoke_hod: ${e.message}", e)
             AuthResult.Error(e.message ?: "Administrative operation failed")

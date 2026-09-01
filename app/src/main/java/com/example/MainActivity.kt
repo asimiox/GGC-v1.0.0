@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         UserProfileManager.init(this)
         com.example.data.datasource.RegisteredFacultyStore.init(this)
+        com.example.data.datasource.RegisteredStudentStore.init(this)
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {

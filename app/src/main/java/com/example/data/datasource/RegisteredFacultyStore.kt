@@ -147,6 +147,39 @@ object RegisteredFacultyStore {
     }
 
     /**
+     * Updates HOD status and department for an existing account.
+     */
+    fun setHodStatus(query: String, department: String, isHod: Boolean) {
+        val cleanDept = department.trim()
+        val account = findAccount(query)
+        if (account != null) {
+            // If making HOD, demote previous HOD in this department
+            if (isHod) {
+                memoryAccounts.values.filter { it.department.equals(cleanDept, ignoreCase = true) && it.isHod }.forEach { oldHod ->
+                    val demoted = oldHod.copy(
+                        designation = "Lecturer",
+                        isHod = false
+                    )
+                    memoryAccounts[demoted.facultyId.uppercase()] = demoted
+                    memoryAccounts[demoted.username.lowercase()] = demoted
+                }
+            }
+
+            val updated = account.copy(
+                department = cleanDept,
+                designation = if (isHod) "Head of Department (HOD)" else "Lecturer",
+                qualification = if (isHod) "Ph.D / Head of Department" else account.qualification,
+                isHod = isHod
+            )
+            memoryAccounts[updated.facultyId.uppercase()] = updated
+            memoryAccounts[updated.username.lowercase()] = updated
+            updated.institutionalEmail?.let { memoryAccounts[it.lowercase()] = updated }
+            persistToPrefs()
+            Log.d(TAG, "Updated HOD status for ${updated.fullName}: isHod=$isHod in $cleanDept")
+        }
+    }
+
+    /**
      * Returns all registered accounts for easy lookup/testing.
      */
     fun getAllAccounts(): List<RegisteredAccount> {
