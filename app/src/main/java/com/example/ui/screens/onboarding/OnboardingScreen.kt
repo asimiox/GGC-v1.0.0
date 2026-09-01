@@ -193,14 +193,7 @@ fun OnboardingScreen(
                     },
                     onSelectTeacher = {
                         currentStep = OnboardingStep.TEACHER_AUTH
-                    },
-                    onSelectHod = {
-                        currentStep = OnboardingStep.HOD_AUTH
-                    },
-                    onSelectAdmin = {
-                        currentStep = OnboardingStep.ADMIN_AUTH
-                    },
-                    onSelectGuest = onOnboardingFinished
+                    }
                 )
 
                 OnboardingStep.CHOOSE_LEVEL -> ChooseLevelStepScreen(
@@ -386,10 +379,7 @@ private fun WelcomeStepScreen(
 private fun ContinueAsStepScreen(
     onBack: () -> Unit,
     onSelectStudent: () -> Unit,
-    onSelectTeacher: () -> Unit,
-    onSelectHod: () -> Unit,
-    onSelectAdmin: () -> Unit,
-    onSelectGuest: () -> Unit
+    onSelectTeacher: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -419,7 +409,7 @@ private fun ContinueAsStepScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Continue as",
+                text = "Choose Login Portal",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = BrandNavy,
@@ -430,7 +420,7 @@ private fun ContinueAsStepScreen(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Select your role to access GGC M.B.Din Official Portal",
+                text = "Select your designated official portal to sign in",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Normal,
                 color = BrandTextMuted,
@@ -440,55 +430,55 @@ private fun ContinueAsStepScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Option 1: Student (BS / Intermediate)
+            // Portal Option 1: Student (BS / Intermediate)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .clickable { onSelectStudent() }
                     .testTag("role_option_student"),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = BrandNavy),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(18.dp),
+                        .padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .size(54.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.School,
-                            contentDescription = "Student Role",
+                            contentDescription = "Student Portal",
                             tint = Color(0xFFE5C058),
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Student",
-                            fontSize = 16.sp,
+                            text = "Student Portal",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "BS Honors & Intermediate Portals",
+                            text = "BS Honors (4-Year) & Intermediate",
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.White.copy(alpha = 0.8f)
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.85f)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
@@ -496,10 +486,10 @@ private fun ContinueAsStepScreen(
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Academics · Outlines · Notices",
+                                text = "Academics · Outlines · Roll No Login",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color.White
+                                color = Color(0xFFE5C058)
                             )
                         }
                     }
@@ -508,62 +498,62 @@ private fun ContinueAsStepScreen(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
                         tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Option 2: Teacher / Faculty
+            // Portal Option 2: Teacher & Staff (Faculty / HOD / Admin)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(RoundedCornerShape(20.dp))
                     .clickable { onSelectTeacher() }
                     .testTag("role_option_teacher"),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF0C245E)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(18.dp),
+                        .padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .size(54.dp)
+                            .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Badge,
-                            contentDescription = "Teacher Role",
+                            contentDescription = "Teacher & Staff Portal",
                             tint = Color(0xFFE5C058),
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(30.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Teacher / Faculty",
-                            fontSize = 16.sp,
+                            text = "Teacher & Staff Portal",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Faculty Management & Teaching Portal",
+                            text = "Teaching Faculty · HODs · Administration",
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.White.copy(alpha = 0.8f)
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White.copy(alpha = 0.85f)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
@@ -571,10 +561,10 @@ private fun ContinueAsStepScreen(
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Courses · Notes · Announcements",
+                                text = "Courses · Notes · Department Command",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color.White
+                                color = Color(0xFFE5C058)
                             )
                         }
                     }
@@ -583,218 +573,7 @@ private fun ContinueAsStepScreen(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
                         tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Option 3: Head of Department (HOD)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable { onSelectHod() }
-                    .testTag("role_option_hod"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1B3B7A)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFFE5C058).copy(alpha = 0.25f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalance,
-                            contentDescription = "HOD Role",
-                            tint = Color(0xFFF3D372),
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Head of Department (HOD)",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Department Command, Teachers & Student Lists",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color.White.copy(alpha = 0.15f))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "Add Teachers · Batch Upload · Broadcaster",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFF3D372)
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFFF3D372),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Option 3: Administrator (Super Control)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable { onSelectAdmin() }
-                    .testTag("role_option_admin"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = BrandNavyDark),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFFC59B27).copy(alpha = 0.35f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AdminPanelSettings,
-                            contentDescription = "Admin Role",
-                            tint = Color(0xFFF3D372),
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Administrator",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Central Super Control & Governance",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFC59B27).copy(alpha = 0.25f))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "All Registries · Content · Broadcasts",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFF3D372)
-                            )
-                        }
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFFF3D372),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Option 4: Guest / Visitor
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable { onSelectGuest() }
-                    .testTag("role_option_guest"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(BrandIconBadgeBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Guest",
-                            tint = BrandNavy,
-                            modifier = Modifier.size(26.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "College Guest / Visitor",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandNavy
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Explore Programs, Prospectus & Events",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = BrandTextMuted
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = BrandTextMuted,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

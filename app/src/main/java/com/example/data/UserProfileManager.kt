@@ -211,12 +211,17 @@ object UserProfileManager {
         userId: String?
     ) {
         val cleanName = fullName.trim().ifEmpty { username }
-        val role = if (designation.contains("HOD", ignoreCase = true) ||
-            designation.contains("Head of Department", ignoreCase = true) ||
-            designation.contains("Principal", ignoreCase = true)) {
-            AppRole.HOD
-        } else {
-            AppRole.TEACHER
+        val role = when {
+            username.equals("principal", ignoreCase = true) ||
+            username.equals("admin", ignoreCase = true) ||
+            facultyId.startsWith("ADMIN", ignoreCase = true) ||
+            designation.contains("Principal", ignoreCase = true) ||
+            designation.contains("Chief Administrator", ignoreCase = true) -> AppRole.ADMIN
+
+            designation.contains("HOD", ignoreCase = true) ||
+            designation.contains("Head of Department", ignoreCase = true) -> AppRole.HOD
+
+            else -> AppRole.TEACHER
         }
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

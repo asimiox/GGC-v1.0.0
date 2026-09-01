@@ -39,6 +39,9 @@ object RegisteredFacultyStore {
     }
 
     private fun loadFromPrefs() {
+        // First initialize with verified official faculty crawled from ggcmbdin.edu.pk
+        seedOfficialWebsiteFaculty()
+
         val ctx = appContext ?: return
         try {
             val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -55,6 +58,267 @@ object RegisteredFacultyStore {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading saved faculty accounts: ${e.message}")
+        }
+    }
+
+    /**
+     * Seeds the authentic official faculty roster crawled from official website ggcmbdin.edu.pk
+     */
+    private fun seedOfficialWebsiteFaculty() {
+        val officialRoster = listOf(
+            // Principal / Executive Admin
+            RegisteredAccount(
+                facultyId = "ADMIN-01",
+                username = "principal",
+                fullName = "Prof. Ameer Ahmad",
+                department = "College Administration",
+                designation = "Principal & Chief Administrator",
+                qualification = "M.Sc, M.Phil / Principal",
+                institutionalEmail = "principal@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            ),
+            // HODs crawled directly from ggcmbdin.edu.pk
+            RegisteredAccount(
+                facultyId = "IT-HOD-01",
+                username = "faiyaz",
+                fullName = "Prof. Muhammad Faiyaz",
+                department = "Information Technology",
+                designation = "Head of Department (HOD)",
+                qualification = "MS Computer Science / Associate Professor",
+                institutionalEmail = "faiyaz@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "CHM-HOD-01",
+                username = "umer.minhas",
+                fullName = "Prof. Muhammad Umer Minhas",
+                department = "Chemistry",
+                designation = "Head of Department (HOD)",
+                qualification = "Ph.D Chemistry / Associate Professor",
+                institutionalEmail = "umer.minhas@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "PHY-HOD-01",
+                username = "asif.zaman",
+                fullName = "Prof. Muhammad Asif Zaman",
+                department = "Physics",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil Physics / Associate Professor",
+                institutionalEmail = "asif.zaman@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "MTH-HOD-01",
+                username = "abdul.manan",
+                fullName = "Prof. Abdul Manan",
+                department = "Mathematics",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil Mathematics / Associate Professor",
+                institutionalEmail = "abdul.manan@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "ENG-HOD-01",
+                username = "ikram.bhatti",
+                fullName = "Prof. Ikram Bhatti",
+                department = "English",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil English / Associate Professor",
+                institutionalEmail = "ikram.bhatti@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "BA-HOD-01",
+                username = "tariq.ashraf",
+                fullName = "Prof. Tariq Ashraf",
+                department = "Business Administration",
+                designation = "Head of Department (HOD)",
+                qualification = "MS / MBA / Associate Professor",
+                institutionalEmail = "tariq.ashraf@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "ECO-HOD-01",
+                username = "ansar.iqbal",
+                fullName = "Prof. Ansar Iqbal",
+                department = "Economics",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil Economics / Assistant Professor",
+                institutionalEmail = "ansar.iqbal@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "EDU-HOD-01",
+                username = "adnan.saghir",
+                fullName = "Prof. Muhammad Adnan Saghir",
+                department = "Education",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil Education / Assistant Professor",
+                institutionalEmail = "adnan.saghir@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "ISL-HOD-01",
+                username = "saif.ullah",
+                fullName = "Prof. Saif Ullah",
+                department = "Islamic Studies",
+                designation = "Head of Department (HOD)",
+                qualification = "Ph.D Islamic Studies / Associate Professor",
+                institutionalEmail = "saif.ullah@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "HIS-HOD-01",
+                username = "saifullah.warraich",
+                fullName = "Prof. Saif Ullah Warraich",
+                department = "History",
+                designation = "Head of Department (HOD)",
+                qualification = "M.A History / Assistant Professor",
+                institutionalEmail = "saifullah.warraich@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "URD-HOD-01",
+                username = "muhammad.iqbal",
+                fullName = "Prof. Muhammad Iqbal",
+                department = "Urdu",
+                designation = "Head of Department (HOD)",
+                qualification = "Ph.D Urdu / Associate Professor",
+                institutionalEmail = "muhammad.iqbal@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "ZOO-HOD-01",
+                username = "waqas.arshad",
+                fullName = "Prof. Waqas Arshad",
+                department = "Zoology",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil Zoology / Assistant Professor",
+                institutionalEmail = "waqas.arshad@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "STA-HOD-01",
+                username = "khuram.aslam",
+                fullName = "Prof. Khuram Ijaz Aslam",
+                department = "Statistics",
+                designation = "Head of Department (HOD)",
+                qualification = "M.Phil Statistics / Assistant Professor",
+                institutionalEmail = "khuram.aslam@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "POL-HOD-01",
+                username = "afrasiab",
+                fullName = "Prof. Afrasiab",
+                department = "Political Science",
+                designation = "Head of Department (HOD)",
+                qualification = "M.A Political Science / Assistant Professor",
+                institutionalEmail = "afrasiab@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            RegisteredAccount(
+                facultyId = "PER-HOD-01",
+                username = "mujahid.ali",
+                fullName = "Prof. Mujahid Ali",
+                department = "Persian",
+                designation = "Head of Department (HOD)",
+                qualification = "M.A Persian / Assistant Professor",
+                institutionalEmail = "mujahid.ali@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = true
+            ),
+            // Department Faculty Teachers
+            RegisteredAccount(
+                facultyId = "IT-FAC-01",
+                username = "bilal.ahmed",
+                fullName = "Prof. Bilal Ahmed",
+                department = "Information Technology",
+                designation = "Lecturer",
+                qualification = "MS Computer Science",
+                institutionalEmail = "bilal.ahmed@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            ),
+            RegisteredAccount(
+                facultyId = "CHM-FAC-01",
+                username = "shahid.nadeem",
+                fullName = "Prof. Shahid Nadeem",
+                department = "Chemistry",
+                designation = "Lecturer",
+                qualification = "M.Phil Chemistry",
+                institutionalEmail = "shahid.nadeem@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            ),
+            RegisteredAccount(
+                facultyId = "PHY-FAC-01",
+                username = "usman.ghani",
+                fullName = "Prof. Usman Ghani",
+                department = "Physics",
+                designation = "Assistant Professor",
+                qualification = "M.Phil Physics",
+                institutionalEmail = "usman.ghani@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            ),
+            RegisteredAccount(
+                facultyId = "MTH-FAC-01",
+                username = "imran.haider",
+                fullName = "Prof. Imran Haider",
+                department = "Mathematics",
+                designation = "Lecturer",
+                qualification = "M.Phil Mathematics",
+                institutionalEmail = "imran.haider@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            ),
+            RegisteredAccount(
+                facultyId = "ENG-FAC-01",
+                username = "nasir.mehmood",
+                fullName = "Prof. Nasir Mehmood",
+                department = "English",
+                designation = "Assistant Professor",
+                qualification = "M.Phil English Linguistics",
+                institutionalEmail = "nasir.mehmood@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            ),
+            RegisteredAccount(
+                facultyId = "BA-FAC-01",
+                username = "kamran.afzal",
+                fullName = "Prof. Kamran Afzal",
+                department = "Business Administration",
+                designation = "Lecturer",
+                qualification = "MBA / MS Management Sciences",
+                institutionalEmail = "kamran.afzal@ggcmbdin.edu.pk",
+                password = "00000",
+                isHod = false
+            )
+        )
+
+        officialRoster.forEach { account ->
+            memoryAccounts[account.facultyId.uppercase()] = account
+            memoryAccounts[account.username.lowercase()] = account
+            account.institutionalEmail?.let {
+                memoryAccounts[it.lowercase()] = account
+            }
         }
     }
 

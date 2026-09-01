@@ -318,38 +318,8 @@ class BsAuthRemoteDataSource {
             return AuthResult.Success(fallbackProfile, "BS Student login successful.")
         }
 
-        // 4. Stage 4: If querying a valid roll number format and password is default 00000, create verified session
-        if (cleanPassword == "00000" && query.length >= 4) {
-            val cleanRoll = query.uppercase()
-            val autoProfile = BsStudentProfileDto(
-                id = "bs_${cleanRoll}",
-                username = cleanRoll.lowercase(),
-                firstName = "Student",
-                lastName = "($cleanRoll)",
-                rollNumber = cleanRoll,
-                registrationNumber = "REG-$cleanRoll",
-                program = "BS Computer Science",
-                session = "2024-2028",
-                semester = "Semester 1"
-            )
-            com.example.data.datasource.RegisteredStudentStore.saveBsAccount(
-                com.example.data.datasource.RegisteredBsStudentAccount(
-                    id = autoProfile.id,
-                    username = autoProfile.username,
-                    firstName = autoProfile.firstName,
-                    lastName = autoProfile.lastName,
-                    rollNumber = autoProfile.rollNumber,
-                    registrationNumber = autoProfile.registrationNumber,
-                    program = autoProfile.program,
-                    session = autoProfile.session ?: "2024-2028",
-                    semester = autoProfile.semester ?: "Semester 1",
-                    password = "00000"
-                )
-            )
-            return AuthResult.Success(autoProfile, "BS Student login successful.")
-        }
-
-        return AuthResult.Error("Invalid Roll Number, Registration Number, or Password. (Default Password for official rolls is 00000)")
+        // If not found in local imported store or official database registry, reject login
+        return AuthResult.Error("Student record not found in official college database. Please contact College Administration / HOD to import your roll number ($query).")
     }
 
     private suspend fun checkOfficialBsStudentFallback(

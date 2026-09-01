@@ -303,34 +303,8 @@ class IntermediateAuthRemoteDataSource {
             return AuthResult.Success(fallbackProfile, "Login successful.")
         }
 
-        // 4. Stage 4: If querying a valid roll number format and password is default 00000, create verified session
-        if (cleanPassword == "00000" && query.length >= 4) {
-            val cleanRoll = query.uppercase()
-            val autoProfile = IntermediateStudentProfileDto(
-                id = "inter_${cleanRoll}",
-                username = cleanRoll.lowercase(),
-                firstName = "Student",
-                lastName = "($cleanRoll)",
-                rollNumber = cleanRoll,
-                registrationNumber = "REG-$cleanRoll",
-                program = "FSc Pre-Medical"
-            )
-            com.example.data.datasource.RegisteredStudentStore.saveIntermediateAccount(
-                com.example.data.datasource.RegisteredIntermediateStudentAccount(
-                    id = autoProfile.id,
-                    username = autoProfile.username,
-                    firstName = autoProfile.firstName,
-                    lastName = autoProfile.lastName,
-                    rollNumber = autoProfile.rollNumber,
-                    registrationNumber = autoProfile.registrationNumber,
-                    program = autoProfile.program,
-                    password = "00000"
-                )
-            )
-            return AuthResult.Success(autoProfile, "Login successful.")
-        }
-
-        return AuthResult.Error("Invalid username, roll number, or password. (Default Password for official rolls is 00000)")
+        // If not found in local imported store or official database registry, reject login
+        return AuthResult.Error("Student record not found in official college database. Please contact College Administration to import your roll number ($query).")
     }
 
     private suspend fun checkOfficialIntermediateStudentFallback(

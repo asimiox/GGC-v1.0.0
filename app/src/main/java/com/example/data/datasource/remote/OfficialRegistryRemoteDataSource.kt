@@ -214,6 +214,22 @@ class OfficialRegistryRemoteDataSource {
                         Log.w(TAG, "Error inserting student $cleanRoll: $err")
                     }
                 }
+
+                // Also persist locally for instant login
+                com.example.data.datasource.RegisteredStudentStore.saveBsAccount(
+                    com.example.data.datasource.RegisteredBsStudentAccount(
+                        id = "bs_$cleanRoll",
+                        username = cleanRoll.lowercase(),
+                        firstName = student.firstName ?: studentFullName.split(" ").firstOrNull() ?: studentFullName,
+                        lastName = student.lastName ?: studentFullName.split(" ").drop(1).joinToString(" "),
+                        rollNumber = cleanRoll,
+                        registrationNumber = cleanReg,
+                        program = cleanProgram,
+                        session = cleanSession,
+                        semester = "Semester 1",
+                        password = "00000"
+                    )
+                )
             }
             AuthResult.Success(insertedCount)
         } catch (e: Exception) {
@@ -269,6 +285,20 @@ class OfficialRegistryRemoteDataSource {
                         Log.w(TAG, "Error inserting intermediate student $cleanRoll: $err")
                     }
                 }
+
+                // Also persist locally for instant login
+                com.example.data.datasource.RegisteredStudentStore.saveIntermediateAccount(
+                    com.example.data.datasource.RegisteredIntermediateStudentAccount(
+                        id = "inter_$cleanRoll",
+                        username = cleanRoll.lowercase(),
+                        firstName = student.firstName ?: studentFullName.split(" ").firstOrNull() ?: studentFullName,
+                        lastName = student.lastName ?: studentFullName.split(" ").drop(1).joinToString(" "),
+                        rollNumber = cleanRoll,
+                        registrationNumber = cleanReg,
+                        program = cleanProgram,
+                        password = "00000"
+                    )
+                )
             }
             AuthResult.Success(insertedCount)
         } catch (e: Exception) {
