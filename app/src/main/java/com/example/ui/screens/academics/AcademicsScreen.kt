@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
@@ -72,7 +73,8 @@ import com.example.ui.screens.academics.models.Department
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AcademicsScreen(
-    viewModel: AcademicsViewModel = viewModel()
+    viewModel: AcademicsViewModel = viewModel(),
+    onNavigateToFaculty: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -117,7 +119,8 @@ fun AcademicsScreen(
                         onCategorySelected = viewModel::onCategorySelected,
                         onSelectDepartment = viewModel::selectDepartment,
                         onRetry = viewModel::loadDepartments,
-                        onToggleOffline = viewModel::toggleOfflineMode
+                        onToggleOffline = viewModel::toggleOfflineMode,
+                        onNavigateToFaculty = onNavigateToFaculty
                     )
                 }
                 is AcademicNavDestination.DepartmentDetail -> {
@@ -183,9 +186,10 @@ fun AcademicDepartmentListContent(
     onCategorySelected: (String) -> Unit,
     onSelectDepartment: (Department) -> Unit,
     onRetry: () -> Unit,
-    onToggleOffline: () -> Unit
+    onToggleOffline: () -> Unit,
+    onNavigateToFaculty: () -> Unit = {}
 ) {
-    val categories = listOf("All", "IT & CS", "Sciences", "Humanities", "Commerce")
+    val categories = listOf("All", "IT & CS", "Sciences", "Humanities", "Commerce", "Administration")
 
     Column(
         modifier = Modifier
@@ -402,6 +406,60 @@ fun AcademicDepartmentListContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToFaculty() }
+                                .testTag("official_faculty_directory_banner"),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(46.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.People,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Official Faculty & Staff Directory",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = "41 Teaching Faculty & 5 Administrative Staff with real profiles from ggcmbdin.edu.pk",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+
                     items(uiState.departments) { dept ->
                         val deptIcon: ImageVector = when (dept.iconName) {
                             "Computer" -> Icons.Default.Computer

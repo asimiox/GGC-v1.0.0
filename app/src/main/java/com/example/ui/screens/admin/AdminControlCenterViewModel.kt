@@ -31,6 +31,7 @@ import java.util.TimeZone
 
 enum class AdminNavSection(val title: String) {
     DASHBOARD("Control Center"),
+    STUDENT_LOGINS("Student Logins & Activity"),
     USERS("User Management"),
     STUDENTS("Student Registry"),
     FACULTY("Faculty Registry"),
@@ -65,7 +66,11 @@ data class AdminControlCenterUiState(
     val broadcastMessage: String = "",
     val broadcastType: String = NotificationType.ANNOUNCEMENT_PRIORITY.key,
     val broadcastTarget: String = "All College Members",
-    val isBroadcasting: Boolean = false
+    val isBroadcasting: Boolean = false,
+
+    // Post viewers ("Kis kis ne post dekha")
+    val selectedPostForReaders: AnnouncementDto? = null,
+    val showPostReadersDialog: Boolean = false
 )
 
 class AdminControlCenterViewModel(
@@ -548,6 +553,20 @@ class AdminControlCenterViewModel(
                 }
             }
         }
+    }
+
+    fun openPostReaders(announcement: AnnouncementDto) {
+        _uiState.value = _uiState.value.copy(
+            selectedPostForReaders = announcement,
+            showPostReadersDialog = true
+        )
+    }
+
+    fun closePostReaders() {
+        _uiState.value = _uiState.value.copy(
+            selectedPostForReaders = null,
+            showPostReadersDialog = false
+        )
     }
 
     fun logoutAdmin(context: Context, onLoggedOut: () -> Unit) {

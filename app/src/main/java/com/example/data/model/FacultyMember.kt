@@ -5,7 +5,10 @@ data class FacultyMember(
     val name: String,
     val designation: String,
     val qualification: String,
-    val department: String
+    val department: String,
+    val email: String = "",
+    val imageUrl: String = "",
+    val isStaff: Boolean = false
 ) {
     val isPrincipal: Boolean
         get() = designation.equals("Principal", ignoreCase = true) || designation.startsWith("Principal", ignoreCase = true)

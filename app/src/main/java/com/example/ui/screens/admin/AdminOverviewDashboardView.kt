@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -336,6 +338,36 @@ fun AdminOverviewDashboardView(
                     fontWeight = FontWeight.Bold,
                     color = BrandNavy
                 )
+
+                // Row 0: Student Logins & Sessions (Audit Authorized)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    AdminBentoCard(
+                        title = "Student Logins",
+                        subtitle = "Active Sessions & Audit Trail",
+                        icon = Icons.Default.VpnKey,
+                        isDark = true,
+                        badgeText = "Live Audit",
+                        onClick = { onNavigateSection(AdminNavSection.STUDENT_LOGINS) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("admin_bento_student_logins")
+                    )
+
+                    AdminBentoCard(
+                        title = "Circular Readers",
+                        subtitle = "Who viewed posts & notices",
+                        icon = Icons.Default.Visibility,
+                        isDark = false,
+                        badgeText = "Views Log",
+                        onClick = { onNavigateSection(AdminNavSection.CONTENT) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("admin_bento_post_readers")
+                    )
+                }
 
                 // Row 1: BS Student Registry (Navy) & Inter Students Registry (White)
                 Row(

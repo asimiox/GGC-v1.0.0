@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,6 +69,7 @@ fun NoticesScreen(
     onBack: (() -> Unit)? = null,
     viewModel: NoticesViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
     val categories = listOf("All", "General", "Admissions", "Examinations", "Academic", "Department", "Fee")
@@ -272,7 +274,7 @@ fun NoticesScreen(
                 items(uiState.filteredNotices, key = { it.id ?: it.title }) { notice ->
                     PublishedNoticeCard(
                         notice = notice,
-                        onClick = { viewModel.selectNotice(notice) }
+                        onClick = { viewModel.selectNotice(context, notice) }
                     )
                 }
             }

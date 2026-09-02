@@ -70,7 +70,7 @@ data class ContentManagementUiState(
 class ContentManagementViewModel(
     private val contentRepository: CollegeContentRepository = CollegeContentRepository(),
     private val storageRepository: CollegeStorageRepository = CollegeStorageRepository(),
-    private val notificationDataSource: NotificationRemoteDataSource = NotificationRemoteDataSource()
+    private val notificationDataSource: NotificationRemoteDataSource = NotificationRemoteDataSource.getInstance()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ContentManagementUiState())

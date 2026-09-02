@@ -1,7 +1,10 @@
 package com.example.ui.screens.academics.components
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.AccountBalance
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.example.data.datasource.OfficialFacultyData
 import com.example.ui.screens.academics.models.Department
 import com.example.ui.screens.academics.models.FacultyMember
@@ -401,44 +407,149 @@ fun DepartmentDetailScreen(
                                         faculty.isHod -> Icons.Default.Verified
                                         else -> Icons.Default.Person
                                     }
-                                    val iconBoxSize = if (faculty.isLeadership) 48.dp else 42.dp
+                                    val iconBoxSize = if (faculty.isLeadership) 50.dp else 46.dp
                                     val iconSize = if (faculty.isLeadership) 24.dp else 20.dp
 
                                     Box(
                                         modifier = Modifier
                                             .size(iconBoxSize)
                                             .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                            .background(MaterialTheme.colorScheme.primaryContainer)
+                                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            imageVector = iconVector,
-                                            contentDescription = faculty.name,
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(iconSize)
-                                        )
+                                        if (faculty.imageUrl.isNotBlank()) {
+                                            SubcomposeAsyncImage(
+                                                model = ImageRequest.Builder(LocalContext.current)
+                                                    .data(faculty.imageUrl)
+                                                    .crossfade(true)
+                                                    .build(),
+                                                contentDescription = faculty.name,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(CircleShape),
+                                                loading = {
+                                                    Box(contentAlignment = Alignment.Center) {
+                                                        Icon(
+                                                            imageVector = iconVector,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                                                            modifier = Modifier.size(iconSize)
+                                                        )
+                                                    }
+                                                },
+                                                error = {
+                                                    Icon(
+                                                        imageVector = iconVector,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(iconSize)
+                                                    )
+                                                }
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = iconVector,
+                                                contentDescription = faculty.name,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(iconSize)
+                                            )
+                                        }
                                     }
 
                                     Spacer(modifier = Modifier.width(12.dp))
 
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = faculty.name,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = faculty.name,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier.weight(1f)
+                                            )
+
+                                            if (faculty.isStaff) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(CircleShape)
+                                                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Staff",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                                                    )
+                                                }
+                                            } else if (faculty.isLeadership) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(CircleShape)
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = if (faculty.isPrincipal) "Principal" else if (faculty.isVicePrincipal) "Vice Principal" else "HOD",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(2.dp))
+
                                         Text(
                                             text = faculty.designation,
                                             fontSize = 12.sp,
                                             fontWeight = if (faculty.isLeadership) FontWeight.SemiBold else FontWeight.Normal,
                                             color = MaterialTheme.colorScheme.primary
                                         )
+
                                         Text(
                                             text = faculty.qualification,
                                             fontSize = 11.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+
+                                        if (faculty.email.isNotBlank()) {
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.clickable {
+                                                    try {
+                                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                                            data = Uri.parse("mailto:${faculty.email}")
+                                                        }
+                                                        context.startActivity(intent)
+                                                    } catch (_: Exception) {
+                                                        Toast.makeText(context, faculty.email, Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Email,
+                                                    contentDescription = "Email",
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(13.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = faculty.email,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }

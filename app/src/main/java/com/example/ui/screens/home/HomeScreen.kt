@@ -236,7 +236,7 @@ fun HomeScreen(
             unreadCount = unreadCount,
             onNavigateToContentTab = { tab ->
                 targetContentTab = tab
-                activeSubScreen = HomeSubScreen.CONTENT_MANAGEMENT
+                onNavigateToContentManagement()
             },
             onNavigateToCourses = onNavigateToCoursesOutline,
             onNavigateToNotices = { activeSubScreen = HomeSubScreen.ANNOUNCEMENT },

@@ -3,9 +3,13 @@ package com.example.data
 import android.content.Context
 import com.example.data.model.AppRole
 import com.example.data.model.UserProfile
+import com.example.data.repository.StudentAuditRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 object UserProfileManager {
     private const val PREFS_NAME = "ggc_user_prefs"
@@ -92,6 +96,21 @@ object UserProfileManager {
             institutionalEmail = institutionalEmail,
             appRole = computedRole
         )
+
+        if (isVerified && (computedRole == AppRole.STUDENT_BS || computedRole == AppRole.STUDENT_INTERMEDIATE)) {
+            val validRoll = roll ?: username ?: "STUDENT"
+            CoroutineScope(Dispatchers.IO).launch {
+                StudentAuditRepository.getInstance(context).recordStudentLogin(
+                    username = username ?: validRoll,
+                    fullName = name,
+                    rollNumber = validRoll,
+                    registrationNumber = reg,
+                    programLevel = level,
+                    programName = program,
+                    semester = semester
+                )
+            }
+        }
     }
 
     fun saveProfile(
@@ -117,6 +136,20 @@ object UserProfileManager {
             programName = programName,
             semester = if (level == "Intermediate") null else semester
         )
+
+        if (level == "BS" || level == "Intermediate") {
+            CoroutineScope(Dispatchers.IO).launch {
+                StudentAuditRepository.getInstance(context).recordStudentLogin(
+                    username = cleanName.lowercase().replace(" ", "."),
+                    fullName = cleanName,
+                    rollNumber = "ONBOARD-${System.currentTimeMillis().toString().takeLast(4)}",
+                    registrationNumber = null,
+                    programLevel = level,
+                    programName = programName,
+                    semester = semester
+                )
+            }
+        }
     }
 
     fun saveVerifiedIntermediateProfile(
@@ -156,6 +189,18 @@ object UserProfileManager {
             userId = userId,
             appRole = AppRole.STUDENT_INTERMEDIATE
         )
+
+        CoroutineScope(Dispatchers.IO).launch {
+            StudentAuditRepository.getInstance(context).recordStudentLogin(
+                username = username.trim().lowercase(),
+                fullName = fullName,
+                rollNumber = rollNumber.trim().uppercase(),
+                registrationNumber = registrationNumber.trim().uppercase(),
+                programLevel = "Intermediate",
+                programName = programName,
+                semester = null
+            )
+        }
     }
 
     fun saveVerifiedBsProfile(
@@ -197,6 +242,18 @@ object UserProfileManager {
             userId = userId,
             appRole = AppRole.STUDENT_BS
         )
+
+        CoroutineScope(Dispatchers.IO).launch {
+            StudentAuditRepository.getInstance(context).recordStudentLogin(
+                username = username.trim().lowercase(),
+                fullName = fullName,
+                rollNumber = rollNumber.trim().uppercase(),
+                registrationNumber = registrationNumber.trim().uppercase(),
+                programLevel = "BS",
+                programName = programName,
+                semester = semester ?: "Semester 1"
+            )
+        }
     }
 
     fun saveVerifiedFacultyProfile(

@@ -1,6 +1,10 @@
 package com.example.ui.screens.faculty
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
@@ -46,11 +51,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.example.data.datasource.OfficialFacultyData
 import com.example.data.model.FacultyMember
 
@@ -68,27 +77,35 @@ fun FacultyTabScreen(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedDepartment by remember { mutableStateOf("All") }
+    var staffTypeFilter by remember { mutableStateOf(0) } // 0: All, 1: Teaching Faculty, 2: Administrative Staff
 
     val allDepartments = remember {
         listOf("All") + OfficialFacultyData.getAllDepartments()
     }
 
-    val filteredFaculty = remember(searchQuery, selectedDepartment) {
+    val filteredFaculty = remember(searchQuery, selectedDepartment, staffTypeFilter) {
         val baseList = if (selectedDepartment == "All") {
             OfficialFacultyData.getAllFaculty()
         } else {
             OfficialFacultyData.getFacultyByDepartment(selectedDepartment)
         }
 
+        val typeFiltered = when (staffTypeFilter) {
+            1 -> baseList.filter { !it.isStaff }
+            2 -> baseList.filter { it.isStaff }
+            else -> baseList
+        }
+
         if (searchQuery.isBlank()) {
-            baseList
+            typeFiltered
         } else {
             val q = searchQuery.trim().lowercase()
-            baseList.filter { member ->
+            typeFiltered.filter { member ->
                 member.name.lowercase().contains(q) ||
                         member.designation.lowercase().contains(q) ||
                         member.qualification.lowercase().contains(q) ||
-                        member.department.lowercase().contains(q)
+                        member.department.lowercase().contains(q) ||
+                        member.email.lowercase().contains(q)
             }
         }
     }
@@ -123,7 +140,7 @@ fun FacultyTabScreen(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Faculty Directory",
+                    text = "Faculty & Staff Directory",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = BrandNavy
@@ -154,11 +171,41 @@ fun FacultyTabScreen(
 
         HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
 
+        // Type Switcher (All / Teaching Faculty / Administrative Staff)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val typeTabs = listOf("All (46)", "Teaching (41)", "Staff (5)")
+            typeTabs.forEachIndexed { index, title ->
+                val isSelected = staffTypeFilter == index
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSelected) BrandNavy else Color(0xFFF0F3F8))
+                        .clickable { staffTypeFilter = index }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else BrandNavy
+                    )
+                }
+            }
+        }
+
         // Search Input
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
             OutlinedTextField(
                 value = searchQuery,
@@ -265,15 +312,15 @@ fun FacultyTabScreen(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
                                 tint = BrandNavy,
-                                modifier = Modifier.size(26.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "No Faculty Found",
-                            fontSize = 15.sp,
+                            text = "No Members Found",
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = BrandNavy
                         )
@@ -281,7 +328,7 @@ fun FacultyTabScreen(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "No results match your search query or filter. Try a different keyword.",
+                            text = "No faculty or staff matched your search query. Try clearing filters.",
                             fontSize = 13.sp,
                             color = BrandTextMuted,
                             textAlign = TextAlign.Center
@@ -292,10 +339,13 @@ fun FacultyTabScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(filteredFaculty, key = { it.id }) { faculty ->
+                items(
+                    items = filteredFaculty,
+                    key = { it.id }
+                ) { faculty ->
                     FacultyMemberCard(faculty = faculty)
                 }
             }
@@ -308,6 +358,8 @@ fun FacultyMemberCard(
     faculty: FacultyMember,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -322,7 +374,6 @@ fun FacultyMemberCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon container with Visual Hierarchy
             val iconVector: ImageVector = when {
                 faculty.isPrincipal -> Icons.Default.AccountBalance
                 faculty.isVicePrincipal -> Icons.Default.MilitaryTech
@@ -330,7 +381,7 @@ fun FacultyMemberCard(
                 else -> Icons.Default.Person
             }
 
-            val iconBoxSize = if (faculty.isLeadership) 48.dp else 42.dp
+            val iconBoxSize = if (faculty.isLeadership) 52.dp else 46.dp
             val iconSize = if (faculty.isLeadership) 24.dp else 20.dp
             val iconBg = if (faculty.isLeadership) BrandLeadershipBadgeBg else BrandIconBadgeBg
 
@@ -338,27 +389,95 @@ fun FacultyMemberCard(
                 modifier = Modifier
                     .size(iconBoxSize)
                     .clip(CircleShape)
-                    .background(iconBg),
+                    .background(iconBg)
+                    .border(1.dp, BrandNavy.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = iconVector,
-                    contentDescription = null,
-                    tint = BrandNavy,
-                    modifier = Modifier.size(iconSize)
-                )
+                if (faculty.imageUrl.isNotBlank()) {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(faculty.imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = faculty.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        loading = {
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = null,
+                                tint = BrandNavy.copy(alpha = 0.5f),
+                                modifier = Modifier.size(iconSize)
+                            )
+                        },
+                        error = {
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(iconSize)
+                            )
+                        }
+                    )
+                } else {
+                    Icon(
+                        imageVector = iconVector,
+                        contentDescription = null,
+                        tint = BrandNavy,
+                        modifier = Modifier.size(iconSize)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                // Name
-                Text(
-                    text = faculty.name,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
-                )
+                // Name & Staff/Leadership Badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = faculty.name,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    if (faculty.isStaff) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFE8F5E9))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Staff",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2E7D32)
+                            )
+                        }
+                    } else if (faculty.isLeadership) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(BrandLeadershipBadgeBg)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (faculty.isPrincipal) "Principal" else if (faculty.isVicePrincipal) "Vice Principal" else "HOD",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandLeadershipText
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(2.dp))
 
@@ -383,7 +502,10 @@ fun FacultyMemberCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 // Department Tag
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
@@ -391,11 +513,45 @@ fun FacultyMemberCard(
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "Department of ${faculty.department}",
+                            text = if (faculty.isStaff) "Administrative & Office Staff" else "Department of ${faculty.department}",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             color = BrandTextMuted
                         )
+                    }
+
+                    if (faculty.email.isNotBlank()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(BrandIconBadgeBg)
+                                .clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                            data = Uri.parse("mailto:${faculty.email}")
+                                        }
+                                        context.startActivity(intent)
+                                    } catch (_: Exception) {
+                                        Toast.makeText(context, faculty.email, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "Email",
+                                tint = BrandNavy,
+                                modifier = Modifier.size(11.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "Email",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandNavy
+                            )
+                        }
                     }
                 }
             }

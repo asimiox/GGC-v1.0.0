@@ -3,10 +3,12 @@ package com.example.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.example.data.UserProfileManager
 import com.example.data.datasource.remote.NotificationRemoteDataSource
 import com.example.data.model.AppNotificationDto
 import com.example.data.model.AuthResult
 import com.example.data.model.UserProfile
+import com.example.util.SystemNotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,7 +27,7 @@ import kotlinx.coroutines.sync.withLock
  */
 class NotificationRepository private constructor(
     private val context: Context,
-    private val remoteDataSource: NotificationRemoteDataSource = NotificationRemoteDataSource()
+    private val remoteDataSource: NotificationRemoteDataSource = NotificationRemoteDataSource.getInstance()
 ) {
     private val TAG = "NotificationRepository"
     private val PREFS_NAME = "ggc_notifications_prefs"
@@ -162,11 +164,14 @@ class NotificationRepository private constructor(
      * Dispatches a new notification to Supabase and triggers local Realtime broadcast.
      */
     suspend fun dispatchNotification(notification: AppNotificationDto): AuthResult<AppNotificationDto> {
-        return remoteDataSource.insertNotification(notification)
+        val res = remoteDataSource.insertNotification(notification)
+        // Also trigger locally immediately for the publisher/active session
+        handleIncomingRealtimeNotification(notification)
+        return res
     }
 
     private fun handleIncomingRealtimeNotification(incoming: AppNotificationDto) {
-        val profile = currentUserProfile ?: return
+        val profile = currentUserProfile ?: UserProfileManager.userProfile.value
 
         // 1. Check authorization
         if (!incoming.isAuthorizedFor(profile)) {
@@ -192,6 +197,11 @@ class NotificationRepository private constructor(
         // 5. Emit to incoming flow for in-app alert banner
         _incomingNotification.tryEmit(notifWithState)
         Log.d(TAG, "Realtime notification displayed: ${incoming.title}")
+
+        // 6. SYSTEM PUSH NOTIFICATION (WhatsApp-like alert: sound + vibration + heads-up banner)
+        if (!notifWithState.isRead) {
+            SystemNotificationHelper.showSystemPushNotification(context, notifWithState)
+        }
     }
 
     private fun updateUnreadCount() {

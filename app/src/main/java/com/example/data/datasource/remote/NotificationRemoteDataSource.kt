@@ -235,12 +235,32 @@ class NotificationRemoteDataSource {
             val inserted = client.from("notifications").insert(notification) {
                 select()
             }.decodeSingle<AppNotificationDto>()
+            // Instantly emit to local flow as well for instantaneous UI responsiveness
+            _incomingNotifications.tryEmit(inserted)
             AuthResult.Success(inserted)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to insert into notifications table directly: ${e.message}")
             // Emit directly to realtime flow locally as backup
             _incomingNotifications.tryEmit(notification)
             AuthResult.Success(notification)
+        }
+    }
+
+    /**
+     * Broadcasts an event locally across the app session.
+     */
+    fun broadcastLocally(notification: AppNotificationDto) {
+        _incomingNotifications.tryEmit(notification)
+    }
+
+    companion object {
+        @Volatile
+        private var instance: NotificationRemoteDataSource? = null
+
+        fun getInstance(): NotificationRemoteDataSource {
+            return instance ?: synchronized(this) {
+                instance ?: NotificationRemoteDataSource().also { instance = it }
+            }
         }
     }
 

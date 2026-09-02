@@ -108,6 +108,7 @@ import com.example.data.model.CollegeEventDto
 import com.example.data.model.CourseOutlineDto
 import com.example.data.model.OfficialDocumentDto
 import com.example.data.model.ProspectusDto
+import com.example.ui.screens.admin.PostReadersDialog
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandNavyDark = Color(0xFF030D2B)
@@ -141,6 +142,7 @@ fun ContentManagementScreen(
     // Dialog States
     var showAnnouncementDialog by remember { mutableStateOf(false) }
     var selectedAnnouncementForEdit by remember { mutableStateOf<AnnouncementDto?>(null) }
+    var selectedAnnouncementForReaders by remember { mutableStateOf<AnnouncementDto?>(null) }
 
     var showEventDialog by remember { mutableStateOf(false) }
     var selectedEventForEdit by remember { mutableStateOf<CollegeEventDto?>(null) }
@@ -522,7 +524,8 @@ fun ContentManagementScreen(
                             showAnnouncementDialog = true
                         },
                         onTogglePublish = { viewModel.toggleAnnouncementPublish(it.id ?: "", it.isPublished) },
-                        onDelete = { deleteConfirmationItem = DeleteTarget.Announcement(it) }
+                        onDelete = { deleteConfirmationItem = DeleteTarget.Announcement(it) },
+                        onViewReaders = { selectedAnnouncementForReaders = it }
                     )
                     ContentSectionTab.EVENTS -> EventsListSection(
                         events = uiState.events.filter { item ->
@@ -708,6 +711,13 @@ fun ContentManagementScreen(
         )
     }
 
+    if (selectedAnnouncementForReaders != null) {
+        PostReadersDialog(
+            announcement = selectedAnnouncementForReaders!!,
+            onDismiss = { selectedAnnouncementForReaders = null }
+        )
+    }
+
     // Delete Confirmation Modal
     deleteConfirmationItem?.let { target ->
         AlertDialog(
@@ -760,7 +770,8 @@ private fun AnnouncementsListSection(
     departments: List<com.example.data.model.DepartmentDto>,
     onEdit: (AnnouncementDto) -> Unit,
     onTogglePublish: (AnnouncementDto) -> Unit,
-    onDelete: (AnnouncementDto) -> Unit
+    onDelete: (AnnouncementDto) -> Unit,
+    onViewReaders: (AnnouncementDto) -> Unit = {}
 ) {
     if (announcements.isEmpty()) {
         EmptyContentView(icon = Icons.Default.Campaign, message = "No announcements found")
@@ -866,11 +877,33 @@ private fun AnnouncementsListSection(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = item.authorName,
-                            fontSize = 11.sp,
-                            color = BrandTextMuted
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = item.authorName,
+                                fontSize = 11.sp,
+                                color = BrandTextMuted
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            TextButton(
+                                onClick = { onViewReaders(item) },
+                                modifier = Modifier.testTag("btn_readers_${item.id ?: item.title.take(6)}"),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Visibility,
+                                    contentDescription = null,
+                                    tint = BrandNavy,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Readers",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy
+                                )
+                            }
+                        }
 
                         Row {
                             IconButton(onClick = { onTogglePublish(item) }, modifier = Modifier.size(36.dp)) {

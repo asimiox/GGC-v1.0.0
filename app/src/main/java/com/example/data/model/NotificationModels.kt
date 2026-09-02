@@ -73,39 +73,40 @@ data class AppNotificationDto(
             return currentUserId != null && userId.equals(currentUserId, ignoreCase = true)
         }
 
-        // 2. Department scope filtering
-        if (!departmentId.isNullOrBlank() || !departmentName.isNullOrBlank()) {
-            val userDept = userProfile.department?.trim()?.lowercase() ?: ""
-            val notifDept = (departmentName ?: departmentId)?.trim()?.lowercase() ?: ""
-
-            // System Admins can inspect all department notifications
-            if (userProfile.isAdmin) {
-                // Allowed
-            } else if (userDept.isNotBlank() && notifDept.isNotBlank()) {
-                val matches = userDept.contains(notifDept) || notifDept.contains(userDept)
-                if (!matches) return false
-            } else if (userProfile.isFaculty) {
-                // Faculty without a specific department assigned or matching
-                // Keep if department not specified
-            } else {
-                // Student without matching department cannot receive department-restricted notification
-                return false
-            }
-        }
-
-        // 3. Target Role filtering
+        // 2. Target Role filtering
         if (!targetRole.isNullOrBlank() && !targetRole.equals("all", ignoreCase = true)) {
             val role = userProfile.appRole
             val allowed = when (targetRole.trim().lowercase()) {
                 "student_bs", "bs" -> role == AppRole.STUDENT_BS || role.isAdminLevel
                 "student_intermediate", "intermediate", "inter" -> role == AppRole.STUDENT_INTERMEDIATE || role.isAdminLevel
-                "students" -> role.isStudent || role.isAdminLevel
+                "students", "student" -> role.isStudent || role.isAdminLevel
                 "teacher", "faculty" -> role.isTeacherLevel
                 "hod" -> role.isHodLevel
                 "admin" -> role == AppRole.ADMIN
                 else -> true
             }
             if (!allowed) return false
+        }
+
+        // 3. Department scope filtering (Lenient to ensure students don't miss college-wide news)
+        val notifDept = (departmentName ?: departmentId)?.trim()?.lowercase() ?: ""
+        if (notifDept.isNotBlank() && notifDept != "all" && notifDept != "general") {
+            val userDept = (userProfile.department ?: "").trim().lowercase()
+            val userProg = (userProfile.programName).trim().lowercase()
+
+            if (userProfile.isAdmin) {
+                // Admins see everything
+                return true
+            } else if (userDept.isNotBlank()) {
+                val matches = userDept.contains(notifDept) || notifDept.contains(userDept) || userProg.contains(notifDept)
+                if (!matches && !userProfile.isFaculty) return false
+            } else if (userProg.isNotBlank()) {
+                // Check if program name matches department keywords (e.g. IT, Computer Science)
+                val matches = userProg.contains(notifDept) || notifDept.contains(userProg) ||
+                        (notifDept.contains("information technology") && (userProg.contains("it") || userProg.contains("computer"))) ||
+                        (notifDept.contains("computer") && userProg.contains("information technology"))
+                // Allow general college news if no strict mismatch
+            }
         }
 
         return true

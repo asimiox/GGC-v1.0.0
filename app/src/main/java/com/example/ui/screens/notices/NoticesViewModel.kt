@@ -1,11 +1,14 @@
 package com.example.ui.screens.notices
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.model.AnnouncementDto
 import com.example.data.model.AuthResult
 import com.example.data.repository.CollegeContentRepository
 import com.example.data.repository.CollegeStorageRepository
+import com.example.data.repository.PostAnalyticsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,6 +83,23 @@ class NoticesViewModel(
 
     fun selectNotice(notice: AnnouncementDto?) {
         _uiState.update { it.copy(selectedNotice = notice) }
+    }
+
+    fun selectNotice(context: Context, notice: AnnouncementDto?) {
+        _uiState.update { it.copy(selectedNotice = notice) }
+        if (notice != null) {
+            viewModelScope.launch {
+                try {
+                    PostAnalyticsRepository.getInstance(context).recordPostView(
+                        postId = notice.id ?: notice.title,
+                        postTitle = notice.title,
+                        postCategory = notice.category
+                    )
+                } catch (e: Exception) {
+                    Log.e("NoticesViewModel", "Failed to record post view", e)
+                }
+            }
+        }
     }
 
     fun getAttachmentUrl(storagePath: String?): String? {

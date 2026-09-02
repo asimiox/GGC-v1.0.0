@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Event
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -91,9 +93,9 @@ sealed class BottomNavItem(
 
     object ContentHub : BottomNavItem(
         route = NavRoutes.CONTENT_MANAGEMENT,
-        title = "Content Hub",
-        selectedIcon = Icons.Filled.School,
-        unselectedIcon = Icons.Outlined.School,
+        title = "Content",
+        selectedIcon = Icons.Filled.PostAdd,
+        unselectedIcon = Icons.Outlined.PostAdd,
         testTag = "nav_content_hub"
     )
 

@@ -40,6 +40,7 @@ import com.example.ui.theme.GgcGoldTertiary
 fun GgcTopAppBar(
     title: String = "GGC M.B.Din",
     subtitle: String = "Official App",
+    unreadCount: Int = 0,
     onBackClick: (() -> Unit)? = null,
     onNotificationClick: (() -> Unit)? = null,
     onAdminClick: (() -> Unit)? = null
@@ -107,15 +108,36 @@ fun GgcTopAppBar(
         },
         actions = {
             if (onNotificationClick != null) {
-                IconButton(
-                    onClick = onNotificationClick,
-                    modifier = Modifier.testTag("action_notifications")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications",
-                        tint = Color(0xFF061B52)
-                    )
+                Box(contentAlignment = Alignment.TopEnd) {
+                    IconButton(
+                        onClick = onNotificationClick,
+                        modifier = Modifier.testTag("action_notifications")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color(0xFF061B52)
+                        )
+                    }
+
+                    if (unreadCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp, end = 6.dp)
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFD32F2F))
+                                .testTag("top_bar_bell_unread_badge"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
                 }
             }
             if (onAdminClick != null) {

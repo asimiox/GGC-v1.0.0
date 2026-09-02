@@ -89,6 +89,7 @@ fun AdminDashboardScreen(
 
     val sectionTitle = when (uiState.activeSection) {
         AdminNavSection.DASHBOARD -> if (userProfile.designation?.contains("Principal", ignoreCase = true) == true) "Principal Portal" else "Administration Portal"
+        AdminNavSection.STUDENT_LOGINS -> "Student Logins & Audit Logs"
         AdminNavSection.USERS -> "HOD Assignment & Governance"
         AdminNavSection.STUDENTS -> "Student Official Registry"
         AdminNavSection.FACULTY -> "Faculty Official Registry"
@@ -345,6 +346,7 @@ fun AdminDashboardScreen(
                         onNavigateSection = { viewModel.selectSection(it) },
                         onRefresh = { viewModel.refreshAll() }
                     )
+                    AdminNavSection.STUDENT_LOGINS -> AdminStudentLoginsView()
                     AdminNavSection.USERS -> AdminUserManagementView(
                         uiState = uiState,
                         onAssignHod = { fId, dName -> viewModel.assignHod(fId, dName) },
@@ -434,6 +436,14 @@ fun AdminDashboardScreen(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    // Post Viewers / Readers Dialog ("Kis kis ne dekha")
+    if (uiState.showPostReadersDialog && uiState.selectedPostForReaders != null) {
+        PostReadersDialog(
+            announcement = uiState.selectedPostForReaders!!,
+            onDismiss = { viewModel.closePostReaders() }
         )
     }
 }

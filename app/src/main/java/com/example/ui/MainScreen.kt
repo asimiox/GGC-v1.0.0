@@ -126,9 +126,10 @@ fun MainScreen(
         return
     }
 
-    // Start lifecycle-aware realtime subscription for the authenticated user
+    // Start lifecycle-aware realtime subscription for the authenticated user and fetch unread state
     LaunchedEffect(userProfile) {
         notificationRepository.startRealtimeSubscription(userProfile)
+        notificationRepository.fetchNotifications(userProfile, forceRefresh = true)
     }
 
     // Collect incoming realtime events for in-app floating banner
@@ -146,8 +147,9 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
-            val activeBottomRoute = when (currentRoute) {
-                NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE, NavRoutes.ADMIN_REGISTRY, NavRoutes.CONTENT_MANAGEMENT -> previousRoute
+            val activeBottomRoute = when {
+                currentRoute == NavRoutes.CONTENT_MANAGEMENT && userProfile.isFaculty -> NavRoutes.CONTENT_MANAGEMENT
+                currentRoute in listOf(NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE, NavRoutes.ADMIN_REGISTRY, NavRoutes.CONTENT_MANAGEMENT) -> previousRoute
                 else -> currentRoute
             }
             val navItems = if (userProfile.isFaculty) {
@@ -178,7 +180,9 @@ fun MainScreen(
                     onNavigateToAdminRegistry = { navigateTo(NavRoutes.ADMIN_REGISTRY) },
                     onNavigateToContentManagement = { navigateTo(NavRoutes.CONTENT_MANAGEMENT) }
                 )
-                NavRoutes.ACADEMICS -> AcademicsScreen()
+                NavRoutes.ACADEMICS -> AcademicsScreen(
+                    onNavigateToFaculty = { navigateTo(NavRoutes.FACULTY) }
+                )
                 NavRoutes.NOTICES -> NoticesScreen(
                     onBack = { goBack() }
                 )
