@@ -81,25 +81,34 @@ class AdminAuthRemoteDataSource {
                 Log.d(TAG, "direct_login_admin RPC unavailable or failed: ${rpcEx.message}")
             }
 
-            // 2. Built-in Master Admin verification fallback for primary admin credentials
+            // 2. Master Admin verification with dynamic updated password check
             val isKnownMasterAdminUser = cleanIdentifier.equals("shark1708", ignoreCase = true) ||
                     cleanIdentifier.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
                     cleanIdentifier.equals("admin", ignoreCase = true) ||
                     cleanIdentifier.equals("admin@ggc.edu.pk", ignoreCase = true)
 
-            val isKnownMasterAdminPwd = cleanPassword == "a\$im0011" || cleanPassword == "admin123" || cleanPassword == "admin"
+            if (isKnownMasterAdminUser) {
+                val hasCustomAdminPass = com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(cleanIdentifier)
+                val isPasswordValid = if (hasCustomAdminPass) {
+                    com.example.data.datasource.PasswordRegistryStore.verifyPassword(cleanIdentifier, cleanPassword)
+                } else {
+                    cleanPassword == "a\$im0011" || cleanPassword == "admin123" || cleanPassword == "admin"
+                }
 
-            if (isKnownMasterAdminUser && isKnownMasterAdminPwd) {
-                val profile = AdminProfileDto(
-                    id = "00000000-0000-0000-0000-000000000001",
-                    username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
-                    fullName = "Super Administrator",
-                    email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
-                    role = "admin",
-                    department = "Central Administration",
-                    isVerified = true
-                )
-                return AuthResult.Success(profile, "Master Administrator identity verified. Super Control granted.")
+                if (isPasswordValid) {
+                    val profile = AdminProfileDto(
+                        id = "00000000-0000-0000-0000-000000000001",
+                        username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
+                        fullName = "Super Administrator",
+                        email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
+                        role = "admin",
+                        department = "Central Administration",
+                        isVerified = true
+                    )
+                    return AuthResult.Success(profile, "Master Administrator identity verified. Super Control granted.")
+                } else {
+                    return AuthResult.Error("Incorrect administrator password. Please verify your credentials.")
+                }
             }
 
             // If RPC returned a specific error (like "Incorrect password"), return it
@@ -147,10 +156,22 @@ class AdminAuthRemoteDataSource {
                 }
             }
 
-            // 5. Verification check against admin system overview RPC to confirm server RLS access
+            // 5. Verification check against admin registry stats or system overview RPC to confirm server RLS access
             try {
-                val overviewCheck = client.postgrest.rpc("admin_get_system_overview")
-                if (overviewCheck.data.isNotBlank()) {
+                var verifiedAccess = false
+                try {
+                    val statsCheck = client.postgrest.rpc("admin_get_registry_stats")
+                    if (statsCheck.data.isNotBlank()) verifiedAccess = true
+                } catch (_: Exception) {}
+
+                if (!verifiedAccess) {
+                    try {
+                        val overviewCheck = client.postgrest.rpc("admin_get_system_overview")
+                        if (overviewCheck.data.isNotBlank()) verifiedAccess = true
+                    } catch (_: Exception) {}
+                }
+
+                if (verifiedAccess) {
                     val profile = AdminProfileDto(
                         id = currentUser?.id ?: "admin_${cleanIdentifier.hashCode()}",
                         username = cleanIdentifier,
@@ -163,7 +184,7 @@ class AdminAuthRemoteDataSource {
                     return AuthResult.Success(profile, "Admin authorization verified via database security policies.")
                 }
             } catch (checkEx: Exception) {
-                Log.w(TAG, "admin_get_system_overview check failed: ${checkEx.message}")
+                Log.d(TAG, "Admin server access verification: ${checkEx.message}")
             }
 
             AuthResult.Error("Access Denied: Invalid Administrator credentials or unauthorized role.")

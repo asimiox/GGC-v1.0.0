@@ -33,4 +33,7 @@ interface PostViewDao {
 
     @Query("DELETE FROM post_views WHERE postId = :postId")
     suspend fun clearViewsForPost(postId: String)
+
+    @Query("DELETE FROM post_views")
+    suspend fun clearAllViews()
 }

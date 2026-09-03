@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.AnnouncementDto
+import com.example.ui.screens.admin.PostReadersDialog
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandGold = Color(0xFFC59B27)
@@ -91,6 +93,7 @@ fun HodAnnouncementsCrudScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var editingAnnouncement by remember { mutableStateOf<AnnouncementDto?>(null) }
     var deletingAnnouncement by remember { mutableStateOf<AnnouncementDto?>(null) }
+    var viewingReadersAnnouncement by remember { mutableStateOf<AnnouncementDto?>(null) }
 
     val filteredAnnouncements = state.announcementsList.filter { notice ->
         val q = state.announcementsSearchQuery.trim().lowercase()
@@ -261,6 +264,7 @@ fun HodAnnouncementsCrudScreen(
                     items(filteredAnnouncements, key = { it.id ?: it.title }) { notice ->
                         HodAnnouncementCardItem(
                             announcement = notice,
+                            onViewReaders = { viewingReadersAnnouncement = notice },
                             onEdit = { editingAnnouncement = notice },
                             onDelete = { deletingAnnouncement = notice }
                         )
@@ -326,11 +330,20 @@ fun HodAnnouncementsCrudScreen(
             }
         )
     }
+
+    // Dialog 4: View Student Readers
+    viewingReadersAnnouncement?.let { notice ->
+        PostReadersDialog(
+            announcement = notice,
+            onDismiss = { viewingReadersAnnouncement = null }
+        )
+    }
 }
 
 @Composable
 fun HodAnnouncementCardItem(
     announcement: AnnouncementDto,
+    onViewReaders: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -436,6 +449,19 @@ fun HodAnnouncementCardItem(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(
+                        onClick = onViewReaders,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = BrandNavy),
+                        modifier = Modifier.height(34.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Readers", fontSize = 12.sp)
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    OutlinedButton(
                         onClick = onEdit,
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(34.dp)
@@ -445,7 +471,7 @@ fun HodAnnouncementCardItem(
                         Text("Edit", fontSize = 12.sp)
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
 
                     OutlinedButton(
                         onClick = onDelete,

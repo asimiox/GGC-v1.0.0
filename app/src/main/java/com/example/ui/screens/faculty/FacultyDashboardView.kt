@@ -1,5 +1,6 @@
 package com.example.ui.screens.faculty
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -47,7 +49,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -104,6 +110,33 @@ fun FacultyDashboardView(
     val todayDate = remember { Date() }
     val currentDayName = remember { liveDayFormat.format(todayDate) }
     val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
+
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showFirstLoginPrompt by rememberSaveable { mutableStateOf(true) }
+
+    val facultyIdentifier = userProfile.facultyId?.ifBlank { null }
+        ?: userProfile.institutionalEmail?.ifBlank { null }
+        ?: userProfile.rollNumber?.ifBlank { null }
+        ?: userProfile.name.ifBlank { "faculty" }
+
+    val hasCustomPassword = remember(facultyIdentifier, showChangePasswordDialog) {
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(facultyIdentifier)
+    }
+
+    if (!hasCustomPassword && showFirstLoginPrompt) {
+        com.example.ui.components.FirstLoginPasswordPromptDialog(
+            userRole = if (userProfile.isHod) "HOD" else "Faculty Member",
+            onDismissRequest = { showFirstLoginPrompt = false },
+            onOpenChangePassword = { showChangePasswordDialog = true }
+        )
+    }
+
+    if (showChangePasswordDialog) {
+        com.example.ui.components.ChangePasswordDialog(
+            userRole = if (userProfile.isHod) "HOD" else "Faculty Member",
+            onDismissRequest = { showChangePasswordDialog = false }
+        )
+    }
 
     LazyColumn(
         modifier = modifier
@@ -163,6 +196,19 @@ fun FacultyDashboardView(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Change Password button
+                    IconButton(
+                        onClick = { showChangePasswordDialog = true },
+                        modifier = Modifier.testTag("faculty_change_password_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VpnKey,
+                            contentDescription = "Change Password",
+                            tint = BrandNavy,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
                     // Profile button
                     IconButton(
                         onClick = onNavigateToProfile,
@@ -213,6 +259,17 @@ fun FacultyDashboardView(
             }
 
             HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
+        }
+
+        // 1.5 Security Alert Notice (If user has default "00000" password)
+        if (!hasCustomPassword) {
+            item {
+                com.example.ui.components.DefaultPasswordSecurityNotice(
+                    userRole = if (userProfile.isHod) "HOD" else "Faculty Member",
+                    onOpenChangePassword = { showChangePasswordDialog = true },
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                )
+            }
         }
 
         // 2. Faculty Hero Card & Teaching Profile
@@ -514,7 +571,7 @@ fun FacultyDashboardView(
             }
         }
 
-        // 3. Quick Action Bar (Notices, Outlines, Students, Events)
+        // 3. Quick Action Hub (Alternating Navy & White 2x2 Grid)
         item {
             Column(
                 modifier = Modifier
@@ -535,111 +592,61 @@ fun FacultyDashboardView(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // + Student
-                    Button(
-                        onClick = onNavigateToStudentsManagement,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .testTag("quick_action_add_student"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp)
+                    // Row 1: Students Roster (Navy) & + Notice (White)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                        FacultyQuickActionCard(
+                            title = "Students Roster",
+                            subtitle = "Enroll & manage",
+                            icon = Icons.Default.School,
+                            isDark = true,
+                            onClick = onNavigateToStudentsManagement,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("quick_action_add_student")
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Students",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                        FacultyQuickActionCard(
+                            title = "+ Notice",
+                            subtitle = "Publish announcement",
+                            icon = Icons.Default.Campaign,
+                            isDark = false,
+                            onClick = { onNavigateToContentTab(ContentSectionTab.ANNOUNCEMENTS) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("quick_action_add_notice")
                         )
                     }
 
-                    // + Announcement
-                    Button(
-                        onClick = { onNavigateToContentTab(ContentSectionTab.ANNOUNCEMENTS) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .testTag("quick_action_add_notice"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp)
+                    // Row 2: + Course Outline (White) & + Event (Navy)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Campaign,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                        FacultyQuickActionCard(
+                            title = "+ Course Outline",
+                            subtitle = "Syllabus & notes",
+                            icon = Icons.Default.AutoStories,
+                            isDark = false,
+                            onClick = { onNavigateToContentTab(ContentSectionTab.COURSE_OUTLINES) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("quick_action_add_outline")
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "+ Notice",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                    }
-
-                    // + Course Outline / Notes
-                    Button(
-                        onClick = { onNavigateToContentTab(ContentSectionTab.COURSE_OUTLINES) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .testTag("quick_action_add_outline"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoStories,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "+ Outline",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                    }
-
-                    // + Event
-                    Button(
-                        onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(44.dp)
-                            .testTag("quick_action_add_event"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Event,
-                            contentDescription = null,
-                            tint = BrandNavy,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "+ Event",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrandNavy
+                        FacultyQuickActionCard(
+                            title = "+ Event",
+                            subtitle = "Seminars & sports",
+                            icon = Icons.Default.Event,
+                            isDark = true,
+                            onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("quick_action_add_event")
                         )
                     }
                 }
@@ -865,8 +872,9 @@ private fun FacultyBentoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isDark) BrandNavy else Color.White
         ),
+        border = if (!isDark) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null,
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
+            defaultElevation = if (isDark) 2.dp else 0.dp
         )
     ) {
         Column(
@@ -934,3 +942,70 @@ private fun FacultyBentoCard(
         }
     }
 }
+
+@Composable
+private fun FacultyQuickActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    isDark: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) BrandNavy else Color.White
+        ),
+        border = if (!isDark) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 2.dp else 0.5.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isDark) Color.White.copy(alpha = 0.15f) else BrandNavy.copy(alpha = 0.08f)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if (isDark) Color.White else BrandNavy,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color.White else BrandNavy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 10.sp,
+                    color = if (isDark) Color.White.copy(alpha = 0.75f) else Color(0xFF718096),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+

@@ -83,9 +83,31 @@ fun AdminDashboardScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showFirstLoginPrompt by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(true) }
 
     val userProfile by UserProfileManager.userProfile.collectAsState()
     val isRootDashboard = uiState.activeSection == AdminNavSection.DASHBOARD
+
+    val adminIdentifier = userProfile.username?.ifBlank { null } ?: userProfile.email?.ifBlank { null } ?: "admin"
+    val hasCustomPassword = remember(adminIdentifier, showChangePasswordDialog) {
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(adminIdentifier)
+    }
+
+    if (!hasCustomPassword && showFirstLoginPrompt) {
+        com.example.ui.components.FirstLoginPasswordPromptDialog(
+            userRole = "Administrator",
+            onDismissRequest = { showFirstLoginPrompt = false },
+            onOpenChangePassword = { showChangePasswordDialog = true }
+        )
+    }
+
+    if (showChangePasswordDialog) {
+        com.example.ui.components.ChangePasswordDialog(
+            userRole = "Administrator",
+            onDismissRequest = { showChangePasswordDialog = false }
+        )
+    }
 
     val sectionTitle = when (uiState.activeSection) {
         AdminNavSection.DASHBOARD -> if (userProfile.designation?.contains("Principal", ignoreCase = true) == true) "Principal Portal" else "Administration Portal"
@@ -156,6 +178,18 @@ fun AdminDashboardScreen(
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { showChangePasswordDialog = true },
+                                modifier = Modifier.testTag("admin_topbar_change_password")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.VpnKey,
+                                    contentDescription = "Change Password",
+                                    tint = BrandNavy,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
                             IconButton(
                                 onClick = { viewModel.refreshAll() },
                                 modifier = Modifier.testTag("admin_topbar_refresh")
@@ -334,6 +368,15 @@ fun AdminDashboardScreen(
                 }
             }
 
+            // Security notice if using default credentials
+            if (isRootDashboard && !hasCustomPassword) {
+                com.example.ui.components.DefaultPasswordSecurityNotice(
+                    userRole = "Administrator",
+                    onOpenChangePassword = { showChangePasswordDialog = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+
             // Content Area Router
             Box(
                 modifier = Modifier
@@ -397,7 +440,8 @@ fun AdminDashboardScreen(
                     AdminNavSection.SETTINGS -> AdminSystemSettingsView(
                         onLogout = {
                             viewModel.logoutAdmin(context) { onNavigateBack() }
-                        }
+                        },
+                        onChangePassword = { showChangePasswordDialog = true }
                     )
                 }
             }
@@ -450,7 +494,8 @@ fun AdminDashboardScreen(
 
 @Composable
 fun AdminSystemSettingsView(
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onChangePassword: () -> Unit = {}
 ) {
     val profile = UserProfileManager.userProfile.value
 
@@ -557,6 +602,21 @@ fun AdminSystemSettingsView(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onChangePassword,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+        ) {
+            Icon(imageVector = Icons.Default.VpnKey, contentDescription = null, tint = BrandGold)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Update Account Password")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = onLogout,

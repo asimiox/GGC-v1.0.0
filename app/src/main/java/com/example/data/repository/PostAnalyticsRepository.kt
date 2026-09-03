@@ -19,7 +19,11 @@ class PostAnalyticsRepository private constructor(context: Context) {
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            seedInitialPostViewsIfEmpty()
+            val prefs = context.getSharedPreferences("post_analytics_prefs", Context.MODE_PRIVATE)
+            if (!prefs.getBoolean("clean_fresh_zero_v2", false)) {
+                postViewDao.clearAllViews()
+                prefs.edit().putBoolean("clean_fresh_zero_v2", true).apply()
+            }
         }
     }
 
@@ -85,99 +89,6 @@ class PostAnalyticsRepository private constructor(context: Context) {
                 viewCount = 1
             )
             postViewDao.insertView(newView)
-        }
-    }
-
-    private suspend fun seedInitialPostViewsIfEmpty() = withContext(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
-        val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
-
-        val seedViews = listOf(
-            PostViewEntity(
-                postId = "ann_fee_schedule_2026",
-                postTitle = "Semester Fee Submission Deadline Notice",
-                postCategory = "Fee",
-                viewerUsername = "asim.nawaz",
-                viewerName = "Asim Nawaz",
-                viewerRollNumber = "BSIT-F22-01",
-                viewerRole = "BS Student",
-                viewerProgram = "BS Information Technology (Sem 4)",
-                viewTimestamp = now - 15 * 60 * 1000,
-                viewTimeFormatted = dateFormat.format(Date(now - 15 * 60 * 1000)),
-                viewCount = 3
-            ),
-            PostViewEntity(
-                postId = "ann_fee_schedule_2026",
-                postTitle = "Semester Fee Submission Deadline Notice",
-                postCategory = "Fee",
-                viewerUsername = "hamza.tariq",
-                viewerName = "Hamza Tariq",
-                viewerRollNumber = "BSCS-F23-14",
-                viewerRole = "BS Student",
-                viewerProgram = "BS Computer Science (Sem 2)",
-                viewTimestamp = now - 35 * 60 * 1000,
-                viewTimeFormatted = dateFormat.format(Date(now - 35 * 60 * 1000)),
-                viewCount = 1
-            ),
-            PostViewEntity(
-                postId = "ann_fee_schedule_2026",
-                postTitle = "Semester Fee Submission Deadline Notice",
-                postCategory = "Fee",
-                viewerUsername = "ali.hassan",
-                viewerName = "Muhammad Ali Hassan",
-                viewerRollNumber = "FSC-24-102",
-                viewerRole = "Intermediate Student",
-                viewerProgram = "FSc Pre-Engineering (1st Year)",
-                viewTimestamp = now - 2 * 3600 * 1000,
-                viewTimeFormatted = dateFormat.format(Date(now - 2 * 3600 * 1000)),
-                viewCount = 2
-            ),
-            PostViewEntity(
-                postId = "ann_midterm_schedule_2026",
-                postTitle = "Mid Term Examinations Schedule Announcement",
-                postCategory = "Examinations",
-                viewerUsername = "asim.nawaz",
-                viewerName = "Asim Nawaz",
-                viewerRollNumber = "BSIT-F22-01",
-                viewerRole = "BS Student",
-                viewerProgram = "BS Information Technology",
-                viewTimestamp = now - 40 * 60 * 1000,
-                viewTimeFormatted = dateFormat.format(Date(now - 40 * 60 * 1000)),
-                viewCount = 2
-            ),
-            PostViewEntity(
-                postId = "ann_midterm_schedule_2026",
-                postTitle = "Mid Term Examinations Schedule Announcement",
-                postCategory = "Examinations",
-                viewerUsername = "zain.abbas",
-                viewerName = "Zain Abbas",
-                viewerRollNumber = "ICS-23-44",
-                viewerRole = "Intermediate Student",
-                viewerProgram = "ICS (Computer Science)",
-                viewTimestamp = now - 4 * 3600 * 1000,
-                viewTimeFormatted = dateFormat.format(Date(now - 4 * 3600 * 1000)),
-                viewCount = 1
-            ),
-            PostViewEntity(
-                postId = "ann_midterm_schedule_2026",
-                postTitle = "Mid Term Examinations Schedule Announcement",
-                postCategory = "Examinations",
-                viewerUsername = "usman.ghani",
-                viewerName = "Usman Ghani",
-                viewerRollNumber = "BSENG-F21-08",
-                viewerRole = "BS Student",
-                viewerProgram = "BS English (Sem 6)",
-                viewTimestamp = now - 6 * 3600 * 1000,
-                viewTimeFormatted = dateFormat.format(Date(now - 6 * 3600 * 1000)),
-                viewCount = 1
-            )
-        )
-
-        for (item in seedViews) {
-            val exists = postViewDao.findExistingUserView(item.postId, item.viewerUsername)
-            if (exists == null) {
-                postViewDao.insertView(item)
-            }
         }
     }
 

@@ -246,6 +246,14 @@ class BsAuthRemoteDataSource {
         }
 
         // 1. Stage 1: Check persistent local store first (instant response)
+        val hasCustom = com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(query)
+        if (hasCustom) {
+            val isValid = com.example.data.datasource.PasswordRegistryStore.verifyPassword(query, cleanPassword)
+            if (!isValid) {
+                return AuthResult.Error("Incorrect password. Please use your updated password.")
+            }
+        }
+
         val localMatch = com.example.data.datasource.RegisteredStudentStore.authenticateBs(query, cleanPassword)
         if (localMatch != null) {
             Log.d(TAG, "BS student authenticated via local store: ${localMatch.rollNumber}")

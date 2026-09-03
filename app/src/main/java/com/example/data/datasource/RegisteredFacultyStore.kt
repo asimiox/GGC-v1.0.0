@@ -388,13 +388,38 @@ object RegisteredFacultyStore {
     }
 
     /**
+     * Updates password for a faculty member or HOD account.
+     */
+    fun updatePassword(identifier: String, newPassword: String) {
+        val cleanPass = newPassword.trim()
+        val account = findAccount(identifier)
+        if (account != null) {
+            val updated = account.copy(password = cleanPass)
+            memoryAccounts[account.facultyId.uppercase()] = updated
+            memoryAccounts[account.username.lowercase()] = updated
+            account.institutionalEmail?.let { memoryAccounts[it.lowercase()] = updated }
+            persistToPrefs()
+            Log.d(TAG, "Updated faculty password for ${account.fullName} (${account.facultyId})")
+        }
+    }
+
+    /**
      * Validates credentials for Teacher / Faculty login.
      */
     fun authenticate(query: String, passwordAttempt: String): FacultyProfileDto? {
+        val cleanQuery = query.trim()
         val cleanAttempt = passwordAttempt.trim()
-        val account = findAccount(query)
+        val account = findAccount(cleanQuery)
         if (account != null) {
-            if (account.password == cleanAttempt || cleanAttempt == "00000" || account.password.isBlank()) {
+            val isVerified = if (PasswordRegistryStore.hasCustomPassword(cleanQuery) || PasswordRegistryStore.hasCustomPassword(account.facultyId) || PasswordRegistryStore.hasCustomPassword(account.username)) {
+                PasswordRegistryStore.verifyPassword(account.facultyId, cleanAttempt) || (account.password.isNotBlank() && account.password != "00000" && account.password == cleanAttempt)
+            } else if (account.password.isNotBlank() && account.password != "00000") {
+                account.password == cleanAttempt
+            } else {
+                cleanAttempt == "00000" || cleanAttempt == account.password
+            }
+
+            if (isVerified) {
                 return FacultyProfileDto(
                     id = account.facultyId,
                     username = account.username,

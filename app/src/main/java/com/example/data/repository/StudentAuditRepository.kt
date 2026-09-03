@@ -34,7 +34,11 @@ class StudentAuditRepository private constructor(context: Context) {
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            seedInitialStudentLoginsIfEmpty()
+            val prefs = context.getSharedPreferences("student_audit_prefs", Context.MODE_PRIVATE)
+            if (!prefs.getBoolean("clean_fresh_zero_v2", false)) {
+                studentLoginDao.clearAllLogins()
+                prefs.edit().putBoolean("clean_fresh_zero_v2", true).apply()
+            }
         }
     }
 
@@ -98,99 +102,6 @@ class StudentAuditRepository private constructor(context: Context) {
 
     suspend fun clearAllAuditLogs() = withContext(Dispatchers.IO) {
         studentLoginDao.clearAllLogins()
-    }
-
-    private suspend fun seedInitialStudentLoginsIfEmpty() = withContext(Dispatchers.IO) {
-        val existing = studentLoginDao.getAllLogins()
-        if (existing.isNotEmpty()) return@withContext
-
-        val now = System.currentTimeMillis()
-        val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.ENGLISH)
-
-        val seedLogins = listOf(
-            StudentLoginEntity(
-                username = "asim.nawaz",
-                fullName = "Asim Nawaz",
-                rollNumber = "BSIT-F22-01",
-                registrationNumber = "2022-GGC-IT-01",
-                programLevel = "BS",
-                programName = "BS Information Technology",
-                semester = "Semester 4",
-                loginTimestamp = now - 12 * 60 * 1000,
-                loginTimeFormatted = dateFormat.format(Date(now - 12 * 60 * 1000)),
-                deviceInfo = "Samsung Galaxy A54 (Android 14)",
-                sessionStatus = "Active"
-            ),
-            StudentLoginEntity(
-                username = "hamza.tariq",
-                fullName = "Hamza Tariq",
-                rollNumber = "BSCS-F23-14",
-                registrationNumber = "2023-GGC-CS-14",
-                programLevel = "BS",
-                programName = "BS Computer Science",
-                semester = "Semester 2",
-                loginTimestamp = now - 45 * 60 * 1000,
-                loginTimeFormatted = dateFormat.format(Date(now - 45 * 60 * 1000)),
-                deviceInfo = "Xiaomi Redmi Note 12",
-                sessionStatus = "Active"
-            ),
-            StudentLoginEntity(
-                username = "ali.hassan",
-                fullName = "Muhammad Ali Hassan",
-                rollNumber = "FSC-24-102",
-                registrationNumber = "2024-BISE-GGC-102",
-                programLevel = "Intermediate",
-                programName = "FSc Pre-Engineering",
-                semester = "1st Year",
-                loginTimestamp = now - 2 * 3600 * 1000,
-                loginTimeFormatted = dateFormat.format(Date(now - 2 * 3600 * 1000)),
-                deviceInfo = "Infinix Hot 30 Play",
-                sessionStatus = "Active"
-            ),
-            StudentLoginEntity(
-                username = "usman.ghani",
-                fullName = "Usman Ghani",
-                rollNumber = "BSENG-F21-08",
-                registrationNumber = "2021-GGC-ENG-08",
-                programLevel = "BS",
-                programName = "BS English",
-                semester = "Semester 6",
-                loginTimestamp = now - 5 * 3600 * 1000,
-                loginTimeFormatted = dateFormat.format(Date(now - 5 * 3600 * 1000)),
-                deviceInfo = "Realme C55",
-                sessionStatus = "Active"
-            ),
-            StudentLoginEntity(
-                username = "zain.abbas",
-                fullName = "Zain Abbas",
-                rollNumber = "ICS-23-44",
-                registrationNumber = "2023-BISE-GGC-44",
-                programLevel = "Intermediate",
-                programName = "ICS (Computer Science)",
-                semester = "2nd Year",
-                loginTimestamp = now - 18 * 3600 * 1000,
-                loginTimeFormatted = dateFormat.format(Date(now - 18 * 3600 * 1000)),
-                deviceInfo = "Vivo Y20s",
-                sessionStatus = "Active"
-            ),
-            StudentLoginEntity(
-                username = "bilal.ahmed",
-                fullName = "Bilal Ahmed",
-                rollNumber = "BBA-F22-19",
-                registrationNumber = "2022-GGC-BBA-19",
-                programLevel = "BS",
-                programName = "BBA (Hons)",
-                semester = "Semester 4",
-                loginTimestamp = now - 28 * 3600 * 1000,
-                loginTimeFormatted = dateFormat.format(Date(now - 28 * 3600 * 1000)),
-                deviceInfo = "Oppo A78",
-                sessionStatus = "Active"
-            )
-        )
-
-        for (item in seedLogins) {
-            studentLoginDao.insertLogin(item)
-        }
     }
 
     companion object {

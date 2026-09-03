@@ -183,6 +183,14 @@ class FacultyAuthRemoteDataSource {
         }
 
         // 1. Check local registered store first for instantaneous verification
+        val hasCustom = com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(query)
+        if (hasCustom) {
+            val isValid = com.example.data.datasource.PasswordRegistryStore.verifyPassword(query, cleanPassword)
+            if (!isValid) {
+                return AuthResult.Error("Incorrect password. Please use your updated password.")
+            }
+        }
+
         val localMatch = com.example.data.datasource.RegisteredFacultyStore.authenticate(query, cleanPassword)
         if (localMatch != null) {
             Log.d(TAG, "Faculty login authenticated via RegisteredFacultyStore: ${localMatch.fullName} (${localMatch.facultyId})")

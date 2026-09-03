@@ -855,6 +855,59 @@ BEGIN
 END;
 $$;
 
+-- 9.1b Admin College-Wide System Overview
+CREATE OR REPLACE FUNCTION public.admin_get_system_overview()
+RETURNS JSONB
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_bs_students_count INT := 0;
+    v_inter_students_count INT := 0;
+    v_faculty_count INT := 0;
+    v_hods_count INT := 0;
+    v_admins_count INT := 0;
+    v_depts_count INT := 0;
+    v_programs_count INT := 0;
+    v_courses_count INT := 0;
+    v_announcements_count INT := 0;
+    v_documents_count INT := 0;
+    v_events_count INT := 0;
+    v_prospectus_count INT := 0;
+BEGIN
+    SELECT COUNT(*) INTO v_bs_students_count FROM public.official_bs_students;
+    SELECT COUNT(*) INTO v_inter_students_count FROM public.official_intermediate_students;
+    SELECT COUNT(*) INTO v_faculty_count FROM public.official_faculty;
+    SELECT COUNT(*) INTO v_hods_count FROM public.user_roles WHERE role = 'hod'::public.app_role;
+    SELECT COUNT(*) INTO v_admins_count FROM public.user_roles WHERE role = 'admin'::public.app_role;
+    SELECT COUNT(*) INTO v_depts_count FROM public.departments;
+    SELECT COUNT(*) INTO v_programs_count FROM public.academic_programs;
+    SELECT COUNT(*) INTO v_courses_count FROM public.courses;
+    SELECT COUNT(*) INTO v_announcements_count FROM public.announcements;
+    SELECT COUNT(*) INTO v_documents_count FROM public.official_documents;
+    SELECT COUNT(*) INTO v_events_count FROM public.college_events;
+    SELECT COUNT(*) INTO v_prospectus_count FROM public.prospectus;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'bs_students_count', v_bs_students_count,
+        'intermediate_students_count', v_inter_students_count,
+        'faculty_count', v_faculty_count,
+        'hods_count', v_hods_count,
+        'admins_count', v_admins_count,
+        'departments_count', v_depts_count,
+        'programs_count', v_programs_count,
+        'courses_count', v_courses_count,
+        'announcements_count', v_announcements_count,
+        'documents_count', v_documents_count,
+        'events_count', v_events_count,
+        'prospectus_count', v_prospectus_count
+    );
+END;
+$$;
+
 -- 9.2 Add BS Registry Entry
 CREATE OR REPLACE FUNCTION public.admin_add_bs_registry_entry(
     p_roll_number TEXT,

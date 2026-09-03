@@ -30,6 +30,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -52,9 +53,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.data.UserProfileManager
 import com.example.data.local.entity.PostViewEntity
 import com.example.data.model.AnnouncementDto
+import com.example.data.model.AppRole
 import com.example.data.repository.PostAnalyticsRepository
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.text.style.TextAlign
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandGold = Color(0xFFC59B27)
@@ -85,6 +92,59 @@ fun PostReadersDialog(
                     (view.viewerProgram?.lowercase()?.contains(q) == true)
             }
         }
+    }
+
+    val userProfile by UserProfileManager.userProfile.collectAsState()
+    val isAuthorized = userProfile.isHod ||
+        userProfile.isAdmin ||
+        userProfile.appRole == AppRole.HOD ||
+        userProfile.appRole == AppRole.ADMIN ||
+        userProfile.designation?.contains("HOD", ignoreCase = true) == true ||
+        userProfile.designation?.contains("Principal", ignoreCase = true) == true ||
+        userProfile.designation?.contains("Head of Department", ignoreCase = true) == true
+
+    if (!isAuthorized) {
+        Dialog(onDismissRequest = onDismiss) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Confidential & Restricted",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Reader identity logs and student verification records are confidential and only accessible by HOD, Principal, and Administration.",
+                        fontSize = 13.sp,
+                        color = Color.DarkGray,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+        return
     }
 
     Dialog(

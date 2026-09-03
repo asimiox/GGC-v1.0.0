@@ -306,71 +306,105 @@ fun NoticeDetailScreen(
                 )
             }
 
-            // Reader Tracking / Views Card ("Kis kis ne dekha")
+            // Reader Tracking / Views ("Kis kis ne dekha")
             val postAnalyticsRepo = remember { PostAnalyticsRepository.getInstance(context) }
             val readers by postAnalyticsRepo.getViewsForPostFlow(notice.id ?: notice.title).collectAsState(initial = emptyList())
+            val userProfile by UserProfileManager.userProfile.collectAsState()
             var showReadersModal by remember { mutableStateOf(false) }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
+            // Strict Role-based access: Only HOD, Principal, and Admin can inspect reader identities
+            val canViewDetailedReaders = userProfile.isHod ||
+                userProfile.isAdmin ||
+                userProfile.appRole == com.example.data.model.AppRole.HOD ||
+                userProfile.appRole == com.example.data.model.AppRole.ADMIN ||
+                userProfile.designation?.contains("HOD", ignoreCase = true) == true ||
+                userProfile.designation?.contains("Principal", ignoreCase = true) == true ||
+                userProfile.designation?.contains("Head of Department", ignoreCase = true) == true
+
+            if (canViewDetailedReaders) {
+                // Privileged View for HOD & Admin / Principal
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF061B52).copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Visibility,
+                                    contentDescription = null,
+                                    tint = Color(0xFF061B52),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "${readers.size} Student Readers",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "HOD / Principal / Admin Audit",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = { showReadersModal = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF061B52)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.testTag("notice_detail_btn_readers")
+                        ) {
+                            Text(
+                                text = "View Readers",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Regular Students & Normal Users View: Only anonymous view count, NO readers list or identities
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .padding(horizontal = 4.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF061B52).copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Visibility,
-                                contentDescription = null,
-                                tint = Color(0xFF061B52),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "${readers.size} Student Readers",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (readers.isEmpty()) "First reader! Viewing now." else "Verified read audits recorded",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Button(
-                        onClick = { showReadersModal = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF061B52)),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.testTag("notice_detail_btn_readers")
-                    ) {
-                        Text(
-                            text = "View Readers",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Visibility,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (readers.isEmpty()) "First reader" else "${readers.size} views",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
                 }
             }
 
-            if (showReadersModal) {
+            if (showReadersModal && canViewDetailedReaders) {
                 PostReadersDialog(
                     announcement = notice,
                     onDismiss = { showReadersModal = false }

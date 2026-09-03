@@ -1,5 +1,6 @@
 package com.example.ui.screens.admin
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -242,84 +243,62 @@ fun AdminOverviewDashboardView(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                // Row 1: [Publish Notice (Navy)] [Course Outline (White)]
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Button(
+                    AdminQuickActionCard(
+                        title = "+ Publish Notice",
+                        subtitle = "Notices & Circulars",
+                        icon = Icons.Default.Campaign,
+                        isDark = true,
                         onClick = { onNavigateSection(AdminNavSection.CONTENT) },
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp)
-                            .testTag("admin_quick_add_notice"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Campaign,
-                            contentDescription = null,
-                            tint = BrandGoldLight,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "+ Notice",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                    }
+                            .testTag("admin_quick_add_notice")
+                    )
 
-                    Button(
+                    AdminQuickActionCard(
+                        title = "+ Course Outline",
+                        subtitle = "Syllabi & Outlines",
+                        icon = Icons.Default.AutoStories,
+                        isDark = false,
                         onClick = { onNavigateSection(AdminNavSection.ACADEMICS) },
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp)
-                            .testTag("admin_quick_add_outline"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavySecondary),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoStories,
-                            contentDescription = null,
-                            tint = BrandGoldLight,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "+ Outline",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
-                    }
+                            .testTag("admin_quick_add_outline")
+                    )
+                }
 
-                    Button(
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Row 2: [Schedule Event (White)] [Official Docs (Navy)] (Alternating sequence!)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    AdminQuickActionCard(
+                        title = "+ Schedule Event",
+                        subtitle = "Seminars & Galas",
+                        icon = Icons.Default.Event,
+                        isDark = false,
                         onClick = { onNavigateSection(AdminNavSection.EVENTS) },
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp)
-                            .testTag("admin_quick_add_event"),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Event,
-                            contentDescription = null,
-                            tint = BrandNavy,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "+ Event",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrandNavy
-                        )
-                    }
+                            .testTag("admin_quick_add_event")
+                    )
+
+                    AdminQuickActionCard(
+                        title = "+ Upload Document",
+                        subtitle = "PDFs & Prospectus",
+                        icon = Icons.Default.Description,
+                        isDark = true,
+                        onClick = { onNavigateSection(AdminNavSection.DOCUMENTS) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("admin_quick_add_doc")
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -339,7 +318,7 @@ fun AdminOverviewDashboardView(
                     color = BrandNavy
                 )
 
-                // Row 0: Student Logins & Sessions (Audit Authorized)
+                // Row 0: Student Logins (Navy) & Circular Readers (White)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -369,7 +348,7 @@ fun AdminOverviewDashboardView(
                     )
                 }
 
-                // Row 1: BS Student Registry (Navy) & Inter Students Registry (White)
+                // Row 1: BS Student Registry (White) & Inter Students Registry (Navy)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -378,7 +357,7 @@ fun AdminOverviewDashboardView(
                         title = "BS Students",
                         subtitle = "Registry & Enrollment",
                         icon = Icons.Default.School,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "BS Program",
                         onClick = { onNavigateSection(AdminNavSection.STUDENTS) },
                         modifier = Modifier
@@ -390,7 +369,7 @@ fun AdminOverviewDashboardView(
                         title = "Inter Students",
                         subtitle = "1st & 2nd Year Records",
                         icon = Icons.Default.Group,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Intermediate",
                         onClick = { onNavigateSection(AdminNavSection.STUDENTS) },
                         modifier = Modifier
@@ -399,7 +378,7 @@ fun AdminOverviewDashboardView(
                     )
                 }
 
-                // Row 2: Faculty Registry (White) & User Roles Governance (Navy)
+                // Row 2: Faculty Registry (Navy) & User Roles Governance (White)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -408,7 +387,7 @@ fun AdminOverviewDashboardView(
                         title = "Faculty Registry",
                         subtitle = "Teachers & Directory",
                         icon = Icons.Default.SupervisorAccount,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Faculty",
                         onClick = { onNavigateSection(AdminNavSection.FACULTY) },
                         modifier = Modifier
@@ -420,7 +399,7 @@ fun AdminOverviewDashboardView(
                         title = "Assign HOD",
                         subtitle = "Department Heads & Roles",
                         icon = Icons.Default.AdminPanelSettings,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "HOD Setup",
                         onClick = { onNavigateSection(AdminNavSection.USERS) },
                         modifier = Modifier
@@ -429,7 +408,7 @@ fun AdminOverviewDashboardView(
                     )
                 }
 
-                // Row 3: Academics & Curricula (Navy) & Announcements Hub (White)
+                // Row 3: Academics & Curricula (White) & Announcements Hub (Navy)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -438,7 +417,7 @@ fun AdminOverviewDashboardView(
                         title = "Academics",
                         subtitle = "Programs & Outlines",
                         icon = Icons.Default.Book,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Curricula",
                         onClick = { onNavigateSection(AdminNavSection.ACADEMICS) },
                         modifier = Modifier
@@ -450,7 +429,7 @@ fun AdminOverviewDashboardView(
                         title = "Announcements",
                         subtitle = "Notices & Circulars",
                         icon = Icons.Default.Campaign,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Publish",
                         onClick = { onNavigateSection(AdminNavSection.CONTENT) },
                         modifier = Modifier
@@ -459,7 +438,7 @@ fun AdminOverviewDashboardView(
                     )
                 }
 
-                // Row 4: College Events (White) & Official Documents (Navy)
+                // Row 4: College Events (Navy) & Official Documents (White)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -468,7 +447,7 @@ fun AdminOverviewDashboardView(
                         title = "College Events",
                         subtitle = "Seminars & Galas",
                         icon = Icons.Default.Event,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Schedule",
                         onClick = { onNavigateSection(AdminNavSection.EVENTS) },
                         modifier = Modifier
@@ -480,7 +459,7 @@ fun AdminOverviewDashboardView(
                         title = "Official Docs",
                         subtitle = "PDFs & Prospectus",
                         icon = Icons.Default.Description,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Documents",
                         onClick = { onNavigateSection(AdminNavSection.DOCUMENTS) },
                         modifier = Modifier
@@ -489,7 +468,7 @@ fun AdminOverviewDashboardView(
                     )
                 }
 
-                // Row 5: Broadcast Alerts (Navy) & System Settings (White)
+                // Row 5: Broadcast Alerts (White) & System Settings (Navy)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -498,7 +477,7 @@ fun AdminOverviewDashboardView(
                         title = "Broadcasts",
                         subtitle = "In-App Push Alerts",
                         icon = Icons.Default.NotificationsActive,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Alerts",
                         onClick = { onNavigateSection(AdminNavSection.NOTIFICATIONS) },
                         modifier = Modifier
@@ -510,7 +489,7 @@ fun AdminOverviewDashboardView(
                         title = "System Settings",
                         subtitle = "Governance & Audit",
                         icon = Icons.Default.Settings,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "System",
                         onClick = { onNavigateSection(AdminNavSection.SETTINGS) },
                         modifier = Modifier
@@ -544,7 +523,8 @@ private fun AdminBentoCard(
         colors = CardDefaults.cardColors(
             containerColor = if (isDark) BrandNavy else Color.White
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        border = if (isDark) null else BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -611,3 +591,74 @@ private fun AdminBentoCard(
         }
     }
 }
+
+@Composable
+private fun AdminQuickActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    isDark: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(74.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) BrandNavy else Color.White
+        ),
+        border = if (isDark) null else BorderStroke(1.dp, Color(0xFFDCE3ED)),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (isDark) Color(0xFFC59B27).copy(alpha = 0.22f)
+                        else BrandIconBadgeBg
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = if (isDark) BrandGoldLight else BrandNavy,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color.White else BrandNavy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = if (isDark) Color.White.copy(alpha = 0.75f) else BrandTextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
