@@ -57,6 +57,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.entity.StudentLoginEntity
 import com.example.data.repository.LoggedInStudentSummary
 import com.example.data.repository.StudentAuditRepository
+import kotlinx.coroutines.launch
 
 private val BrandNavy = Color(0xFF061B52)
 private val BrandGold = Color(0xFFC59B27)
@@ -85,6 +87,7 @@ fun AdminStudentLoginsView(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val auditRepo = remember { StudentAuditRepository.getInstance(context) }
 
     val allLogins by auditRepo.allLoginsFlow.collectAsState(initial = emptyList())
@@ -408,7 +411,7 @@ fun AdminStudentLoginsView(
                 Button(
                     onClick = {
                         showClearConfirmDialog = false
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        coroutineScope.launch {
                             auditRepo.clearAllAuditLogs()
                         }
                     },

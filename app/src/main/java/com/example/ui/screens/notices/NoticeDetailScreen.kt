@@ -38,7 +38,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,8 +55,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.UserProfileManager
 import com.example.data.model.AnnouncementDto
+import com.example.data.repository.PostAnalyticsRepository
 import com.example.ui.components.FileAttachmentCard
+import com.example.ui.screens.admin.PostReadersDialog
 
 @Composable
 fun NoticeDetailScreen(
@@ -293,6 +303,77 @@ fun NoticeDetailScreen(
                     fileName = notice.attachmentName,
                     fileSizeBytes = notice.attachmentSizeBytes,
                     title = notice.title
+                )
+            }
+
+            // Reader Tracking / Views Card ("Kis kis ne dekha")
+            val postAnalyticsRepo = remember { PostAnalyticsRepository.getInstance(context) }
+            val readers by postAnalyticsRepo.getViewsForPostFlow(notice.id ?: notice.title).collectAsState(initial = emptyList())
+            var showReadersModal by remember { mutableStateOf(false) }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF061B52).copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = Color(0xFF061B52),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "${readers.size} Student Readers",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (readers.isEmpty()) "First reader! Viewing now." else "Verified read audits recorded",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = { showReadersModal = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF061B52)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.testTag("notice_detail_btn_readers")
+                    ) {
+                        Text(
+                            text = "View Readers",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+
+            if (showReadersModal) {
+                PostReadersDialog(
+                    announcement = notice,
+                    onDismiss = { showReadersModal = false }
                 )
             }
         }

@@ -91,6 +91,7 @@ class AdminControlCenterViewModel(
         _uiState.value = _uiState.value.copy(activeSection = section, errorMessage = null)
         when (section) {
             AdminNavSection.DASHBOARD -> loadDashboardData()
+            AdminNavSection.STUDENT_LOGINS -> {}
             AdminNavSection.USERS -> loadUserData()
             AdminNavSection.STUDENTS -> loadStudentsData()
             AdminNavSection.FACULTY -> loadFacultyData()
