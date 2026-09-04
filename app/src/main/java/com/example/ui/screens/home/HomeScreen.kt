@@ -120,10 +120,6 @@ fun HomeScreen(
     var targetContentTab by remember { mutableStateOf(ContentSectionTab.ANNOUNCEMENTS) }
     var showFacultyAuthSheet by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
-    var showFirstLoginPrompt by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(true) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scrollState = rememberScrollState()
-
     val studentIdentifier = userProfile.rollNumber?.ifBlank { null }
         ?: userProfile.registrationNumber?.ifBlank { null }
         ?: userProfile.username?.ifBlank { null }
@@ -133,10 +129,23 @@ fun HomeScreen(
         com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(studentIdentifier)
     }
 
-    if (!hasCustomPassword && showFirstLoginPrompt) {
+    var showFirstLoginPrompt by remember(studentIdentifier) {
+        mutableStateOf(!hasCustomPassword && !com.example.data.datasource.PasswordRegistryStore.hasShownLoginPasswordPrompt(studentIdentifier))
+    }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scrollState = rememberScrollState()
+
+    if (showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
-            onDismissRequest = { showFirstLoginPrompt = false },
-            onOpenChangePassword = { showChangePasswordDialog = true }
+            onDismissRequest = {
+                showFirstLoginPrompt = false
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(studentIdentifier)
+            },
+            onOpenChangePassword = {
+                showFirstLoginPrompt = false
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(studentIdentifier)
+                showChangePasswordDialog = true
+            }
         )
     }
 
@@ -324,19 +333,6 @@ fun HomeScreen(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Change Password Button
-                IconButton(
-                    onClick = { showChangePasswordDialog = true },
-                    modifier = Modifier.testTag("home_change_password_btn")
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.VpnKey,
-                        contentDescription = "Change Password",
-                        tint = BrandNavy,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
                 // Profile & Portals Button
                 IconButton(
                     onClick = { activeSubScreen = HomeSubScreen.PROFILE },
@@ -408,14 +404,6 @@ fun HomeScreen(
             val todayDate = remember { Date() }
             val currentDayName = remember { liveDayFormat.format(todayDate) }
             val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
-
-            // Default password security notice
-            if (!hasCustomPassword) {
-                com.example.ui.components.DefaultPasswordSecurityNotice(
-                    onOpenChangePassword = { showChangePasswordDialog = true },
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-            }
 
             // 2. Personalized Student Academic Bento Card (Clickable to view Profile)
             Card(

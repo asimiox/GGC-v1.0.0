@@ -112,8 +112,6 @@ fun FacultyDashboardView(
     val currentDateFormatted = remember { liveDateFormat.format(todayDate) }
 
     var showChangePasswordDialog by remember { mutableStateOf(false) }
-    var showFirstLoginPrompt by rememberSaveable { mutableStateOf(true) }
-
     val facultyIdentifier = userProfile.facultyId?.ifBlank { null }
         ?: userProfile.institutionalEmail?.ifBlank { null }
         ?: userProfile.rollNumber?.ifBlank { null }
@@ -123,10 +121,21 @@ fun FacultyDashboardView(
         com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(facultyIdentifier)
     }
 
-    if (!hasCustomPassword && showFirstLoginPrompt) {
+    var showFirstLoginPrompt by remember(facultyIdentifier) {
+        mutableStateOf(!hasCustomPassword && !com.example.data.datasource.PasswordRegistryStore.hasShownLoginPasswordPrompt(facultyIdentifier))
+    }
+
+    if (showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
-            onDismissRequest = { showFirstLoginPrompt = false },
-            onOpenChangePassword = { showChangePasswordDialog = true }
+            onDismissRequest = {
+                showFirstLoginPrompt = false
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(facultyIdentifier)
+            },
+            onOpenChangePassword = {
+                showFirstLoginPrompt = false
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(facultyIdentifier)
+                showChangePasswordDialog = true
+            }
         )
     }
 
@@ -194,19 +203,6 @@ fun FacultyDashboardView(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Change Password button
-                    IconButton(
-                        onClick = { showChangePasswordDialog = true },
-                        modifier = Modifier.testTag("faculty_change_password_btn")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.VpnKey,
-                            contentDescription = "Change Password",
-                            tint = BrandNavy,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
                     // Profile button
                     IconButton(
                         onClick = onNavigateToProfile,
@@ -257,16 +253,6 @@ fun FacultyDashboardView(
             }
 
             HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
-        }
-
-        // 1.5 Security Alert Notice (If user has default "00000" password)
-        if (!hasCustomPassword) {
-            item {
-                com.example.ui.components.DefaultPasswordSecurityNotice(
-                    onOpenChangePassword = { showChangePasswordDialog = true },
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                )
-            }
         }
 
         // 2. Faculty Hero Card & Teaching Profile

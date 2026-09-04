@@ -178,18 +178,6 @@ fun AdminDashboardScreen(
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(
-                                onClick = { showChangePasswordDialog = true },
-                                modifier = Modifier.testTag("admin_topbar_change_password")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.VpnKey,
-                                    contentDescription = "Change Password",
-                                    tint = BrandNavy,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-
-                            IconButton(
                                 onClick = { viewModel.refreshAll() },
                                 modifier = Modifier.testTag("admin_topbar_refresh")
                             ) {

@@ -434,13 +434,17 @@ private fun ContinueAsStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             // Top Bar
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -662,12 +666,16 @@ private fun HodAuthStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -931,11 +939,15 @@ private fun ChooseLevelStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -1111,13 +1123,17 @@ private fun IntermediateAuthStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 16.dp)
             .testTag("intermediate_auth_step_container")
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -1162,11 +1178,15 @@ private fun BsProgramsStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -1282,13 +1302,21 @@ private fun SelectSemesterStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
             // Top Bar
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
@@ -1411,7 +1439,9 @@ private fun SelectSemesterStepScreen(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 items(semesters) { semester ->
                     val isSelected = selectedSemester == semester
@@ -1460,7 +1490,8 @@ private fun SelectSemesterStepScreen(
             enabled = selectedSemester != null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .padding(bottom = 16.dp, top = 8.dp)
+                .height(52.dp)
                 .testTag("semester_continue_btn"),
             colors = ButtonDefaults.buttonColors(
                 containerColor = BrandNavy,
@@ -1494,13 +1525,17 @@ private fun BsAuthStepScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 16.dp)
             .testTag("bs_auth_step_container")
     ) {
         // Top Bar
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(

@@ -30,6 +30,7 @@ object PasswordRegistryStore {
     private const val KEY_ADMIN_PASSWORD = "custom_admin_password"
     private const val PREF_PREFIX_USER = "pwd_user_"
     private const val PREF_PREFIX_HAS_CHANGED = "has_changed_"
+    private const val PREF_PREFIX_PROMPT_SHOWN = "pwd_prompt_shown_"
 
     private val memoryPasswords = mutableMapOf<String, String>()
     private val memoryHasChanged = mutableSetOf<String>()
@@ -142,6 +143,30 @@ object PasswordRegistryStore {
         } else {
             cleanAttempt == "00000"
         }
+    }
+
+    /**
+     * Checks if the one-time post-login password change popup has already been shown
+     * for this user account.
+     */
+    fun hasShownLoginPasswordPrompt(identifier: String): Boolean {
+        if (identifier.isBlank()) return false
+        val key = PREF_PREFIX_PROMPT_SHOWN + identifier.trim().uppercase()
+        val prefs = appContext?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs?.getBoolean(key, false) ?: false
+    }
+
+    /**
+     * Marks the post-login password change popup as having been shown for this account,
+     * ensuring it only appears strictly once after login.
+     */
+    fun markLoginPasswordPromptShown(identifier: String) {
+        if (identifier.isBlank()) return
+        val key = PREF_PREFIX_PROMPT_SHOWN + identifier.trim().uppercase()
+        appContext?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            ?.edit()
+            ?.putBoolean(key, true)
+            ?.apply()
     }
 
     /**
