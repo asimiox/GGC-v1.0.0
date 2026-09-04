@@ -553,6 +553,23 @@ fun ProfileScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    ProfileMenuRow(
+                        icon = Icons.Default.Lock,
+                        title = "Change Password",
+                        subtitle = "Update student portal account password (default: 00000)",
+                        tag = "student_change_password_row",
+                        onClick = { showChangePasswordDialog = true }
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }

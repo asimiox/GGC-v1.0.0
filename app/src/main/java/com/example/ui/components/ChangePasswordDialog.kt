@@ -490,8 +490,7 @@ private fun performPasswordUpdate(
         context = context,
         identifiers = linkedIdentifiers.distinct(),
         newPassword = cleanNew,
-        appRole = profile.appRole,
-        fullName = profile.name
+        appRole = profile.appRole
     )
 
     onSuccess("Password updated successfully! Next time you log in, please use this new password.")

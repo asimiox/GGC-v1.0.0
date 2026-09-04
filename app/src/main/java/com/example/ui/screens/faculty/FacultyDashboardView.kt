@@ -125,7 +125,6 @@ fun FacultyDashboardView(
 
     if (!hasCustomPassword && showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
-            userRole = if (userProfile.isHod) "HOD" else "Faculty Member",
             onDismissRequest = { showFirstLoginPrompt = false },
             onOpenChangePassword = { showChangePasswordDialog = true }
         )
@@ -133,7 +132,6 @@ fun FacultyDashboardView(
 
     if (showChangePasswordDialog) {
         com.example.ui.components.ChangePasswordDialog(
-            userRole = if (userProfile.isHod) "HOD" else "Faculty Member",
             onDismissRequest = { showChangePasswordDialog = false }
         )
     }
@@ -265,7 +263,6 @@ fun FacultyDashboardView(
         if (!hasCustomPassword) {
             item {
                 com.example.ui.components.DefaultPasswordSecurityNotice(
-                    userRole = if (userProfile.isHod) "HOD" else "Faculty Member",
                     onOpenChangePassword = { showChangePasswordDialog = true },
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
                 )

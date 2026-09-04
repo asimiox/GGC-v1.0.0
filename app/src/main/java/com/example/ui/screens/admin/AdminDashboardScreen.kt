@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -89,14 +90,13 @@ fun AdminDashboardScreen(
     val userProfile by UserProfileManager.userProfile.collectAsState()
     val isRootDashboard = uiState.activeSection == AdminNavSection.DASHBOARD
 
-    val adminIdentifier = userProfile.username?.ifBlank { null } ?: userProfile.email?.ifBlank { null } ?: "admin"
+    val adminIdentifier = userProfile.username?.ifBlank { null } ?: userProfile.institutionalEmail?.ifBlank { null } ?: "admin"
     val hasCustomPassword = remember(adminIdentifier, showChangePasswordDialog) {
         com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(adminIdentifier)
     }
 
     if (!hasCustomPassword && showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
-            userRole = "Administrator",
             onDismissRequest = { showFirstLoginPrompt = false },
             onOpenChangePassword = { showChangePasswordDialog = true }
         )
@@ -104,7 +104,6 @@ fun AdminDashboardScreen(
 
     if (showChangePasswordDialog) {
         com.example.ui.components.ChangePasswordDialog(
-            userRole = "Administrator",
             onDismissRequest = { showChangePasswordDialog = false }
         )
     }
@@ -371,7 +370,6 @@ fun AdminDashboardScreen(
             // Security notice if using default credentials
             if (isRootDashboard && !hasCustomPassword) {
                 com.example.ui.components.DefaultPasswordSecurityNotice(
-                    userRole = "Administrator",
                     onOpenChangePassword = { showChangePasswordDialog = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                 )
