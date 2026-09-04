@@ -126,26 +126,27 @@ sealed class BottomNavItem(
 
     companion object {
         val studentItems: List<BottomNavItem> = listOf(
-            Home,
-            Academics,
             Notices,
+            Academics,
+            Home,
             Events,
             Profile
         )
 
         val facultyItems: List<BottomNavItem> = listOf(
-            Home,
-            ContentHub,
             Notices,
+            ContentHub,
+            Home,
             Events,
             Profile
         )
 
         val defaultItems: List<BottomNavItem> = listOf(
+            Notices,
+            Academics,
             Home,
-            Admission,
-            Alumni,
-            About
+            Events,
+            Profile
         )
     }
 }

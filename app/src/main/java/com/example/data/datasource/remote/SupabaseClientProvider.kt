@@ -8,6 +8,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.storage.Storage
+import io.ktor.client.engine.okhttp.OkHttp
 
 /**
  * Singleton provider for the official GGC M.B.Din Supabase client instance.
@@ -42,6 +43,7 @@ object SupabaseClientProvider {
             supabaseUrl = resolvedUrl,
             supabaseKey = safeKey
         ) {
+            httpEngine = OkHttp.create()
             install(Postgrest)
             install(Auth)
             install(Storage)
