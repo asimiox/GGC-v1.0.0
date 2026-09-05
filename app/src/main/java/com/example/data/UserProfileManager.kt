@@ -150,6 +150,7 @@ object UserProfileManager {
                 )
             }
         }
+        onLoginSuccess(context)
     }
 
     fun saveVerifiedIntermediateProfile(
@@ -201,6 +202,7 @@ object UserProfileManager {
                 semester = null
             )
         }
+        onLoginSuccess(context)
     }
 
     fun saveVerifiedBsProfile(
@@ -254,6 +256,7 @@ object UserProfileManager {
                 semester = semester ?: "Semester 1"
             )
         }
+        onLoginSuccess(context)
     }
 
     fun saveVerifiedFacultyProfile(
@@ -316,6 +319,7 @@ object UserProfileManager {
             userId = userId,
             appRole = role
         )
+        onLoginSuccess(context)
     }
 
     fun saveHodProfile(
@@ -397,6 +401,7 @@ object UserProfileManager {
             userId = userId,
             appRole = AppRole.ADMIN
         )
+        onLoginSuccess(context)
     }
 
     fun updateSemester(context: Context, newSemester: String) {
@@ -413,6 +418,12 @@ object UserProfileManager {
     }
 
     fun clearProfile(context: Context) {
+        val currentProfile = _userProfile.value
+        val userIdentifier = currentProfile.rollNumber
+            ?: currentProfile.facultyId
+            ?: currentProfile.username
+            ?: (if (currentProfile.appRole == AppRole.ADMIN) "ADMIN_CENTRAL" else null)
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().clear().apply()
         _userProfile.value = UserProfile(
@@ -422,6 +433,34 @@ object UserProfileManager {
             semester = "Semester 1",
             appRole = AppRole.STUDENT_BS
         )
+        try {
+            com.example.util.NotificationSyncScheduler.stopSync(context)
+            com.example.util.NotificationBackgroundSyncManager.clearDeliveredHistory(context)
+        } catch (e: Exception) {
+            android.util.Log.e("UserProfileManager", "Error stopping sync on logout: ${e.message}")
+        }
+
+        // Release remote single-device session lock so another device can now log in
+        if (!userIdentifier.isNullOrBlank()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    com.example.data.datasource.remote.ActiveSessionRemoteManager.releaseSession(
+                        context = context,
+                        userIdentifier = userIdentifier
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.w("UserProfileManager", "Session release on logout note: ${e.message}")
+                }
+            }
+        }
+    }
+
+    private fun onLoginSuccess(context: Context) {
+        try {
+            com.example.util.NotificationSyncScheduler.startSync(context)
+        } catch (e: Exception) {
+            android.util.Log.e("UserProfileManager", "Error starting sync on login: ${e.message}")
+        }
     }
 
     fun isOnboarded(context: Context): Boolean {

@@ -70,6 +70,14 @@ class StudentAuditRepository private constructor(context: Context) {
             .sortedByDescending { it.lastLoginTimestamp }
     }
 
+    fun getLoginsForStudentFlow(username: String, rollNumber: String = ""): Flow<List<StudentLoginEntity>> =
+        allLoginsFlow.map { list ->
+            list.filter {
+                it.username.equals(username.trim(), ignoreCase = true) ||
+                    (rollNumber.isNotBlank() && it.rollNumber.equals(rollNumber.trim(), ignoreCase = true))
+            }.sortedByDescending { it.loginTimestamp }
+        }
+
     suspend fun recordStudentLogin(
         username: String,
         fullName: String,

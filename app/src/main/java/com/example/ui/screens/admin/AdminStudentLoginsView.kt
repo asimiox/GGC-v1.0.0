@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
@@ -95,10 +96,11 @@ fun AdminStudentLoginsView(
     val totalLoginCount by auditRepo.totalLoginCountFlow.collectAsState(initial = 0)
     val distinctStudentCount by auditRepo.distinctStudentCountFlow.collectAsState(initial = 0)
 
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: All Login Sessions, 1: Logged-in Students
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Consolidated Student Directory, 1: All Login Sessions
     var searchQuery by remember { mutableStateOf("") }
     var selectedLevelFilter by remember { mutableStateOf("All") } // "All", "BS", "Intermediate"
     var showClearConfirmDialog by remember { mutableStateOf(false) }
+    var selectedStudentForHistory by remember { mutableStateOf<LoggedInStudentSummary?>(null) }
 
     // Filter logins
     val filteredLogins = remember(allLogins, searchQuery, selectedLevelFilter) {
@@ -250,7 +252,7 @@ fun AdminStudentLoginsView(
                 onClick = { selectedTab = 0 },
                 text = {
                     Text(
-                        text = "Login Timeline (${filteredLogins.size})",
+                        text = "Verified Students (${filteredStudents.size})",
                         fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
                         fontSize = 13.sp
                     )
@@ -261,7 +263,7 @@ fun AdminStudentLoginsView(
                 onClick = { selectedTab = 1 },
                 text = {
                     Text(
-                        text = "Students Directory (${filteredStudents.size})",
+                        text = "Login Sessions (${filteredLogins.size})",
                         fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
                         fontSize = 13.sp
                     )
@@ -346,8 +348,31 @@ fun AdminStudentLoginsView(
 
         HorizontalDivider(color = Color(0xFFE2E8F0))
 
-        // 4. Content List
+        // 4. Content List (Tab 0: Consolidated Student Directory; Tab 1: Login Sessions)
         if (selectedTab == 0) {
+            // Logged-in Students Directory (One entry per student with aggregated stats)
+            if (filteredStudents.isEmpty()) {
+                EmptyStateView(
+                    title = "No students found",
+                    message = "Students who log in will be listed in this directory."
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("admin_students_directory_list"),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(filteredStudents, key = { it.username }) { student ->
+                        StudentDirectoryCard(
+                            student = student,
+                            onClick = { selectedStudentForHistory = student }
+                        )
+                    }
+                }
+            }
+        } else {
             // All Login Sessions
             if (filteredLogins.isEmpty()) {
                 EmptyStateView(
@@ -364,31 +389,39 @@ fun AdminStudentLoginsView(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(filteredLogins, key = { it.id }) { login ->
-                        LoginSessionCard(login = login)
-                    }
-                }
-            }
-        } else {
-            // Logged-in Students Directory
-            if (filteredStudents.isEmpty()) {
-                EmptyStateView(
-                    title = "No students found",
-                    message = "Students who log in will be listed in this directory."
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .testTag("admin_students_directory_list"),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(filteredStudents, key = { it.username }) { student ->
-                        StudentDirectoryCard(student = student)
+                        val matchingSummary = distinctStudents.firstOrNull { 
+                            it.username.equals(login.username, ignoreCase = true) ||
+                                it.rollNumber.equals(login.rollNumber, ignoreCase = true)
+                        } ?: LoggedInStudentSummary(
+                            username = login.username,
+                            fullName = login.fullName,
+                            rollNumber = login.rollNumber,
+                            registrationNumber = login.registrationNumber,
+                            programLevel = login.programLevel,
+                            programName = login.programName,
+                            semester = login.semester,
+                            totalLogins = 1,
+                            firstLoginFormatted = login.loginTimeFormatted,
+                            lastLoginFormatted = login.loginTimeFormatted,
+                            lastLoginTimestamp = login.loginTimestamp,
+                            isCurrentlyActive = true
+                        )
+                        LoginSessionCard(
+                            login = login,
+                            onClick = { selectedStudentForHistory = matchingSummary }
+                        )
                     }
                 }
             }
         }
+    }
+
+    // Student Activity History Dialog
+    selectedStudentForHistory?.let { student ->
+        StudentActivityHistoryDialog(
+            student = student,
+            onDismiss = { selectedStudentForHistory = null }
+        )
     }
 
     // Clear History Confirmation
@@ -466,10 +499,14 @@ private fun MetricBox(
 }
 
 @Composable
-private fun LoginSessionCard(login: StudentLoginEntity) {
+private fun LoginSessionCard(
+    login: StudentLoginEntity,
+    onClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .testTag("login_card_${login.id}"),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -616,10 +653,14 @@ private fun LoginSessionCard(login: StudentLoginEntity) {
 }
 
 @Composable
-private fun StudentDirectoryCard(student: LoggedInStudentSummary) {
+private fun StudentDirectoryCard(
+    student: LoggedInStudentSummary,
+    onClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .testTag("student_dir_${student.username}"),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -719,6 +760,27 @@ private fun StudentDirectoryCard(student: LoggedInStudentSummary) {
                         color = BrandTextMuted
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Tap to view complete history",
+                    fontSize = 11.sp,
+                    color = BrandGold,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = BrandGold,
+                    modifier = Modifier.size(13.dp)
+                )
             }
         }
     }

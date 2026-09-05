@@ -1,5 +1,6 @@
 package com.example.ui.screens.admin
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -63,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.R
 import com.example.data.UserProfileManager
+import com.example.ui.components.GgcAdminBottomBar
 import com.example.ui.screens.admin.OfficialRegistryScreen
 import com.example.ui.screens.admin.OfficialRegistryTab
 import com.example.ui.screens.admin.content.ContentManagementScreen
@@ -120,6 +122,15 @@ fun AdminDashboardScreen(
         AdminNavSection.DOCUMENTS -> "Official Documents & Rules"
         AdminNavSection.NOTIFICATIONS -> "Broadcast Alert Center"
         AdminNavSection.SETTINGS -> "System Settings & Diagnostics"
+    }
+
+    // Device System 3-Button & Gesture Navigation Handler
+    BackHandler(enabled = true) {
+        if (uiState.activeSection != AdminNavSection.DASHBOARD) {
+            viewModel.selectSection(AdminNavSection.DASHBOARD)
+        } else {
+            showLogoutConfirm = true
+        }
     }
 
     Scaffold(
@@ -254,6 +265,12 @@ fun AdminDashboardScreen(
                     )
                 )
             }
+        },
+        bottomBar = {
+            GgcAdminBottomBar(
+                activeSection = uiState.activeSection,
+                onSelectSection = { viewModel.selectSection(it) }
+            )
         },
         containerColor = BackgroundSurface
     ) { innerPadding ->
@@ -469,7 +486,7 @@ fun AdminDashboardScreen(
         )
     }
 
-    // Post Viewers / Readers Dialog ("Kis kis ne dekha")
+    // Notice Readers Audit Dialog
     if (uiState.showPostReadersDialog && uiState.selectedPostForReaders != null) {
         PostReadersDialog(
             announcement = uiState.selectedPostForReaders!!,

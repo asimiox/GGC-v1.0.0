@@ -68,7 +68,7 @@ data class AdminControlCenterUiState(
     val broadcastTarget: String = "All College Members",
     val isBroadcasting: Boolean = false,
 
-    // Post viewers ("Kis kis ne post dekha")
+    // Notice Readers Audit Trail
     val selectedPostForReaders: AnnouncementDto? = null,
     val showPostReadersDialog: Boolean = false
 )

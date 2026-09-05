@@ -1,27 +1,8 @@
 package com.example.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-
-private val DarkColorScheme =
-  darkColorScheme(
-    primary = GgcNavyPrimaryDarkTheme,
-    onPrimary = GgcNavyPrimaryDark,
-    primaryContainer = GgcNavyContainerDarkTheme,
-    secondary = GgcNavyPrimaryDarkTheme,
-    tertiary = GgcGoldTertiary,
-    background = GgcBackgroundDark,
-    surface = GgcSurfaceDark,
-    onBackground = GgcOnBackgroundDark,
-    onSurface = GgcOnBackgroundDark
-  )
 
 private val LightColorScheme =
   lightColorScheme(
@@ -43,30 +24,32 @@ private val LightColorScheme =
     outline = GgcOutlineLight
   )
 
+/**
+ * Universal College Theme: Strictly locked to Light Mode across all devices and OS settings.
+ * Dark Mode is completely disabled to ensure consistent institutional branding and legibility.
+ */
 @Composable
 fun MyApplicationTheme(
-  darkTheme: Boolean = isSystemInDarkTheme(),
-  dynamicColor: Boolean = false, // Set to false to strictly preserve official GGC branding colors
+  darkTheme: Boolean = false,
+  dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
 ) {
-  val colorScheme =
-    when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
-    }
-
-  MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  MaterialTheme(
+    colorScheme = LightColorScheme,
+    typography = Typography,
+    content = content
+  )
 }
 
 @Composable
 fun GgcTheme(
-  darkTheme: Boolean = isSystemInDarkTheme(),
+  darkTheme: Boolean = false,
   dynamicColor: Boolean = false,
   content: @Composable () -> Unit,
-) = MyApplicationTheme(darkTheme, dynamicColor, content)
+) = MyApplicationTheme(
+  darkTheme = false,
+  dynamicColor = false,
+  content = content
+)
+
 

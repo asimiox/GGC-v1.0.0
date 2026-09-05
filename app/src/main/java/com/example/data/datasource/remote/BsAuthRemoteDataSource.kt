@@ -245,95 +245,105 @@ class BsAuthRemoteDataSource {
             return AuthResult.Error("Roll number '$query' is enrolled in Intermediate Program (${interAccount.program}). Please log in using the Intermediate Student Portal.")
         }
 
-        // 1. Stage 1: Check persistent local store first (instant response)
-        val hasCustom = com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(query)
-        if (hasCustom) {
-            val isValid = com.example.data.datasource.PasswordRegistryStore.verifyPassword(query, cleanPassword)
-            if (!isValid) {
-                return AuthResult.Error("Incorrect password. Please use your updated password.")
-            }
+        // 1. Stage 1: Central Database Password Verification (Cross-Device Synchronized)
+        val pwdVerification = CentralAuthRemoteManager.verifyPasswordWithRemote(
+            identifier = query,
+            passwordAttempt = cleanPassword,
+            defaultPasswordFallback = "00000"
+        )
+        if (pwdVerification is CentralAuthRemoteManager.PasswordVerificationResult.Failed) {
+            return AuthResult.Error(pwdVerification.message)
         }
 
-        val localMatch = com.example.data.datasource.RegisteredStudentStore.authenticateBs(query, cleanPassword)
+        // 2. Stage 2: Locate student record (Local Registered Store, Official Database Table, or RPC)
+        var resolvedProfile: BsStudentProfileDto? = null
+
+        val localMatch = com.example.data.datasource.RegisteredStudentStore.findBsAccount(query)
         if (localMatch != null) {
-            Log.d(TAG, "BS student authenticated via local store: ${localMatch.rollNumber}")
-            return AuthResult.Success(localMatch, "BS Student login successful.")
+            resolvedProfile = BsStudentProfileDto(
+                id = localMatch.id.ifBlank { "bs_${localMatch.rollNumber}" },
+                username = localMatch.username,
+                firstName = localMatch.firstName,
+                lastName = localMatch.lastName,
+                rollNumber = localMatch.rollNumber,
+                registrationNumber = localMatch.registrationNumber,
+                program = localMatch.program,
+                session = localMatch.session,
+                semester = localMatch.semester
+            )
         }
 
-        // 2. Stage 2: Try direct_login_bs_student RPC on Supabase (safely caught)
-        var rpcProfile: BsStudentProfileDto? = null
-        try {
-            val loginParams = buildJsonObject {
-                put("p_identifier", query)
-                put("p_password", cleanPassword)
-            }
+        if (resolvedProfile == null) {
+            // Try official_bs_students table in Supabase
+            resolvedProfile = checkOfficialBsStudentFallback(query, cleanPassword)
+        }
 
-            val rpcResponse = client.postgrest.rpc("direct_login_bs_student", loginParams)
-            val bodyText = rpcResponse.data
-            if (bodyText.isNotBlank()) {
-                val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
-                if (isSuccess) {
-                    val profileObj = jsonObj["profile"]?.jsonObject
-                    if (profileObj != null) {
-                        rpcProfile = BsStudentProfileDto(
-                            id = profileObj["id"]?.jsonPrimitive?.content ?: "bs_$query",
-                            username = profileObj["username"]?.jsonPrimitive?.content ?: query,
-                            firstName = profileObj["first_name"]?.jsonPrimitive?.content ?: "",
-                            lastName = profileObj["last_name"]?.jsonPrimitive?.content ?: "",
-                            rollNumber = profileObj["roll_number"]?.jsonPrimitive?.content ?: query,
-                            registrationNumber = profileObj["registration_number"]?.jsonPrimitive?.content ?: "",
-                            program = profileObj["program"]?.jsonPrimitive?.content ?: "",
-                            session = "2024-2028",
-                            semester = profileObj["semester"]?.jsonPrimitive?.content ?: "Semester 1"
-                        )
+        if (resolvedProfile == null) {
+            // Try direct_login_bs_student RPC on Supabase (safely caught)
+            try {
+                val loginParams = buildJsonObject {
+                    put("p_identifier", query)
+                    put("p_password", cleanPassword)
+                }
+                val rpcResponse = client.postgrest.rpc("direct_login_bs_student", loginParams)
+                val bodyText = rpcResponse.data
+                if (bodyText.isNotBlank()) {
+                    val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+                    val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+                    if (isSuccess) {
+                        val profileObj = jsonObj["profile"]?.jsonObject
+                        if (profileObj != null) {
+                            resolvedProfile = BsStudentProfileDto(
+                                id = profileObj["id"]?.jsonPrimitive?.content ?: "bs_$query",
+                                username = profileObj["username"]?.jsonPrimitive?.content ?: query,
+                                firstName = profileObj["first_name"]?.jsonPrimitive?.content ?: "",
+                                lastName = profileObj["last_name"]?.jsonPrimitive?.content ?: "",
+                                rollNumber = profileObj["roll_number"]?.jsonPrimitive?.content ?: query,
+                                registrationNumber = profileObj["registration_number"]?.jsonPrimitive?.content ?: "",
+                                program = profileObj["program"]?.jsonPrimitive?.content ?: "",
+                                session = "2024-2028",
+                                semester = profileObj["semester"]?.jsonPrimitive?.content ?: "Semester 1"
+                            )
+                        }
                     }
                 }
+            } catch (rpcErr: Exception) {
+                Log.w(TAG, "direct_login_bs_student RPC error: ${rpcErr.message}")
             }
-        } catch (rpcErr: Exception) {
-            Log.w(TAG, "direct_login_bs_student RPC error: ${rpcErr.message}")
         }
 
-        if (rpcProfile != null) {
-            com.example.data.datasource.RegisteredStudentStore.saveBsAccount(
-                com.example.data.datasource.RegisteredBsStudentAccount(
-                    id = rpcProfile.id,
-                    username = rpcProfile.username,
-                    firstName = rpcProfile.firstName,
-                    lastName = rpcProfile.lastName,
-                    rollNumber = rpcProfile.rollNumber,
-                    registrationNumber = rpcProfile.registrationNumber,
-                    program = rpcProfile.program,
-                    session = rpcProfile.session ?: "2024-2028",
-                    semester = rpcProfile.semester ?: "Semester 1",
-                    password = cleanPassword
-                )
+        if (resolvedProfile == null) {
+            return AuthResult.Error("Student record not found in official college database. Please contact College Administration / HOD to import your roll number ($query).")
+        }
+
+        // 3. Stage 3: Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Lock)
+        val sessionIdentifier = resolvedProfile.rollNumber.ifBlank { query }
+        val sessionResult = ActiveSessionRemoteManager.acquireSession(
+            context = com.example.util.DeviceIdentifierHelper.getAppContext(),
+            userIdentifier = sessionIdentifier,
+            role = com.example.data.model.AppRole.STUDENT_BS
+        )
+        if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
+            return AuthResult.Error(sessionResult.message)
+        }
+
+        // 4. Save to local persistent registered store with verified credentials
+        com.example.data.datasource.RegisteredStudentStore.saveBsAccount(
+            com.example.data.datasource.RegisteredBsStudentAccount(
+                id = resolvedProfile.id,
+                username = resolvedProfile.username,
+                firstName = resolvedProfile.firstName,
+                lastName = resolvedProfile.lastName,
+                rollNumber = resolvedProfile.rollNumber,
+                registrationNumber = resolvedProfile.registrationNumber,
+                program = resolvedProfile.program,
+                session = resolvedProfile.session ?: "2024-2028",
+                semester = resolvedProfile.semester ?: "Semester 1",
+                password = cleanPassword
             )
-            return AuthResult.Success(rpcProfile, "BS Student login successful.")
-        }
+        )
 
-        // 3. Stage 3: Direct official registry fallback query from Supabase table
-        val fallbackProfile = checkOfficialBsStudentFallback(query, cleanPassword)
-        if (fallbackProfile != null) {
-            com.example.data.datasource.RegisteredStudentStore.saveBsAccount(
-                com.example.data.datasource.RegisteredBsStudentAccount(
-                    id = fallbackProfile.id,
-                    username = fallbackProfile.username,
-                    firstName = fallbackProfile.firstName,
-                    lastName = fallbackProfile.lastName,
-                    rollNumber = fallbackProfile.rollNumber,
-                    registrationNumber = fallbackProfile.registrationNumber,
-                    program = fallbackProfile.program,
-                    session = fallbackProfile.session ?: "2024-2028",
-                    semester = fallbackProfile.semester ?: "Semester 1",
-                    password = cleanPassword
-                )
-            )
-            return AuthResult.Success(fallbackProfile, "BS Student login successful.")
-        }
-
-        // If not found in local imported store or official database registry, reject login
-        return AuthResult.Error("Student record not found in official college database. Please contact College Administration / HOD to import your roll number ($query).")
+        return AuthResult.Success(resolvedProfile, "BS Student login successful.")
     }
 
     private suspend fun checkOfficialBsStudentFallback(

@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Persists every announcement / post view record in Room database ("Kis kis ne post dekha").
- * Tracks who read the post, when they read it, their roll number, and program.
+ * Persists every announcement / post view record in Room database for official reader audit logs.
+ * Tracks who read the post, when they read it, their roll number, and academic program.
  */
 @Entity(tableName = "post_views")
 data class PostViewEntity(

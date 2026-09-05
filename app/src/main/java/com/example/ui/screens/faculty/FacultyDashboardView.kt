@@ -579,7 +579,7 @@ fun FacultyDashboardView(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Row 1: Students Roster (Navy) & + Notice (White)
+                    // Row 1: Students Roster & + Notice
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -588,7 +588,7 @@ fun FacultyDashboardView(
                             title = "Students Roster",
                             subtitle = "Enroll & manage",
                             icon = Icons.Default.School,
-                            isDark = true,
+                            isDark = false,
                             onClick = onNavigateToStudentsManagement,
                             modifier = Modifier
                                 .weight(1f)
@@ -606,7 +606,7 @@ fun FacultyDashboardView(
                         )
                     }
 
-                    // Row 2: + Course Outline (White) & + Event (Navy)
+                    // Row 2: + Course Outline & + Event
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -625,7 +625,7 @@ fun FacultyDashboardView(
                             title = "+ Event",
                             subtitle = "Seminars & sports",
                             icon = Icons.Default.Event,
-                            isDark = true,
+                            isDark = false,
                             onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
                             modifier = Modifier
                                 .weight(1f)
@@ -636,7 +636,7 @@ fun FacultyDashboardView(
             }
         }
 
-        // 4. Dedicated Faculty Management Bento Grid (Alternating Navy / White Ladder)
+        // 4. Dedicated Faculty Management Bento Grid (Universal Light Hub)
         item {
             Column(
                 modifier = Modifier
@@ -651,17 +651,17 @@ fun FacultyDashboardView(
                     color = BrandNavy
                 )
 
-                // Row 1: Student Management (Navy) & Announcements (White)
+                // Row 1: Student Management & Announcements
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 1: Students & Roster Management (Navy)
+                    // Card 1: Students & Roster Management
                     FacultyBentoCard(
                         title = "Students Roster",
                         subtitle = "Enroll & Manage Records",
                         icon = Icons.Default.School,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Students",
                         onClick = onNavigateToStudentsManagement,
                         modifier = Modifier
@@ -669,7 +669,7 @@ fun FacultyDashboardView(
                             .testTag("faculty_card_students")
                     )
 
-                    // Card 2: Create Announcement (White)
+                    // Card 2: Create Announcement
                     FacultyBentoCard(
                         title = "Announcements",
                         subtitle = "Post & Edit Notices",
@@ -683,12 +683,12 @@ fun FacultyDashboardView(
                     )
                 }
 
-                // Row 2: My Courses & Syllabi (White) & Manage Notes (Navy)
+                // Row 2: My Courses & Syllabi & Manage Notes
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 3: My Courses & Syllabi (White)
+                    // Card 3: My Courses & Syllabi
                     FacultyBentoCard(
                         title = "My Courses",
                         subtitle = "Syllabi & Outlines",
@@ -701,12 +701,12 @@ fun FacultyDashboardView(
                             .testTag("faculty_card_courses")
                     )
 
-                    // Card 4: Manage Notes & Study Materials (Navy)
+                    // Card 4: Manage Notes & Study Materials
                     FacultyBentoCard(
                         title = "Course Notes",
                         subtitle = "Lecture Slides & PDFs",
                         icon = Icons.Default.UploadFile,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Materials",
                         onClick = { onNavigateToContentTab(ContentSectionTab.COURSE_OUTLINES) },
                         modifier = Modifier
@@ -715,17 +715,17 @@ fun FacultyDashboardView(
                     )
                 }
 
-                // Row 3: College Events (Navy) & Official Docs (White)
+                // Row 3: College Events & Official Docs
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Card 5: Academic Events & Seminars (Navy)
+                    // Card 5: Academic Events & Seminars
                     FacultyBentoCard(
                         title = "College Events",
                         subtitle = "Seminars & Workshops",
                         icon = Icons.Default.Event,
-                        isDark = true,
+                        isDark = false,
                         badgeText = "Organize",
                         onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
                         modifier = Modifier
@@ -733,7 +733,7 @@ fun FacultyDashboardView(
                             .testTag("faculty_card_events")
                     )
 
-                    // Card 6: Official Documents & Resources (White)
+                    // Card 6: Official Documents & Resources
                     FacultyBentoCard(
                         title = "Official Docs",
                         subtitle = "Rules & Guidelines",

@@ -43,6 +43,10 @@ class PostAnalyticsRepository private constructor(context: Context) {
         return postViewDao.getAllViewsFlow()
     }
 
+    fun getViewsForUserFlow(username: String, rollNumber: String = ""): Flow<List<PostViewEntity>> {
+        return postViewDao.getViewsForUserFlow(username.trim(), rollNumber.trim())
+    }
+
     suspend fun recordPostView(
         postId: String,
         postTitle: String,

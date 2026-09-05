@@ -88,27 +88,34 @@ class AdminAuthRemoteDataSource {
                     cleanIdentifier.equals("admin@ggc.edu.pk", ignoreCase = true)
 
             if (isKnownMasterAdminUser) {
-                val hasCustomAdminPass = com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(cleanIdentifier)
-                val isPasswordValid = if (hasCustomAdminPass) {
-                    com.example.data.datasource.PasswordRegistryStore.verifyPassword(cleanIdentifier, cleanPassword)
-                } else {
-                    cleanPassword == "a\$im0011" || cleanPassword == "admin123" || cleanPassword == "admin"
+                val pwdVerification = CentralAuthRemoteManager.verifyPasswordWithRemote(
+                    identifier = cleanIdentifier,
+                    passwordAttempt = cleanPassword,
+                    defaultPasswordFallback = "a\$im0011"
+                )
+                if (pwdVerification is CentralAuthRemoteManager.PasswordVerificationResult.Failed) {
+                    return AuthResult.Error(pwdVerification.message)
                 }
 
-                if (isPasswordValid) {
-                    val profile = AdminProfileDto(
-                        id = "00000000-0000-0000-0000-000000000001",
-                        username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
-                        fullName = "Super Administrator",
-                        email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
-                        role = "admin",
-                        department = "Central Administration",
-                        isVerified = true
-                    )
-                    return AuthResult.Success(profile, "Master Administrator identity verified. Super Control granted.")
-                } else {
-                    return AuthResult.Error("Incorrect administrator password. Please verify your credentials.")
+                val sessionResult = ActiveSessionRemoteManager.acquireSession(
+                    context = com.example.util.DeviceIdentifierHelper.getAppContext(),
+                    userIdentifier = "ADMIN_CENTRAL",
+                    role = AppRole.ADMIN
+                )
+                if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
+                    return AuthResult.Error(sessionResult.message)
                 }
+
+                val profile = AdminProfileDto(
+                    id = "00000000-0000-0000-0000-000000000001",
+                    username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
+                    fullName = "Super Administrator",
+                    email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
+                    role = "admin",
+                    department = "Central Administration",
+                    isVerified = true
+                )
+                return AuthResult.Success(profile, "Master Administrator identity verified. Super Control granted.")
             }
 
             // If RPC returned a specific error (like "Incorrect password"), return it

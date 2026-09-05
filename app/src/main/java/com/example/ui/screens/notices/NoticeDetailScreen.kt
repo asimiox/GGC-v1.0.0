@@ -306,7 +306,7 @@ fun NoticeDetailScreen(
                 )
             }
 
-            // Reader Tracking / Views ("Kis kis ne dekha")
+            // Official Notice Readers Tracking & Audit
             val postAnalyticsRepo = remember { PostAnalyticsRepository.getInstance(context) }
             val readers by postAnalyticsRepo.getViewsForPostFlow(notice.id ?: notice.title).collectAsState(initial = emptyList())
             val userProfile by UserProfileManager.userProfile.collectAsState()

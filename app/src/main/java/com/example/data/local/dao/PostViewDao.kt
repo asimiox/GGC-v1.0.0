@@ -31,6 +31,9 @@ interface PostViewDao {
     @Query("SELECT * FROM post_views ORDER BY viewTimestamp DESC")
     fun getAllViewsFlow(): Flow<List<PostViewEntity>>
 
+    @Query("SELECT * FROM post_views WHERE LOWER(viewerUsername) = LOWER(:username) OR (viewerRollNumber IS NOT NULL AND LOWER(viewerRollNumber) = LOWER(:rollNumber)) ORDER BY viewTimestamp DESC")
+    fun getViewsForUserFlow(username: String, rollNumber: String): Flow<List<PostViewEntity>>
+
     @Query("DELETE FROM post_views WHERE postId = :postId")
     suspend fun clearViewsForPost(postId: String)
 

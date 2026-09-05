@@ -110,9 +110,11 @@ fun MainScreen(
         }
     }
 
-    // System Back Press Handler
-    BackHandler(enabled = true) {
-        goBack()
+    // System Back Press Handler (Students & Faculty)
+    if (!userProfile.isAdmin) {
+        BackHandler(enabled = true) {
+            goBack()
+        }
     }
 
     // Dedicated Super Administrator Control Center (Completely Separate Flow)

@@ -217,9 +217,38 @@ object PasswordRegistryStore {
 
         Log.d(TAG, "Successfully updated password for ${cleanIds.size} identifiers (Role: ${appRole.roleKey}).")
 
-        // Asynchronous remote database synchronization (Best-Effort)
+        // Asynchronous remote database synchronization (Central Database)
         CoroutineScope(Dispatchers.IO).launch {
+            try {
+                com.example.data.datasource.remote.CentralAuthRemoteManager.saveRemotePassword(cleanIds, cleanPass, appRole)
+            } catch (e: Exception) {
+                Log.w(TAG, "CentralAuthRemoteManager sync note: ${e.message}")
+            }
             syncPasswordToRemote(cleanIds, cleanPass, appRole)
+        }
+    }
+
+    /**
+     * Updates the local in-memory cache and SharedPreferences when a remote password
+     * is pulled from the central Supabase database on this device.
+     */
+    fun saveRemotePasswordToLocalCache(identifier: String, password: String) {
+        val cleanId = identifier.trim().uppercase()
+        val cleanPass = password.trim()
+        if (cleanId.isBlank() || cleanPass.isBlank()) return
+
+        memoryPasswords[cleanId] = cleanPass
+        memoryHasChanged.add(cleanId)
+
+        appContext?.let { ctx ->
+            val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val editor = prefs.edit()
+            editor.putString(PREF_PREFIX_USER + cleanId, cleanPass)
+            editor.putBoolean(PREF_PREFIX_HAS_CHANGED + cleanId, true)
+            if (isAdminIdentifier(cleanId)) {
+                editor.putString(KEY_ADMIN_PASSWORD, cleanPass)
+            }
+            editor.apply()
         }
     }
 

@@ -450,8 +450,8 @@ fun HodDashboardMainView(
                 )
             }
 
-            // 3. 2x2 Bento Operations Grid (Alternating Navy / White matching the rest of the app)
-            // Row 1: Teachers Management (Navy) & Students Management (White)
+            // 3. 2x2 Bento Operations Grid (Universal Light Design)
+            // Row 1: Teachers Management & Students Management
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -461,7 +461,7 @@ fun HodDashboardMainView(
                     subtitle = "Provision & Manage Staff",
                     badgeText = "${state.totalFacultyCount} Faculty",
                     icon = Icons.Default.Person,
-                    isDark = true,
+                    isDark = false,
                     testTag = "hod_feature_teachers",
                     onClick = { onFeatureClick(HodFlowScreen.TEACHERS_MANAGEMENT) },
                     modifier = Modifier.weight(1f)
@@ -479,7 +479,7 @@ fun HodDashboardMainView(
                 )
             }
 
-            // Row 2: Department Posts (White) & Announcements (Navy)
+            // Row 2: Department Posts & Announcements
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -500,7 +500,7 @@ fun HodDashboardMainView(
                     subtitle = "Alerts, Notices & Dates",
                     badgeText = "${state.totalAnnouncementsCount} Notices",
                     icon = Icons.Default.Campaign,
-                    isDark = true,
+                    isDark = false,
                     testTag = "hod_feature_announcements",
                     onClick = { onFeatureClick(HodFlowScreen.ANNOUNCEMENTS_MANAGEMENT) },
                     modifier = Modifier.weight(1f)
@@ -518,7 +518,7 @@ private fun HodBentoCard(
     subtitle: String,
     badgeText: String,
     icon: ImageVector,
-    isDark: Boolean,
+    isDark: Boolean = false,
     testTag: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -530,10 +530,9 @@ private fun HodBentoCard(
             .clickable { onClick() }
             .testTag(testTag),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDark) BrandNavy else Color.White
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -550,29 +549,26 @@ private fun HodBentoCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isDark) Color.White.copy(alpha = 0.15f)
-                            else BrandIconBadgeBg
-                        ),
+                        .background(BrandIconBadgeBg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = if (isDark) Color.White else BrandNavy,
+                        tint = BrandNavy,
                         modifier = Modifier.size(22.dp)
                     )
                 }
 
                 Surface(
-                    color = if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFFF0F3FA),
+                    color = Color(0xFFF0F3FA),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = badgeText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isDark) Color.White.copy(alpha = 0.9f) else BrandNavy,
+                        color = BrandNavy,
                         maxLines = 1,
                         softWrap = false,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -585,7 +581,7 @@ private fun HodBentoCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else BrandNavy,
+                    color = BrandNavy,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -594,7 +590,7 @@ private fun HodBentoCard(
                     text = subtitle,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
-                    color = if (isDark) Color.White.copy(alpha = 0.75f) else BrandTextMuted,
+                    color = BrandTextMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

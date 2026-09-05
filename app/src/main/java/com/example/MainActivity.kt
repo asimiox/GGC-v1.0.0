@@ -8,9 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -19,7 +23,9 @@ import com.example.ui.MainScreen
 import com.example.ui.navigation.NavRoutes
 import com.example.ui.screens.onboarding.OnboardingScreen
 import com.example.ui.screens.splash.SplashScreen
+import com.example.ui.theme.GgcBackgroundLight
 import com.example.ui.theme.MyApplicationTheme
+import com.example.util.NotificationSyncScheduler
 import com.example.util.SystemNotificationHelper
 
 class MainActivity : ComponentActivity() {
@@ -28,17 +34,26 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         android.util.Log.d("MainActivity", "POST_NOTIFICATIONS granted: $isGranted")
+        if (isGranted && UserProfileManager.isOnboarded(this)) {
+            NotificationSyncScheduler.startSync(this)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.example.util.DeviceIdentifierHelper.init(this)
         UserProfileManager.init(this)
         com.example.data.datasource.PasswordRegistryStore.init(this)
         com.example.data.datasource.RegisteredFacultyStore.init(this)
         com.example.data.datasource.RegisteredStudentStore.init(this)
 
-        // Initialize High-Priority System Notification Channel for WhatsApp-like alerts
+        // Initialize High-Priority System Notification Channel for alerts
         SystemNotificationHelper.initNotificationChannel(this)
+
+        // Ensure background sync is running if user is logged in (even when app is subsequently swiped away/closed)
+        if (UserProfileManager.isOnboarded(this)) {
+            NotificationSyncScheduler.startSync(this)
+        }
 
         // Request runtime permission on Android 13+ (API 33+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -51,10 +66,36 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        enableEdgeToEdge()
+        // Strictly force universal light status & navigation bars
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
+
+        // Disable OEM/Android Hardware Force Dark (MIUI, ColorOS, OneUI) so no device force-inverts the UI
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.decorView.isForceDarkAllowed = false
+            window.isNavigationBarContrastEnforced = false
+        }
+
+        enableEdgeToEdge(
+            statusBarStyle = androidx.activity.SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = androidx.activity.SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         setContent {
             MyApplicationTheme {
-                GgcAppNavigation()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = GgcBackgroundLight
+                ) {
+                    GgcAppNavigation()
+                }
             }
         }
     }

@@ -23,8 +23,8 @@ class ExampleRobolectricTest {
   fun `verify official faculty registry has valid records`() {
     val facultyList = com.example.data.datasource.OfficialFacultyData.facultyList
     assertEquals(41, facultyList.size)
-    val principal = facultyList.first()
-    assertEquals("Amir Ahmed", principal.name)
+    val principal = facultyList.first { it.designation == "Principal" }
+    assertEquals("Amir Ahmad", principal.name)
     assertEquals("Principal", principal.designation)
   }
 

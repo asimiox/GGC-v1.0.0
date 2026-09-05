@@ -236,89 +236,100 @@ class IntermediateAuthRemoteDataSource {
             return AuthResult.Error("Roll number '$query' is enrolled in BS Degree Program (${bsAccount.program}). Please log in using the BS Student Portal.")
         }
 
-        // 1. Stage 1: Check persistent local store first (instant response)
-        val hasCustom = com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(query)
-        if (hasCustom) {
-            val isValid = com.example.data.datasource.PasswordRegistryStore.verifyPassword(query, cleanPassword)
-            if (!isValid) {
-                return AuthResult.Error("Incorrect password. Please use your updated password.")
-            }
+        // 1. Stage 1: Central Database Password Verification (Cross-Device Synchronized)
+        val pwdVerification = CentralAuthRemoteManager.verifyPasswordWithRemote(
+            identifier = query,
+            passwordAttempt = cleanPassword,
+            defaultPasswordFallback = "00000"
+        )
+        if (pwdVerification is CentralAuthRemoteManager.PasswordVerificationResult.Failed) {
+            return AuthResult.Error(pwdVerification.message)
         }
 
-        val localMatch = com.example.data.datasource.RegisteredStudentStore.authenticateIntermediate(query, cleanPassword)
+        // 2. Stage 2: Locate Intermediate Student Record
+        var resolvedProfile: IntermediateStudentProfileDto? = null
+
+        val localMatch = com.example.data.datasource.RegisteredStudentStore.findIntermediateAccount(query)
         if (localMatch != null) {
-            Log.d(TAG, "Intermediate student authenticated via local store: ${localMatch.rollNumber}")
-            return AuthResult.Success(localMatch, "Intermediate Student login successful.")
+            resolvedProfile = IntermediateStudentProfileDto(
+                id = localMatch.id.ifBlank { "inter_${localMatch.rollNumber}" },
+                username = localMatch.username,
+                firstName = localMatch.firstName,
+                lastName = localMatch.lastName,
+                rollNumber = localMatch.rollNumber,
+                registrationNumber = localMatch.registrationNumber,
+                program = localMatch.program
+            )
         }
 
-        // 2. Stage 2: Try direct_login_intermediate_student RPC on Supabase (safely caught)
-        var rpcProfile: IntermediateStudentProfileDto? = null
-        try {
-            val loginParams = buildJsonObject {
-                put("p_identifier", query)
-                put("p_password", cleanPassword)
-            }
+        if (resolvedProfile == null) {
+            // Try official_intermediate_students table from Supabase
+            resolvedProfile = checkOfficialIntermediateStudentFallback(query, cleanPassword)
+        }
 
-            val rpcResponse = client.postgrest.rpc("direct_login_intermediate_student", loginParams)
-            val bodyText = rpcResponse.data
-            if (bodyText.isNotBlank()) {
-                val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
-                if (isSuccess) {
-                    val profileObj = jsonObj["profile"]?.jsonObject
-                    if (profileObj != null) {
-                        rpcProfile = IntermediateStudentProfileDto(
-                            id = profileObj["id"]?.jsonPrimitive?.content ?: "inter_$query",
-                            username = profileObj["username"]?.jsonPrimitive?.content ?: query,
-                            firstName = profileObj["first_name"]?.jsonPrimitive?.content ?: "",
-                            lastName = profileObj["last_name"]?.jsonPrimitive?.content ?: "",
-                            rollNumber = profileObj["roll_number"]?.jsonPrimitive?.content ?: query,
-                            registrationNumber = profileObj["registration_number"]?.jsonPrimitive?.content ?: "",
-                            program = profileObj["program"]?.jsonPrimitive?.content ?: ""
-                        )
+        if (resolvedProfile == null) {
+            // Try direct_login_intermediate_student RPC on Supabase (safely caught)
+            try {
+                val loginParams = buildJsonObject {
+                    put("p_identifier", query)
+                    put("p_password", cleanPassword)
+                }
+
+                val rpcResponse = client.postgrest.rpc("direct_login_intermediate_student", loginParams)
+                val bodyText = rpcResponse.data
+                if (bodyText.isNotBlank()) {
+                    val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+                    val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+                    if (isSuccess) {
+                        val profileObj = jsonObj["profile"]?.jsonObject
+                        if (profileObj != null) {
+                            resolvedProfile = IntermediateStudentProfileDto(
+                                id = profileObj["id"]?.jsonPrimitive?.content ?: "inter_$query",
+                                username = profileObj["username"]?.jsonPrimitive?.content ?: query,
+                                firstName = profileObj["first_name"]?.jsonPrimitive?.content ?: "",
+                                lastName = profileObj["last_name"]?.jsonPrimitive?.content ?: "",
+                                rollNumber = profileObj["roll_number"]?.jsonPrimitive?.content ?: query,
+                                registrationNumber = profileObj["registration_number"]?.jsonPrimitive?.content ?: "",
+                                program = profileObj["program"]?.jsonPrimitive?.content ?: ""
+                            )
+                        }
                     }
                 }
+            } catch (rpcErr: Exception) {
+                Log.w(TAG, "direct_login_intermediate_student RPC error: ${rpcErr.message}")
             }
-        } catch (rpcErr: Exception) {
-            Log.w(TAG, "direct_login_intermediate_student RPC error: ${rpcErr.message}")
         }
 
-        if (rpcProfile != null) {
-            com.example.data.datasource.RegisteredStudentStore.saveIntermediateAccount(
-                com.example.data.datasource.RegisteredIntermediateStudentAccount(
-                    id = rpcProfile.id,
-                    username = rpcProfile.username,
-                    firstName = rpcProfile.firstName,
-                    lastName = rpcProfile.lastName,
-                    rollNumber = rpcProfile.rollNumber,
-                    registrationNumber = rpcProfile.registrationNumber,
-                    program = rpcProfile.program,
-                    password = cleanPassword
-                )
+        if (resolvedProfile == null) {
+            return AuthResult.Error("Student record not found in official college database. Please contact College Administration to import your roll number ($query).")
+        }
+
+        // 3. Stage 3: Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Lock)
+        val sessionIdentifier = resolvedProfile.rollNumber.ifBlank { query }
+        val sessionResult = ActiveSessionRemoteManager.acquireSession(
+            context = com.example.util.DeviceIdentifierHelper.getAppContext(),
+            userIdentifier = sessionIdentifier,
+            role = com.example.data.model.AppRole.STUDENT_INTERMEDIATE
+        )
+        if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
+            return AuthResult.Error(sessionResult.message)
+        }
+
+        // 4. Save to local persistent store with verified credentials
+        com.example.data.datasource.RegisteredStudentStore.saveIntermediateAccount(
+            com.example.data.datasource.RegisteredIntermediateStudentAccount(
+                id = resolvedProfile.id,
+                username = resolvedProfile.username,
+                firstName = resolvedProfile.firstName,
+                lastName = resolvedProfile.lastName,
+                rollNumber = resolvedProfile.rollNumber,
+                registrationNumber = resolvedProfile.registrationNumber,
+                program = resolvedProfile.program,
+                password = cleanPassword
             )
-            return AuthResult.Success(rpcProfile, "Login successful.")
-        }
+        )
 
-        // 3. Stage 3: Direct official registry fallback query from Supabase table
-        val fallbackProfile = checkOfficialIntermediateStudentFallback(query, cleanPassword)
-        if (fallbackProfile != null) {
-            com.example.data.datasource.RegisteredStudentStore.saveIntermediateAccount(
-                com.example.data.datasource.RegisteredIntermediateStudentAccount(
-                    id = fallbackProfile.id,
-                    username = fallbackProfile.username,
-                    firstName = fallbackProfile.firstName,
-                    lastName = fallbackProfile.lastName,
-                    rollNumber = fallbackProfile.rollNumber,
-                    registrationNumber = fallbackProfile.registrationNumber,
-                    program = fallbackProfile.program,
-                    password = cleanPassword
-                )
-            )
-            return AuthResult.Success(fallbackProfile, "Login successful.")
-        }
-
-        // If not found in local imported store or official database registry, reject login
-        return AuthResult.Error("Student record not found in official college database. Please contact College Administration to import your roll number ($query).")
+        return AuthResult.Success(resolvedProfile, "Intermediate Student login successful.")
     }
 
     private suspend fun checkOfficialIntermediateStudentFallback(

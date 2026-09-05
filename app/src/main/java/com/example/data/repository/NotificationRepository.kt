@@ -201,6 +201,7 @@ class NotificationRepository private constructor(
         // 6. SYSTEM PUSH NOTIFICATION (WhatsApp-like alert: sound + vibration + heads-up banner)
         if (!notifWithState.isRead) {
             SystemNotificationHelper.showSystemPushNotification(context, notifWithState)
+            notifWithState.id?.let { com.example.util.NotificationBackgroundSyncManager.markDelivered(context, it) }
         }
     }
 

@@ -193,13 +193,13 @@ fun PostReadersDialog(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = "Post Viewers (Kis kis ne dekha)",
+                                    text = "Official Notice Readers",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "Readers Audit for this Announcement",
+                                    text = "Verified Student Readers Audit Trail",
                                     fontSize = 11.sp,
                                     color = Color.White.copy(alpha = 0.75f)
                                 )
