@@ -25,7 +25,8 @@ data class BsAuthUiState(
     val errorMessage: String? = null,
     val successMessage: String? = null,
     val isPasswordVisible: Boolean = false,
-    val isConfirmPasswordVisible: Boolean = false
+    val isConfirmPasswordVisible: Boolean = false,
+    val transferPromptData: com.example.ui.components.SessionTransferPromptData? = null
 )
 
 class BsAuthViewModel(
@@ -246,12 +247,49 @@ class BsAuthViewModel(
                     onSuccess()
                 }
                 is AuthResult.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
+                    if (result.code?.startsWith("SESSION_BLOCKED:") == true) {
+                        val parts = result.code.split(":")
+                        val activeDeviceName = parts.getOrNull(1)?.ifBlank { "Another Device" } ?: "Another Device"
+                        val activeDeviceId = parts.getOrNull(2) ?: ""
+                        val userIdentifier = parts.getOrNull(3)?.ifBlank { form.usernameOrRoll } ?: form.usernameOrRoll
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = null,
+                            transferPromptData = com.example.ui.components.SessionTransferPromptData(
+                                activeDeviceName = activeDeviceName,
+                                activeDeviceId = activeDeviceId,
+                                userIdentifier = userIdentifier,
+                                role = com.example.data.model.AppRole.STUDENT_BS
+                            )
+                        )
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = result.message
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    fun dismissTransferPrompt() {
+        _uiState.value = _uiState.value.copy(transferPromptData = null)
+    }
+
+    fun completeTransferLogin(context: Context, onSuccess: () -> Unit) {
+        val prompt = _uiState.value.transferPromptData
+        _uiState.value = _uiState.value.copy(transferPromptData = null, isLoading = true)
+        viewModelScope.launch {
+            if (prompt != null) {
+                com.example.data.datasource.remote.ActiveSessionRemoteManager.acquireSession(
+                    context = context,
+                    userIdentifier = prompt.userIdentifier,
+                    role = com.example.data.model.AppRole.STUDENT_BS,
+                    forceOverride = true
+                )
+            }
+            loginStudent(context, onSuccess)
         }
     }
 }

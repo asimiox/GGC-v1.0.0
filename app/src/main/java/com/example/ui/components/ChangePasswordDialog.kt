@@ -352,6 +352,7 @@ fun ChangePasswordDialog(
                             primaryIdentifier = primaryIdentifier,
                             profile = profile,
                             context = context,
+                            coroutineScope = coroutineScope,
                             onError = { errorMessage = it },
                             onSuccess = { msg ->
                                 successMessage = msg
@@ -386,6 +387,7 @@ fun ChangePasswordDialog(
                         primaryIdentifier = primaryIdentifier,
                         profile = profile,
                         context = context,
+                        coroutineScope = coroutineScope,
                         onError = { errorMessage = it },
                         onSuccess = { msg ->
                             successMessage = msg
@@ -438,6 +440,7 @@ private fun performPasswordUpdate(
     primaryIdentifier: String,
     profile: com.example.data.model.UserProfile,
     context: android.content.Context,
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
     onError: (String) -> Unit,
     onSuccess: (String) -> Unit,
     setSubmitting: (Boolean) -> Unit
@@ -448,14 +451,6 @@ private fun performPasswordUpdate(
 
     if (cleanCurrent.isBlank()) {
         onError("Please enter your current password.")
-        return
-    }
-
-    // Verify current password
-    val isCurrentValid = PasswordRegistryStore.verifyPassword(primaryIdentifier, cleanCurrent) ||
-            (cleanCurrent == UserProfileManager.getPassword(context))
-    if (!isCurrentValid) {
-        onError("Current password is incorrect. Please verify your current credentials.")
         return
     }
 
@@ -476,24 +471,24 @@ private fun performPasswordUpdate(
 
     setSubmitting(true)
 
-    // Gather all linked aliases
-    val linkedIdentifiers = mutableListOf<String>()
-    profile.rollNumber?.let { linkedIdentifiers.add(it) }
-    profile.registrationNumber?.let { linkedIdentifiers.add(it) }
-    profile.username?.let { linkedIdentifiers.add(it) }
-    profile.facultyId?.let { linkedIdentifiers.add(it) }
-    profile.institutionalEmail?.let { linkedIdentifiers.add(it) }
-    profile.userId?.let { linkedIdentifiers.add(it) }
-    if (primaryIdentifier.isNotBlank()) linkedIdentifiers.add(primaryIdentifier)
-
-    PasswordRegistryStore.updatePasswordForUser(
-        context = context,
-        identifiers = linkedIdentifiers.distinct(),
-        newPassword = cleanNew,
-        appRole = profile.appRole
-    )
-
-    onSuccess("Password updated successfully! Next time you log in, please use this new password.")
+    coroutineScope.launch {
+        val result = com.example.data.datasource.remote.CentralAuthRemoteManager.changePassword(
+            role = profile.appRole,
+            identifier = primaryIdentifier,
+            currentPassword = cleanCurrent,
+            newPassword = cleanNew,
+            context = context
+        )
+        when (result) {
+            is com.example.data.datasource.remote.CentralAuthRemoteManager.PasswordChangeResult.Success -> {
+                onSuccess(result.message)
+            }
+            is com.example.data.datasource.remote.CentralAuthRemoteManager.PasswordChangeResult.Error -> {
+                setSubmitting(false)
+                onError(result.message)
+            }
+        }
+    }
 }
 
 /**

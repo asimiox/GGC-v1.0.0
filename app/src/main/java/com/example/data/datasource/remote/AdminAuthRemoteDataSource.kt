@@ -67,6 +67,20 @@ class AdminAuthRemoteDataSource {
                                 department = "Central Administration",
                                 isVerified = true
                             )
+
+                            // Enforce Single-Device Concurrency Lock
+                            val sessionResult = ActiveSessionRemoteManager.acquireSession(
+                                context = com.example.util.DeviceIdentifierHelper.getAppContext(),
+                                userIdentifier = "ADMIN_CENTRAL",
+                                role = AppRole.ADMIN
+                            )
+                            if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
+                                return AuthResult.Error(
+                                    message = sessionResult.message,
+                                    code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
+                                )
+                            }
+
                             return AuthResult.Success(profile, "Administrator identity verified. Super Control granted.")
                         }
                     } else {
@@ -74,48 +88,12 @@ class AdminAuthRemoteDataSource {
                         if (!rpcError.isNullOrBlank()) {
                             lastRpcErrorMessage = rpcError
                             Log.w(TAG, "direct_login_admin RPC returned error: $rpcError")
+                            return AuthResult.Error(rpcError)
                         }
                     }
                 }
             } catch (rpcEx: Exception) {
                 Log.d(TAG, "direct_login_admin RPC unavailable or failed: ${rpcEx.message}")
-            }
-
-            // 2. Master Admin verification with dynamic updated password check
-            val isKnownMasterAdminUser = cleanIdentifier.equals("shark1708", ignoreCase = true) ||
-                    cleanIdentifier.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
-                    cleanIdentifier.equals("admin", ignoreCase = true) ||
-                    cleanIdentifier.equals("admin@ggc.edu.pk", ignoreCase = true)
-
-            if (isKnownMasterAdminUser) {
-                val pwdVerification = CentralAuthRemoteManager.verifyPasswordWithRemote(
-                    identifier = cleanIdentifier,
-                    passwordAttempt = cleanPassword,
-                    defaultPasswordFallback = "a\$im0011"
-                )
-                if (pwdVerification is CentralAuthRemoteManager.PasswordVerificationResult.Failed) {
-                    return AuthResult.Error(pwdVerification.message)
-                }
-
-                val sessionResult = ActiveSessionRemoteManager.acquireSession(
-                    context = com.example.util.DeviceIdentifierHelper.getAppContext(),
-                    userIdentifier = "ADMIN_CENTRAL",
-                    role = AppRole.ADMIN
-                )
-                if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
-                    return AuthResult.Error(sessionResult.message)
-                }
-
-                val profile = AdminProfileDto(
-                    id = "00000000-0000-0000-0000-000000000001",
-                    username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
-                    fullName = "Super Administrator",
-                    email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
-                    role = "admin",
-                    department = "Central Administration",
-                    isVerified = true
-                )
-                return AuthResult.Success(profile, "Master Administrator identity verified. Super Control granted.")
             }
 
             // If RPC returned a specific error (like "Incorrect password"), return it
@@ -155,6 +133,19 @@ class AdminAuthRemoteDataSource {
                             department = "Central Administration",
                             isVerified = true
                         )
+
+                        val sessionResult = ActiveSessionRemoteManager.acquireSession(
+                            context = com.example.util.DeviceIdentifierHelper.getAppContext(),
+                            userIdentifier = "ADMIN_CENTRAL",
+                            role = AppRole.ADMIN
+                        )
+                        if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
+                            return AuthResult.Error(
+                                message = sessionResult.message,
+                                code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
+                            )
+                        }
+
                         return AuthResult.Success(profile, "Super Administrator access verified.")
                     } else {
                         // User exists and authenticated, but does NOT possess the Admin role
@@ -188,6 +179,19 @@ class AdminAuthRemoteDataSource {
                         department = "Central Administration",
                         isVerified = true
                     )
+
+                    val sessionResult = ActiveSessionRemoteManager.acquireSession(
+                        context = com.example.util.DeviceIdentifierHelper.getAppContext(),
+                        userIdentifier = "ADMIN_CENTRAL",
+                        role = AppRole.ADMIN
+                    )
+                    if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
+                        return AuthResult.Error(
+                            message = sessionResult.message,
+                            code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
+                        )
+                    }
+
                     return AuthResult.Success(profile, "Admin authorization verified via database security policies.")
                 }
             } catch (checkEx: Exception) {

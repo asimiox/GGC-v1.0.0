@@ -30,7 +30,6 @@ object UserProfileManager {
     private const val KEY_FACULTY_ID = "user_faculty_id"
     private const val KEY_INSTITUTIONAL_EMAIL = "user_institutional_email"
     private const val KEY_APP_ROLE = "user_app_role"
-    private const val KEY_PASSWORD = "user_password"
 
     private val _userProfile = MutableStateFlow(
         UserProfile(
@@ -45,6 +44,10 @@ object UserProfileManager {
 
     fun init(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        // Clean up any legacy plaintext password key if present
+        if (prefs.contains("user_password")) {
+            prefs.edit().remove("user_password").apply()
+        }
         val name = prefs.getString(KEY_NAME, "Student") ?: "Student"
         val level = prefs.getString(KEY_PROGRAM_LEVEL, "BS") ?: "BS"
         val program = prefs.getString(KEY_PROGRAM_NAME, "BS Information Technology") ?: "BS Information Technology"
@@ -327,12 +330,8 @@ object UserProfileManager {
         fullName: String,
         department: String,
         hodId: String = "CS-HOD-01",
-        email: String? = null,
-        password: String = "00000"
+        email: String? = null
     ) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_PASSWORD, password.trim().ifBlank { "00000" }).apply()
-
         saveVerifiedFacultyProfile(
             context = context,
             fullName = fullName.ifBlank { "Prof. Dr. Head of Department" },
@@ -344,18 +343,6 @@ object UserProfileManager {
             username = hodId.trim().lowercase(),
             userId = hodId
         )
-    }
-
-    fun getPassword(context: Context): String {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_PASSWORD, "00000") ?: "00000"
-    }
-
-    fun updatePassword(context: Context, newPassword: String): Boolean {
-        if (newPassword.isBlank()) return false
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_PASSWORD, newPassword.trim()).apply()
-        return true
     }
 
     fun saveVerifiedAdminProfile(

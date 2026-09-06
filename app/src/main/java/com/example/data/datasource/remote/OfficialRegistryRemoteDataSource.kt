@@ -192,8 +192,7 @@ class OfficialRegistryRemoteDataSource {
                     registrationNumber = cleanReg,
                     program = cleanProgram,
                     session = cleanSession,
-                    semester = cleanSemester,
-                    password = "00000"
+                    semester = cleanSemester
                 )
             }
             com.example.data.datasource.RegisteredStudentStore.saveBsAccounts(localAccounts)
@@ -302,8 +301,7 @@ class OfficialRegistryRemoteDataSource {
                     lastName = student.lastName ?: studentFullName.split(" ").drop(1).joinToString(" "),
                     rollNumber = cleanRoll,
                     registrationNumber = cleanReg,
-                    program = cleanProgram,
-                    password = "00000"
+                    program = cleanProgram
                 )
             }
             com.example.data.datasource.RegisteredStudentStore.saveIntermediateAccounts(localAccounts)
@@ -712,7 +710,6 @@ class OfficialRegistryRemoteDataSource {
                 department = cleanDept,
                 designation = cleanDesig,
                 qualification = cleanQual,
-                password = cleanPassword,
                 isHod = false
             )
 

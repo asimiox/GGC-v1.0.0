@@ -756,13 +756,11 @@ object RegisteredFacultyStore {
         department: String,
         designation: String,
         qualification: String = "M.Phil / Lecturer",
-        password: String = "00000",
         isHod: Boolean = false
     ): RegisteredAccount {
         val cleanId = facultyId.trim().uppercase()
         val cleanUsername = cleanId.lowercase()
         val cleanEmail = "${cleanUsername}@ggcmbdin.edu.pk"
-        val cleanPass = password.trim().ifBlank { "00000" }
 
         val account = RegisteredAccount(
             facultyId = cleanId,
@@ -772,7 +770,7 @@ object RegisteredFacultyStore {
             designation = designation.trim(),
             qualification = qualification.trim(),
             institutionalEmail = cleanEmail,
-            password = cleanPass,
+            password = "",
             isHod = isHod
         )
 
@@ -781,7 +779,7 @@ object RegisteredFacultyStore {
         memoryAccounts[cleanEmail.lowercase()] = account
 
         persistToPrefs()
-        Log.d(TAG, "Saved registered account: ${account.fullName} (${account.facultyId}) with password: $cleanPass")
+        Log.d(TAG, "Saved registered account: ${account.fullName} (${account.facultyId})")
         return account
     }
 
@@ -802,54 +800,6 @@ object RegisteredFacultyStore {
                 it.fullName.equals(cleanQuery, ignoreCase = true) ||
                 it.fullName.removePrefix("Prof. ").removePrefix("Dr. ").trim().equals(queryStripped, ignoreCase = true)
             }
-    }
-
-    /**
-     * Updates password for a faculty member or HOD account.
-     */
-    fun updatePassword(identifier: String, newPassword: String) {
-        val cleanPass = newPassword.trim()
-        val account = findAccount(identifier)
-        if (account != null) {
-            val updated = account.copy(password = cleanPass)
-            memoryAccounts[account.facultyId.uppercase()] = updated
-            memoryAccounts[account.username.lowercase()] = updated
-            account.institutionalEmail?.let { memoryAccounts[it.lowercase()] = updated }
-            persistToPrefs()
-            Log.d(TAG, "Updated faculty password for ${account.fullName} (${account.facultyId})")
-        }
-    }
-
-    /**
-     * Validates credentials for Teacher / Faculty login.
-     */
-    fun authenticate(query: String, passwordAttempt: String): FacultyProfileDto? {
-        val cleanQuery = query.trim()
-        val cleanAttempt = passwordAttempt.trim()
-        val account = findAccount(cleanQuery)
-        if (account != null) {
-            val isVerified = if (PasswordRegistryStore.hasCustomPassword(cleanQuery) || PasswordRegistryStore.hasCustomPassword(account.facultyId) || PasswordRegistryStore.hasCustomPassword(account.username)) {
-                PasswordRegistryStore.verifyPassword(account.facultyId, cleanAttempt) || (account.password.isNotBlank() && account.password != "00000" && account.password == cleanAttempt)
-            } else if (account.password.isNotBlank() && account.password != "00000") {
-                account.password == cleanAttempt
-            } else {
-                cleanAttempt == "00000" || cleanAttempt == account.password
-            }
-
-            if (isVerified) {
-                return FacultyProfileDto(
-                    id = account.facultyId,
-                    username = account.username,
-                    facultyId = account.facultyId,
-                    fullName = account.fullName,
-                    department = account.department,
-                    designation = account.designation,
-                    qualification = account.qualification,
-                    institutionalEmail = account.institutionalEmail
-                )
-            }
-        }
-        return null
     }
 
     /**

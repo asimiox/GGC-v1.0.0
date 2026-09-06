@@ -20,7 +20,6 @@ data class RegisteredBsStudentAccount(
     val program: String,
     val session: String = "2024-2028",
     val semester: String = "Semester 1",
-    val password: String = "00000",
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -35,7 +34,6 @@ data class RegisteredIntermediateStudentAccount(
     val program: String,
     val group: String = "FSc Pre-Medical",
     val section: String = "A",
-    val password: String = "00000",
     val createdAt: Long = System.currentTimeMillis()
 )
 
@@ -137,26 +135,6 @@ object RegisteredStudentStore {
         persistToPrefs()
     }
 
-    fun updateBsPassword(identifier: String, newPassword: String) {
-        val cleanQuery = identifier.trim().uppercase()
-        val account = memoryBsAccounts[cleanQuery] ?: memoryBsAccounts[identifier.trim().lowercase()]
-        if (account != null) {
-            val updated = account.copy(password = newPassword.trim())
-            saveBsAccount(updated)
-            Log.d(TAG, "Updated BS student password for ${account.rollNumber}")
-        }
-    }
-
-    fun updateIntermediatePassword(identifier: String, newPassword: String) {
-        val cleanQuery = identifier.trim().uppercase()
-        val account = memoryInterAccounts[cleanQuery] ?: memoryInterAccounts[identifier.trim().lowercase()]
-        if (account != null) {
-            val updated = account.copy(password = newPassword.trim())
-            saveIntermediateAccount(updated)
-            Log.d(TAG, "Updated Intermediate student password for ${account.rollNumber}")
-        }
-    }
-
     fun findBsAccount(query: String): RegisteredBsStudentAccount? {
         val cleanQuery = query.trim().uppercase()
         return memoryBsAccounts[cleanQuery] ?: memoryBsAccounts[query.trim().lowercase()]
@@ -165,65 +143,5 @@ object RegisteredStudentStore {
     fun findIntermediateAccount(query: String): RegisteredIntermediateStudentAccount? {
         val cleanQuery = query.trim().uppercase()
         return memoryInterAccounts[cleanQuery] ?: memoryInterAccounts[query.trim().lowercase()]
-    }
-
-    fun authenticateBs(query: String, pass: String): BsStudentProfileDto? {
-        val cleanQuery = query.trim().uppercase()
-        val cleanPass = pass.trim()
-        
-        val account = memoryBsAccounts[cleanQuery] ?: memoryBsAccounts[query.trim().lowercase()]
-        if (account != null) {
-            val isVerified = if (PasswordRegistryStore.hasCustomPassword(cleanQuery) || PasswordRegistryStore.hasCustomPassword(account.rollNumber)) {
-                PasswordRegistryStore.verifyPassword(cleanQuery, cleanPass) || (account.password.isNotBlank() && account.password != "00000" && account.password == cleanPass)
-            } else if (account.password.isNotBlank() && account.password != "00000") {
-                account.password == cleanPass
-            } else {
-                cleanPass == "00000" || cleanPass == account.password
-            }
-
-            if (isVerified) {
-                return BsStudentProfileDto(
-                    id = account.id.ifBlank { "bs_${account.rollNumber}" },
-                    username = account.username,
-                    firstName = account.firstName,
-                    lastName = account.lastName,
-                    rollNumber = account.rollNumber,
-                    registrationNumber = account.registrationNumber,
-                    program = account.program,
-                    session = account.session,
-                    semester = account.semester
-                )
-            }
-        }
-        return null
-    }
-
-    fun authenticateIntermediate(query: String, pass: String): IntermediateStudentProfileDto? {
-        val cleanQuery = query.trim().uppercase()
-        val cleanPass = pass.trim()
-
-        val account = memoryInterAccounts[cleanQuery] ?: memoryInterAccounts[query.trim().lowercase()]
-        if (account != null) {
-            val isVerified = if (PasswordRegistryStore.hasCustomPassword(cleanQuery) || PasswordRegistryStore.hasCustomPassword(account.rollNumber)) {
-                PasswordRegistryStore.verifyPassword(cleanQuery, cleanPass) || (account.password.isNotBlank() && account.password != "00000" && account.password == cleanPass)
-            } else if (account.password.isNotBlank() && account.password != "00000") {
-                account.password == cleanPass
-            } else {
-                cleanPass == "00000" || cleanPass == account.password
-            }
-
-            if (isVerified) {
-                return IntermediateStudentProfileDto(
-                    id = account.id.ifBlank { "inter_${account.rollNumber}" },
-                    username = account.username,
-                    firstName = account.firstName,
-                    lastName = account.lastName,
-                    rollNumber = account.rollNumber,
-                    registrationNumber = account.registrationNumber,
-                    program = account.program
-                )
-            }
-        }
-        return null
     }
 }

@@ -59,6 +59,32 @@ object DeviceIdentifierHelper {
         return fallback
     }
 
+    private const val KEY_SESSION_TOKEN = "unique_session_token"
+
+    fun getSessionToken(context: Context? = null): String {
+        val ctx = context?.applicationContext ?: appContext
+        if (ctx != null) {
+            val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            var token = prefs.getString(KEY_SESSION_TOKEN, null)
+            if (token.isNullOrBlank()) {
+                token = UUID.randomUUID().toString().replace("-", "")
+                prefs.edit().putString(KEY_SESSION_TOKEN, token).apply()
+            }
+            return token
+        }
+        return UUID.randomUUID().toString().replace("-", "")
+    }
+
+    fun hashSessionToken(token: String): String {
+        return try {
+            val md = java.security.MessageDigest.getInstance("SHA-256")
+            val digest = md.digest(token.toByteArray(Charsets.UTF_8))
+            digest.joinToString("") { "%02x".format(it) }
+        } catch (_: Exception) {
+            token.hashCode().toString()
+        }
+    }
+
     fun getDeviceDisplayName(): String {
         val manufacturer = Build.MANUFACTURER.orEmpty().replaceFirstChar { it.uppercase() }
         val model = Build.MODEL.orEmpty()

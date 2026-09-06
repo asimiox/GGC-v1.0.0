@@ -243,7 +243,6 @@ class HodViewModel(
                 department = dept,
                 designation = cleanDesig,
                 qualification = cleanSubject,
-                password = cleanPassword,
                 isHod = false
             )
 

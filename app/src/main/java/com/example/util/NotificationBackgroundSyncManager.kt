@@ -82,7 +82,32 @@ object NotificationBackgroundSyncManager {
                 }
             }
 
-            // 3. Filter notifications authorized for the current user profile
+            // 3. Check for security login transfer requests from other devices
+            try {
+                val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
+                val userIdentifier = userProfile.studentRollNumber.takeIf { !it.isNullOrBlank() } ?: userProfile.name
+                val transferReq = com.example.data.datasource.remote.ActiveSessionRemoteManager.getPendingTransferRequest(userIdentifier, currentDeviceId)
+                if (transferReq != null) {
+                    val notifId = "transfer_${transferReq.requestId}"
+                    if (!deliveredIds.contains(notifId)) {
+                        SystemNotificationHelper.showSystemPushNotification(
+                            context = context,
+                            notification = AppNotificationDto(
+                                id = notifId,
+                                notificationType = NotificationType.SECURITY_ALERT.key,
+                                title = "Security Alert: Login Request",
+                                message = "Someone is trying to log in from ${transferReq.toDeviceName}. Tap to Approve or Reject.",
+                                targetRole = "all",
+                                priority = 100
+                            )
+                        )
+                        deliveredIds.add(notifId)
+                        newNotifsDispatched++
+                    }
+                }
+            } catch (_: Exception) {}
+
+            // 4. Filter notifications authorized for the current user profile
             val authorized = pendingNotifications.filter { it.isAuthorizedFor(userProfile) }
 
             if (isFirstRun) {

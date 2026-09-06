@@ -182,74 +182,57 @@ class FacultyAuthRemoteDataSource {
             return AuthResult.Error("Faculty ID / Username and Password are required.")
         }
 
-        // 1. Central Database Password Verification (Cross-Device Synchronized)
-        val pwdVerification = CentralAuthRemoteManager.verifyPasswordWithRemote(
-            identifier = query,
-            passwordAttempt = cleanPassword,
-            defaultPasswordFallback = "00000"
-        )
-        if (pwdVerification is CentralAuthRemoteManager.PasswordVerificationResult.Failed) {
-            return AuthResult.Error(pwdVerification.message)
-        }
-
         var resolvedProfile: FacultyProfileDto? = null
+        var lastErrorMessage: String? = null
 
-        // 2. Check local registered store first for instantaneous match
-        val localMatch = com.example.data.datasource.RegisteredFacultyStore.findAccount(query)
-        if (localMatch != null) {
-            resolvedProfile = FacultyProfileDto(
-                id = localMatch.facultyId,
-                username = localMatch.username,
-                facultyId = localMatch.facultyId,
-                fullName = localMatch.fullName,
-                department = localMatch.department,
-                designation = localMatch.designation,
-                qualification = localMatch.qualification,
-                institutionalEmail = localMatch.institutionalEmail,
-                phoneNumber = null,
-                officialRecordId = null,
-                createdAt = localMatch.createdAt.toString()
-            )
-        }
+        // 1. Primary Strategy: Direct Database Authentication via direct_login_faculty RPC
+        try {
+            val loginParams = buildJsonObject {
+                put("p_identifier", query)
+                put("p_password", cleanPassword)
+            }
 
-        // 3. Try Supabase direct_login_faculty RPC
-        if (resolvedProfile == null) {
-            try {
-                val loginParams = buildJsonObject {
-                    put("p_identifier", query)
-                    put("p_password", cleanPassword)
-                }
+            val rpcResponse = client.postgrest.rpc("direct_login_faculty", loginParams)
+            val bodyText = rpcResponse.data
 
-                val rpcResponse = client.postgrest.rpc("direct_login_faculty", loginParams)
-                val bodyText = rpcResponse.data
-
-                if (bodyText.isNotBlank()) {
-                    try {
-                        val jsonObj = json.parseToJsonElement(bodyText).jsonObject
-                        val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
-                        if (isSuccess) {
-                            val profileObj = jsonObj["profile"]?.jsonObject
-                            if (profileObj != null) {
-                                resolvedProfile = FacultyProfileDto(
-                                    id = profileObj["id"]?.jsonPrimitive?.content ?: "",
-                                    username = profileObj["username"]?.jsonPrimitive?.content ?: query,
-                                    facultyId = profileObj["faculty_id"]?.jsonPrimitive?.content ?: "",
-                                    fullName = profileObj["full_name"]?.jsonPrimitive?.content ?: "",
-                                    department = profileObj["department"]?.jsonPrimitive?.content ?: "",
-                                    designation = profileObj["designation"]?.jsonPrimitive?.content ?: "Faculty Member",
-                                    qualification = profileObj["qualification"]?.jsonPrimitive?.content ?: ""
-                                )
+            if (bodyText.isNotBlank()) {
+                try {
+                    val jsonObj = json.parseToJsonElement(bodyText).jsonObject
+                    val isSuccess = jsonObj["success"]?.jsonPrimitive?.booleanOrNull ?: false
+                    if (isSuccess) {
+                        val profileObj = jsonObj["profile"]?.jsonObject
+                        if (profileObj != null) {
+                            resolvedProfile = FacultyProfileDto(
+                                id = profileObj["id"]?.jsonPrimitive?.content ?: "",
+                                username = profileObj["username"]?.jsonPrimitive?.content ?: query,
+                                facultyId = profileObj["faculty_id"]?.jsonPrimitive?.content ?: "",
+                                fullName = profileObj["full_name"]?.jsonPrimitive?.content ?: "",
+                                department = profileObj["department"]?.jsonPrimitive?.content ?: "",
+                                designation = profileObj["designation"]?.jsonPrimitive?.content ?: "Faculty Member",
+                                qualification = profileObj["qualification"]?.jsonPrimitive?.content ?: ""
+                            )
+                            val forceChange = jsonObj["force_password_change"]?.jsonPrimitive?.booleanOrNull ?: true
+                            if (!forceChange) {
+                                com.example.data.datasource.PasswordRegistryStore.markPasswordChanged(resolvedProfile.facultyId)
                             }
                         }
-                    } catch (parseErr: Exception) {
-                        Log.w(TAG, "direct_login_faculty JSON parse note: ${parseErr.message}")
+                    } else {
+                        val rpcError = jsonObj["error"]?.jsonPrimitive?.content
+                        if (!rpcError.isNullOrBlank()) {
+                            lastErrorMessage = rpcError
+                            if (rpcError.contains("password", ignoreCase = true) || rpcError.contains("incorrect", ignoreCase = true)) {
+                                return AuthResult.Error(rpcError)
+                            }
+                        }
                     }
+                } catch (parseErr: Exception) {
+                    Log.w(TAG, "direct_login_faculty JSON parse note: ${parseErr.message}")
                 }
-            } catch (_: Exception) {}
-        }
+            }
+        } catch (_: Exception) {}
 
-        // 4. Fallback: Query official_faculty table from Supabase
-        if (resolvedProfile == null) {
+        // 2. Fallback: Query official_faculty table from Supabase only on initial setup and default password
+        if (resolvedProfile == null && cleanPassword == "00000") {
             try {
                 val officialList = client.from("official_faculty")
                     .select()
@@ -276,8 +259,8 @@ class FacultyAuthRemoteDataSource {
             }
         }
 
-        // 5. Fallback: Official Static Faculty & Registered Store Registry
-        if (resolvedProfile == null) {
+        // 3. Fallback: Official Static Faculty Registry only on initial setup and default password
+        if (resolvedProfile == null && cleanPassword == "00000") {
             val staticMatch = com.example.data.datasource.OfficialFacultyData.facultyList.firstOrNull {
                 it.name.equals(query, ignoreCase = true) ||
                 "FAC-${it.id}".equals(query, ignoreCase = true) ||
@@ -297,10 +280,10 @@ class FacultyAuthRemoteDataSource {
         }
 
         if (resolvedProfile == null) {
-            return AuthResult.Error("Invalid Faculty ID, username, or record not found.")
+            return AuthResult.Error(lastErrorMessage ?: "Invalid Faculty ID, username, or incorrect credentials.")
         }
 
-        // 6. Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Lock)
+        // 4. Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Lock)
         val sessionIdentifier = resolvedProfile.facultyId.ifBlank { query }
         val sessionResult = ActiveSessionRemoteManager.acquireSession(
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
@@ -308,17 +291,19 @@ class FacultyAuthRemoteDataSource {
             role = if (resolvedProfile.designation.contains("HOD", ignoreCase = true)) com.example.data.model.AppRole.HOD else com.example.data.model.AppRole.TEACHER
         )
         if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
-            return AuthResult.Error(sessionResult.message)
+            return AuthResult.Error(
+                message = sessionResult.message,
+                code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
+            )
         }
 
-        // Save into local RegisteredFacultyStore
+        // Save into local RegisteredFacultyStore without storing plaintext password
         com.example.data.datasource.RegisteredFacultyStore.saveAccount(
             facultyId = resolvedProfile.facultyId.ifBlank { query },
             fullName = resolvedProfile.fullName,
             department = resolvedProfile.department,
             designation = resolvedProfile.designation,
-            qualification = resolvedProfile.qualification,
-            password = cleanPassword
+            qualification = resolvedProfile.qualification
         )
 
         return AuthResult.Success(resolvedProfile, "Faculty portal login successful.")

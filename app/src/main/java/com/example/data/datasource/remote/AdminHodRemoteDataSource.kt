@@ -514,7 +514,6 @@ class AdminHodRemoteDataSource {
                 department = cleanDept,
                 designation = "Head of Department (HOD)",
                 qualification = "Ph.D / Head of Department",
-                password = cleanPass,
                 isHod = true
             )
 
@@ -588,7 +587,6 @@ class AdminHodRemoteDataSource {
                 department = cleanDept,
                 designation = cleanDesignation,
                 qualification = "M.Phil / Lecturer",
-                password = cleanPass,
                 isHod = false
             )
 
