@@ -218,7 +218,7 @@ fun ContentManagementScreen(
                             )
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandNavyDark)
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandNavy)
                 )
             }
         },

@@ -197,7 +197,19 @@ class FacultyAuthRemoteDataSource {
         // 2. Check local registered store first for instantaneous match
         val localMatch = com.example.data.datasource.RegisteredFacultyStore.findAccount(query)
         if (localMatch != null) {
-            resolvedProfile = localMatch
+            resolvedProfile = FacultyProfileDto(
+                id = localMatch.facultyId,
+                username = localMatch.username,
+                facultyId = localMatch.facultyId,
+                fullName = localMatch.fullName,
+                department = localMatch.department,
+                designation = localMatch.designation,
+                qualification = localMatch.qualification,
+                institutionalEmail = localMatch.institutionalEmail,
+                phoneNumber = null,
+                officialRecordId = null,
+                createdAt = localMatch.createdAt.toString()
+            )
         }
 
         // 3. Try Supabase direct_login_faculty RPC

@@ -3,6 +3,7 @@ package com.example.ui.screens.auth
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -120,7 +121,9 @@ fun AdminAuthContent(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = BrandNavyDark)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -132,14 +135,14 @@ fun AdminAuthContent(
                         modifier = Modifier
                             .size(60.dp)
                             .clip(CircleShape)
-                            .background(BrandGold.copy(alpha = 0.2f))
-                            .border(1.dp, BrandGold.copy(alpha = 0.4f), CircleShape),
+                            .background(BrandNavy.copy(alpha = 0.08f))
+                            .border(1.dp, BrandNavy.copy(alpha = 0.15f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.AdminPanelSettings,
                             contentDescription = "Admin Shield",
-                            tint = BrandGoldLight,
+                            tint = BrandNavy,
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -150,7 +153,7 @@ fun AdminAuthContent(
                         text = "Super Control Login",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = BrandNavy
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -158,7 +161,7 @@ fun AdminAuthContent(
                     Text(
                         text = "Authorized Personnel Only • Full College Scope",
                         fontSize = 12.sp,
-                        color = BrandGoldLight,
+                        color = BrandTextMuted,
                         fontWeight = FontWeight.Medium
                     )
                 }

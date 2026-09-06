@@ -841,7 +841,7 @@ private fun FacultyBentoCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    isDark: Boolean,
+    isDark: Boolean = false,
     badgeText: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -852,13 +852,9 @@ private fun FacultyBentoCard(
             .clip(RoundedCornerShape(20.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDark) BrandNavy else Color.White
-        ),
-        border = if (!isDark) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null,
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isDark) 2.dp else 0.dp
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -875,29 +871,26 @@ private fun FacultyBentoCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isDark) Color.White.copy(alpha = 0.15f)
-                            else BrandIconBadgeBg
-                        ),
+                        .background(BrandIconBadgeBg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = if (isDark) Color.White else BrandNavy,
+                        tint = BrandNavy,
                         modifier = Modifier.size(22.dp)
                     )
                 }
 
                 Surface(
-                    color = if (isDark) Color.White.copy(alpha = 0.12f) else Color(0xFFF0F3FA),
+                    color = Color(0xFFF0F3FA),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = badgeText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (isDark) Color.White.copy(alpha = 0.9f) else BrandNavy,
+                        color = BrandNavy,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -908,7 +901,7 @@ private fun FacultyBentoCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else BrandNavy,
+                    color = BrandNavy,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -917,7 +910,7 @@ private fun FacultyBentoCard(
                     text = subtitle,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
-                    color = if (isDark) Color.White.copy(alpha = 0.75f) else BrandTextMuted,
+                    color = BrandTextMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -931,7 +924,7 @@ private fun FacultyQuickActionCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    isDark: Boolean,
+    isDark: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -940,11 +933,9 @@ private fun FacultyQuickActionCard(
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDark) BrandNavy else Color.White
-        ),
-        border = if (!isDark) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null,
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 2.dp else 0.5.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -956,15 +947,13 @@ private fun FacultyQuickActionCard(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (isDark) Color.White.copy(alpha = 0.15f) else BrandNavy.copy(alpha = 0.08f)
-                    ),
+                    .background(BrandIconBadgeBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (isDark) Color.White else BrandNavy,
+                    tint = BrandNavy,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -976,14 +965,14 @@ private fun FacultyQuickActionCard(
                     text = title,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isDark) Color.White else BrandNavy,
+                    color = BrandNavy,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = subtitle,
                     fontSize = 10.sp,
-                    color = if (isDark) Color.White.copy(alpha = 0.75f) else Color(0xFF718096),
+                    color = BrandTextMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
