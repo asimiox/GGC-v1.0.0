@@ -84,6 +84,13 @@ fun MainScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var incomingAlertNotification by remember { mutableStateOf<AppNotificationDto?>(null) }
 
+    // Device-to-Device Login Transfer Approval Listener
+    com.example.ui.components.SessionTransferApprovalHost(
+        onLoggedOut = {
+            onLogout()
+        }
+    )
+
     val navigateTo: (String) -> Unit = { targetRoute ->
         if (currentRoute != targetRoute) {
             previousRoute = currentRoute

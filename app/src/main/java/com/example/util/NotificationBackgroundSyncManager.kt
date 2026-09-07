@@ -85,7 +85,7 @@ object NotificationBackgroundSyncManager {
             // 3. Check for security login transfer requests from other devices
             try {
                 val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
-                val userIdentifier = userProfile.studentRollNumber.takeIf { !it.isNullOrBlank() } ?: userProfile.name
+                val userIdentifier = userProfile.rollNumber ?: userProfile.facultyId ?: userProfile.username ?: userProfile.name
                 val transferReq = com.example.data.datasource.remote.ActiveSessionRemoteManager.getPendingTransferRequest(userIdentifier, currentDeviceId)
                 if (transferReq != null) {
                     val notifId = "transfer_${transferReq.requestId}"
@@ -94,11 +94,11 @@ object NotificationBackgroundSyncManager {
                             context = context,
                             notification = AppNotificationDto(
                                 id = notifId,
-                                notificationType = NotificationType.SECURITY_ALERT.key,
+                                notificationType = NotificationType.ANNOUNCEMENT_PRIORITY.key,
                                 title = "Security Alert: Login Request",
                                 message = "Someone is trying to log in from ${transferReq.toDeviceName}. Tap to Approve or Reject.",
                                 targetRole = "all",
-                                priority = 100
+                                isPriority = true
                             )
                         )
                         deliveredIds.add(notifId)

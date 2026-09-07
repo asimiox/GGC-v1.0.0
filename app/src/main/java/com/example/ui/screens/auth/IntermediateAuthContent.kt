@@ -71,6 +71,16 @@ fun IntermediateAuthContent(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
 
+    state.transferPromptData?.let { promptData ->
+        com.example.ui.components.SessionTransferPromptDialog(
+            data = promptData,
+            onDismiss = { viewModel.dismissTransferPrompt() },
+            onApproved = {
+                viewModel.completeTransferLogin(context, onAuthSuccess)
+            }
+        )
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()

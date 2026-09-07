@@ -64,9 +64,9 @@ fun SessionTransferApprovalHost(
     LaunchedEffect(Unit) {
         val deviceId = DeviceIdentifierHelper.getDeviceId(context)
         while (true) {
-            val user = UserProfileManager.getUserProfile(context)
-            if (user != null && user.isLoggedIn) {
-                val userIdentifier = user.studentRollNumber.takeIf { !it.isNullOrBlank() } ?: user.name
+            val user = UserProfileManager.userProfile.value
+            if (user.isVerified) {
+                val userIdentifier = user.rollNumber ?: user.facultyId ?: user.username ?: (if (user.appRole == com.example.data.model.AppRole.ADMIN) "ADMIN_CENTRAL" else user.name)
                 try {
                     val req = ActiveSessionRemoteManager.getPendingTransferRequest(
                         userIdentifier = userIdentifier,
@@ -201,7 +201,7 @@ fun SessionTransferApprovalHost(
                                 isProcessing = true
                                 scope.launch {
                                     ActiveSessionRemoteManager.approveTransferRequest(context, request)
-                                    UserProfileManager.logoutUser(context)
+                                    UserProfileManager.clearProfile(context)
                                     pendingRequest = null
                                     isProcessing = false
                                     Toast.makeText(

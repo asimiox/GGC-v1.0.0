@@ -80,6 +80,16 @@ fun BsAuthContent(
         viewModel.initialize(initialProgram, initialSemester)
     }
 
+    state.transferPromptData?.let { promptData ->
+        com.example.ui.components.SessionTransferPromptDialog(
+            data = promptData,
+            onDismiss = { viewModel.dismissTransferPrompt() },
+            onApproved = {
+                viewModel.completeTransferLogin(context, onAuthSuccess)
+            }
+        )
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()

@@ -79,6 +79,16 @@ fun AdminAuthContent(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
+    uiState.transferPromptData?.let { promptData ->
+        com.example.ui.components.SessionTransferPromptDialog(
+            data = promptData,
+            onDismiss = { viewModel.dismissTransferPrompt() },
+            onApproved = {
+                viewModel.completeTransferLogin(context, onAuthSuccess)
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

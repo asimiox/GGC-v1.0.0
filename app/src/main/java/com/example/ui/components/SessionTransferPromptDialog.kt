@@ -48,7 +48,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.datasource.remote.ActiveSessionRemoteManager
 import com.example.data.model.AppRole
-import com.example.ui.theme.GgcPrimary
+import com.example.ui.theme.GgcNavyPrimary as GgcPrimary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

@@ -591,13 +591,12 @@ object ActiveSessionRemoteManager {
                 notificationRemote.insertNotification(
                     com.example.data.model.AppNotificationDto(
                         id = "notif_transfer_$requestId",
-                        notificationType = com.example.data.model.NotificationType.SECURITY_ALERT.key,
+                        notificationType = com.example.data.model.NotificationType.ANNOUNCEMENT_PRIORITY.key,
                         title = "Security Alert: Login Request",
                         message = "Someone is trying to log in from $currentDeviceName. Tap to Approve or Reject.",
                         targetRole = role.roleKey,
                         departmentId = cleanId,
-                        isPublic = false,
-                        priority = 100
+                        isPriority = true
                     )
                 )
             } catch (notifEx: Exception) {
