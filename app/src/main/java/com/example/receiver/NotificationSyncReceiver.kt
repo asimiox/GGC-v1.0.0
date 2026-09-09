@@ -28,6 +28,11 @@ class NotificationSyncReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Ensure foreground service is revived if system killed it
+                try {
+                    com.example.service.NotificationSyncForegroundService.start(context)
+                } catch (_: Exception) {}
+
                 val dispatched = NotificationBackgroundSyncManager.performSync(context)
                 Log.d(TAG, "Background sync finished. Dispatched $dispatched notifications.")
             } catch (e: Exception) {

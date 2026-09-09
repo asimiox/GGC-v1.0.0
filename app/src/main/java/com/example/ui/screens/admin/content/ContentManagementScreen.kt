@@ -593,6 +593,9 @@ fun ContentManagementScreen(
             departments = uiState.departments,
             userRole = userProfile.appRole,
             userDepartmentId = uiState.userDepartmentId,
+            isSaving = uiState.isSaving,
+            isUploadingFile = uiState.isUploadingFile,
+            uploadProgressMessage = uiState.uploadProgressMessage,
             onDismiss = { showAnnouncementDialog = false },
             onSave = { id, title, content, category, deptId, isPinned, isPublished, attachBytes, attachFileName ->
                 viewModel.saveAnnouncement(

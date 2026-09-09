@@ -109,7 +109,7 @@ object ActiveSessionRemoteManager {
 
                 val isSameDevice = activeDeviceId.equals(currentDeviceId, ignoreCase = true)
 
-                if (!isSameDevice && !forceOverride) {
+                if (!isSameDevice && !forceOverride && role != AppRole.ADMIN) {
                     // BLOCKED: Active on another device
                     val blockMsg = "This account is currently active on $activeDeviceName. You cannot log in here unless you first log out from that device, or request College Administration to reset your session."
                     Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $activeDeviceName)")
@@ -211,7 +211,7 @@ object ActiveSessionRemoteManager {
                 if (existingSession != null && existingSession.isActive) {
                     val isSameDevice = existingSession.deviceId.equals(currentDeviceId, ignoreCase = true)
 
-                    if (!isSameDevice && !forceOverride) {
+                    if (!isSameDevice && !forceOverride && role != AppRole.ADMIN) {
                         val deviceLabel = existingSession.deviceName.ifBlank { "Another Device" }
                         val blockMsg = "This account is currently active on $deviceLabel. You cannot log in here unless you first log out from that device, or request College Administration to reset your session."
                         Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $deviceLabel)")

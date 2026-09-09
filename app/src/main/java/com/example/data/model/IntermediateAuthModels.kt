@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class IntermediateStudentProfileDto(
-    val id: String,
-    val username: String,
-    @SerialName("first_name") val firstName: String,
-    @SerialName("last_name") val lastName: String,
-    @SerialName("roll_number") val rollNumber: String,
-    @SerialName("registration_number") val registrationNumber: String,
-    val program: String,
+    val id: String = "",
+    val username: String = "",
+    @SerialName("first_name") val firstName: String = "",
+    @SerialName("last_name") val lastName: String = "",
+    @SerialName("roll_number") val rollNumber: String = "",
+    @SerialName("registration_number") val registrationNumber: String = "",
+    val program: String = "",
     @SerialName("official_record_id") val officialRecordId: String? = null,
     @SerialName("created_at") val createdAt: String? = null
 )

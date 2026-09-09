@@ -27,6 +27,9 @@ import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -550,6 +553,51 @@ fun ProfileScreen(
                                 Text(text = "@$user", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandNavy)
                             }
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column {
+                        ProfileMenuRow(
+                            icon = Icons.Default.NotificationsActive,
+                            title = "Instant Background Notifications",
+                            subtitle = "Keep alerts active even after swiping app away from Recent Apps",
+                            tag = "notification_background_sync_row",
+                            onClick = {
+                                com.example.util.NotificationSyncScheduler.startSync(context)
+                                android.widget.Toast.makeText(context, "Background Notice Service Restarted & Verified!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
+                        )
+                        ProfileMenuRow(
+                            icon = Icons.Default.Power,
+                            title = "Battery Unrestricted Mode",
+                            subtitle = "Prevent Android OEM battery cleaner from terminating notice alerts",
+                            tag = "battery_optimization_row",
+                            onClick = {
+                                try {
+                                    val intent = android.content.Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {
+                                    try {
+                                        val appSettings = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                            data = android.net.Uri.fromParts("package", context.packageName, null)
+                                        }
+                                        context.startActivity(appSettings)
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        )
                     }
                 }
 

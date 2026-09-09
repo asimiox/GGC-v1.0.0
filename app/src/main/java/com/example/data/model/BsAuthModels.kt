@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BsStudentProfileDto(
-    val id: String,
-    val username: String,
-    @SerialName("first_name") val firstName: String,
-    @SerialName("last_name") val lastName: String,
-    @SerialName("roll_number") val rollNumber: String,
-    @SerialName("registration_number") val registrationNumber: String,
-    val program: String,
+    val id: String = "",
+    val username: String = "",
+    @SerialName("first_name") val firstName: String = "",
+    @SerialName("last_name") val lastName: String = "",
+    @SerialName("roll_number") val rollNumber: String = "",
+    @SerialName("registration_number") val registrationNumber: String = "",
+    val program: String = "",
     val session: String? = null,
     val semester: String? = "Semester 1",
     @SerialName("official_record_id") val officialRecordId: String? = null,

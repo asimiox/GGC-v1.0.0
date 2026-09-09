@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FacultyProfileDto(
-    val id: String,
-    val username: String,
-    @SerialName("faculty_id") val facultyId: String,
-    @SerialName("full_name") val fullName: String,
-    val department: String,
-    val designation: String,
-    val qualification: String,
+    val id: String = "",
+    val username: String = "",
+    @SerialName("faculty_id") val facultyId: String = "",
+    @SerialName("full_name") val fullName: String = "",
+    val department: String = "",
+    val designation: String = "",
+    val qualification: String = "",
     @SerialName("institutional_email") val institutionalEmail: String? = null,
     @SerialName("phone_number") val phoneNumber: String? = null,
     @SerialName("official_record_id") val officialRecordId: String? = null,
@@ -20,12 +20,12 @@ data class FacultyProfileDto(
 
 @Serializable
 data class OfficialFacultyDto(
-    val id: String,
-    @SerialName("faculty_id") val facultyId: String,
-    @SerialName("full_name") val fullName: String,
-    val department: String,
-    val designation: String,
-    val qualification: String,
+    val id: String = "",
+    @SerialName("faculty_id") val facultyId: String = "",
+    @SerialName("full_name") val fullName: String = "",
+    val department: String = "",
+    val designation: String = "",
+    val qualification: String = "",
     @SerialName("institutional_email") val institutionalEmail: String? = null,
     @SerialName("is_claimed") val isClaimed: Boolean = false,
     @SerialName("claimed_by_user_id") val claimedByUserId: String? = null,

@@ -128,6 +128,7 @@ fun GgcAppNavigation() {
         composable(NavRoutes.ONBOARDING) {
             OnboardingScreen(
                 onOnboardingFinished = {
+                    NotificationSyncScheduler.startSync(context)
                     navController.navigate(NavRoutes.MAIN) {
                         popUpTo(NavRoutes.ONBOARDING) { inclusive = true }
                     }

@@ -12,6 +12,7 @@ import android.os.SystemClock
 import android.util.Log
 import com.example.receiver.NotificationSyncReceiver
 import com.example.service.NotificationJobService
+import com.example.service.NotificationSyncForegroundService
 
 /**
  * Schedules recurring background tasks to check for new college notices and announcements
@@ -23,18 +24,35 @@ object NotificationSyncScheduler {
     private const val ALARM_INTERVAL_MS = 60_000L // 60 seconds interval for prompt delivery
 
     /**
-     * Starts background sync by queueing the AlarmManager and registering the JobScheduler task.
+     * Starts background sync by starting foreground service, queueing the AlarmManager,
+     * and registering the JobScheduler task.
      */
     fun startSync(context: Context) {
         Log.d(TAG, "Starting persistent background notification sync engines...")
+        try {
+            NotificationSyncForegroundService.start(context)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not start foreground service directly: ${e.message}")
+        }
         scheduleNextAlarm(context)
         scheduleJobService(context)
+    }
+
+    /**
+     * Schedules an immediate AlarmManager wake-up (e.g. 5 seconds after app swiped away).
+     */
+    fun scheduleImmediateWakeup(context: Context) {
+        scheduleAlarmWithDelay(context, 5_000L)
     }
 
     /**
      * Schedules the next AlarmManager wakeup. Works in Doze mode via setAndAllowWhileIdle.
      */
     fun scheduleNextAlarm(context: Context) {
+        scheduleAlarmWithDelay(context, ALARM_INTERVAL_MS)
+    }
+
+    private fun scheduleAlarmWithDelay(context: Context, delayMs: Long) {
         try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
             val intent = Intent(context, NotificationSyncReceiver::class.java)
@@ -45,7 +63,7 @@ object NotificationSyncScheduler {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val triggerAt = SystemClock.elapsedRealtime() + ALARM_INTERVAL_MS
+            val triggerAt = SystemClock.elapsedRealtime() + delayMs
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 try {
@@ -64,7 +82,7 @@ object NotificationSyncScheduler {
             } else {
                 alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pendingIntent)
             }
-            Log.d(TAG, "Next background sync alarm set for +${ALARM_INTERVAL_MS / 1000}s.")
+            Log.d(TAG, "Background sync alarm set for +${delayMs / 1000}s.")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to schedule alarm: ${e.message}", e)
         }
@@ -95,6 +113,7 @@ object NotificationSyncScheduler {
      */
     fun stopSync(context: Context) {
         try {
+            NotificationSyncForegroundService.stop(context)
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             val intent = Intent(context, NotificationSyncReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(

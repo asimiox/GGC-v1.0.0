@@ -21,18 +21,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -85,6 +88,9 @@ fun AnnouncementManageDialog(
     departments: List<DepartmentDto>,
     userRole: AppRole,
     userDepartmentId: String?,
+    isSaving: Boolean = false,
+    isUploadingFile: Boolean = false,
+    uploadProgressMessage: String? = null,
     onDismiss: () -> Unit,
     onSave: (
         id: String?,
@@ -193,8 +199,53 @@ fun AnnouncementManageDialog(
                         }
                     }
 
-                    IconButton(onClick = onDismiss) {
+                    IconButton(
+                        onClick = onDismiss,
+                        enabled = !isSaving && !isUploadingFile
+                    ) {
                         Icon(Icons.Default.Close, contentDescription = "Close", tint = BrandTextMuted)
+                    }
+                }
+
+                if (isUploadingFile || isSaving) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = BrandNavy
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = if (isUploadingFile) {
+                                        uploadProgressMessage ?: "Uploading attachment file to storage..."
+                                    } else {
+                                        "Saving and syncing announcement..."
+                                    },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = BrandNavy
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LinearProgressIndicator(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = BrandNavy,
+                                trackColor = Color(0xFFD4E2FF)
+                            )
+                        }
                     }
                 }
 
@@ -477,6 +528,7 @@ fun AnnouncementManageDialog(
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
+                        enabled = !isSaving && !isUploadingFile,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -508,13 +560,27 @@ fun AnnouncementManageDialog(
                                 )
                             }
                         },
+                        enabled = !isSaving && !isUploadingFile,
                         modifier = Modifier
                             .weight(1f)
                             .testTag("btn_save_announcement"),
                         colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(if (announcement == null) "Create" else "Save Changes", color = Color.White)
+                        if (isSaving || isUploadingFile) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                if (isUploadingFile) "Uploading..." else "Saving...",
+                                color = Color.White
+                            )
+                        } else {
+                            Text(if (announcement == null) "Create" else "Save Changes", color = Color.White)
+                        }
                     }
                 }
             }
