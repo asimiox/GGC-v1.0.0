@@ -451,7 +451,7 @@ fun HodDashboardMainView(
                 )
             }
 
-            // 3. 2x2 Bento Operations Grid (Universal Light Design)
+            // 3. 2x2 Bento Operations Grid (Alternating Navy-White Ladder)
             // Row 1: Teachers Management & Students Management
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -462,7 +462,7 @@ fun HodDashboardMainView(
                     subtitle = "Provision & Manage Staff",
                     badgeText = "${state.totalFacultyCount} Faculty",
                     icon = Icons.Default.Person,
-                    isDark = false,
+                    isDark = true,
                     testTag = "hod_feature_teachers",
                     onClick = { onFeatureClick(HodFlowScreen.TEACHERS_MANAGEMENT) },
                     modifier = Modifier.weight(1f)
@@ -501,7 +501,7 @@ fun HodDashboardMainView(
                     subtitle = "Alerts, Notices & Dates",
                     badgeText = "${state.totalAnnouncementsCount} Notices",
                     icon = Icons.Default.Campaign,
-                    isDark = false,
+                    isDark = true,
                     testTag = "hod_feature_announcements",
                     onClick = { onFeatureClick(HodFlowScreen.ANNOUNCEMENTS_MANAGEMENT) },
                     modifier = Modifier.weight(1f)
@@ -524,6 +524,15 @@ private fun HodBentoCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val cardBg = if (isDark) BrandNavy else Color.White
+    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF162D6E)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
+    val iconBg = if (isDark) Color.White.copy(alpha = 0.15f) else BrandIconBadgeBg
+    val iconTint = if (isDark) Color.White else BrandNavy
+    val badgeBg = if (isDark) Color.White.copy(alpha = 0.20f) else Color(0xFFF0F3FA)
+    val badgeTextColor = if (isDark) Color.White else BrandNavy
+    val titleColor = if (isDark) Color.White else BrandNavy
+    val subtitleColor = if (isDark) Color.White.copy(alpha = 0.8f) else BrandTextMuted
+
     Card(
         modifier = modifier
             .height(152.dp)
@@ -531,8 +540,8 @@ private fun HodBentoCard(
             .clickable { onClick() }
             .testTag(testTag),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = cardBorder,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -550,26 +559,26 @@ private fun HodBentoCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(BrandIconBadgeBg),
+                        .background(iconBg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = BrandNavy,
+                        tint = iconTint,
                         modifier = Modifier.size(22.dp)
                     )
                 }
 
                 Surface(
-                    color = Color(0xFFF0F3FA),
+                    color = badgeBg,
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = badgeText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = BrandNavy,
+                        color = badgeTextColor,
                         maxLines = 1,
                         softWrap = false,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -582,7 +591,7 @@ private fun HodBentoCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BrandNavy,
+                    color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -591,7 +600,7 @@ private fun HodBentoCard(
                     text = subtitle,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
-                    color = BrandTextMuted,
+                    color = subtitleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

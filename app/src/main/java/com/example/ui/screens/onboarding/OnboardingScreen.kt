@@ -197,12 +197,6 @@ fun OnboardingScreen(
                     },
                     onSelectTeacher = {
                         currentStep = OnboardingStep.TEACHER_AUTH
-                    },
-                    onSelectHod = {
-                        currentStep = OnboardingStep.HOD_AUTH
-                    },
-                    onSelectAdmin = {
-                        currentStep = OnboardingStep.ADMIN_AUTH
                     }
                 )
 
@@ -256,7 +250,6 @@ fun OnboardingScreen(
 
                 OnboardingStep.TEACHER_AUTH -> TeacherAuthStepScreen(
                     onBack = { currentStep = OnboardingStep.CONTINUE_AS },
-                    onSwitchToAdmin = { currentStep = OnboardingStep.ADMIN_AUTH },
                     onAuthSuccess = onOnboardingFinished
                 )
 
@@ -435,9 +428,7 @@ private fun WelcomeStepScreen(
 private fun ContinueAsStepScreen(
     onBack: () -> Unit,
     onSelectStudent: () -> Unit,
-    onSelectTeacher: () -> Unit,
-    onSelectHod: () -> Unit,
-    onSelectAdmin: () -> Unit
+    onSelectTeacher: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -565,9 +556,9 @@ private fun ContinueAsStepScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Portal Option 2: Teaching Faculty Portal
+            // Portal Option 2: Teacher & Staff (Faculty / HOD / Admin)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -593,7 +584,7 @@ private fun ContinueAsStepScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Badge,
-                            contentDescription = "Faculty Portal",
+                            contentDescription = "Teacher & Staff Portal",
                             tint = Color(0xFFE5C058),
                             modifier = Modifier.size(30.dp)
                         )
@@ -603,14 +594,14 @@ private fun ContinueAsStepScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Teaching Faculty Portal",
+                            text = "Teacher & Staff Portal",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "College Teachers & Lecturers",
+                            text = "Teaching Faculty · HODs · Administration",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White.copy(alpha = 0.85f)
@@ -623,7 +614,7 @@ private fun ContinueAsStepScreen(
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "Course Materials · Lectures · Attendance",
+                                text = "Courses · Notes · Department Command",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = Color(0xFFE5C058)
@@ -636,144 +627,6 @@ private fun ContinueAsStepScreen(
                         contentDescription = null,
                         tint = Color(0xFFE5C058),
                         modifier = Modifier.size(22.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Portal Option 3: HOD Portal
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .clickable { onSelectHod() }
-                    .testTag("role_option_hod"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A5F)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalance,
-                            contentDescription = "HOD Portal",
-                            tint = Color(0xFFE5C058),
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Head of Department (HOD)",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = "Departmental Command & Syllabus Oversight",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.85f)
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Portal Option 4: Super Administrator Portal
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .clickable { onSelectAdmin() }
-                    .testTag("role_option_admin"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFFC59B27)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Administrator Portal",
-                            tint = Color.Black,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Super Administrator",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFFC59B27))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "CENTRAL",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.Black
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = "Central Admin, Database & Master Control",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFFCBD5E1)
-                        )
-                    }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -1011,7 +864,6 @@ private fun HodAuthStepScreen(
 @Composable
 private fun TeacherAuthStepScreen(
     onBack: () -> Unit,
-    onSwitchToAdmin: () -> Unit,
     onAuthSuccess: () -> Unit
 ) {
     Column(
@@ -1058,7 +910,6 @@ private fun TeacherAuthStepScreen(
         // Embedded Supabase Faculty Verification and Authentication
         FacultyAuthContent(
             onAuthSuccess = onAuthSuccess,
-            onSwitchToAdmin = onSwitchToAdmin,
             modifier = Modifier.fillMaxWidth()
         )
     }

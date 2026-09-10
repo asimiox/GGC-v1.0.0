@@ -67,7 +67,6 @@ private val BrandFieldBorder = Color(0xFFDCE2EE)
 fun FacultyAuthContent(
     modifier: Modifier = Modifier,
     viewModel: FacultyAuthViewModel = viewModel(),
-    onSwitchToAdmin: (() -> Unit)? = null,
     onAuthSuccess: () -> Unit
 ) {
     val context = LocalContext.current
@@ -341,23 +340,6 @@ fun FacultyAuthContent(
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
-                        )
-                    }
-                }
-
-                if (onSwitchToAdmin != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    androidx.compose.material3.TextButton(
-                        onClick = onSwitchToAdmin,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("switch_to_admin_portal_btn")
-                    ) {
-                        Text(
-                            text = "Administrator? Switch to Super Admin Portal",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrandNavy
                         )
                     }
                 }

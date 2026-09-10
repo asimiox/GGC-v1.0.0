@@ -588,7 +588,7 @@ fun FacultyDashboardView(
                             title = "Students Roster",
                             subtitle = "Enroll & manage",
                             icon = Icons.Default.School,
-                            isDark = false,
+                            isDark = true,
                             onClick = onNavigateToStudentsManagement,
                             modifier = Modifier
                                 .weight(1f)
@@ -625,7 +625,7 @@ fun FacultyDashboardView(
                             title = "+ Event",
                             subtitle = "Seminars & sports",
                             icon = Icons.Default.Event,
-                            isDark = false,
+                            isDark = true,
                             onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
                             modifier = Modifier
                                 .weight(1f)
@@ -636,7 +636,7 @@ fun FacultyDashboardView(
             }
         }
 
-        // 4. Dedicated Faculty Management Bento Grid (Universal Light Hub)
+        // 4. Dedicated Faculty Management Bento Grid (Alternating Navy-White Ladder)
         item {
             Column(
                 modifier = Modifier
@@ -661,7 +661,7 @@ fun FacultyDashboardView(
                         title = "Students Roster",
                         subtitle = "Enroll & Manage Records",
                         icon = Icons.Default.School,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Students",
                         onClick = onNavigateToStudentsManagement,
                         modifier = Modifier
@@ -706,7 +706,7 @@ fun FacultyDashboardView(
                         title = "Course Notes",
                         subtitle = "Lecture Slides & PDFs",
                         icon = Icons.Default.UploadFile,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Materials",
                         onClick = { onNavigateToContentTab(ContentSectionTab.COURSE_OUTLINES) },
                         modifier = Modifier
@@ -725,7 +725,7 @@ fun FacultyDashboardView(
                         title = "College Events",
                         subtitle = "Seminars & Workshops",
                         icon = Icons.Default.Event,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Organize",
                         onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
                         modifier = Modifier
@@ -846,14 +846,23 @@ private fun FacultyBentoCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val cardBg = if (isDark) BrandNavy else Color.White
+    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF162D6E)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
+    val iconBg = if (isDark) Color.White.copy(alpha = 0.15f) else BrandIconBadgeBg
+    val iconTint = if (isDark) Color.White else BrandNavy
+    val badgeBg = if (isDark) Color.White.copy(alpha = 0.20f) else Color(0xFFF0F3FA)
+    val badgeTextColor = if (isDark) Color.White else BrandNavy
+    val titleColor = if (isDark) Color.White else BrandNavy
+    val subtitleColor = if (isDark) Color.White.copy(alpha = 0.8f) else BrandTextMuted
+
     Card(
         modifier = modifier
             .height(148.dp)
             .clip(RoundedCornerShape(20.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = cardBorder,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -871,26 +880,26 @@ private fun FacultyBentoCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(BrandIconBadgeBg),
+                        .background(iconBg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = BrandNavy,
+                        tint = iconTint,
                         modifier = Modifier.size(22.dp)
                     )
                 }
 
                 Surface(
-                    color = Color(0xFFF0F3FA),
+                    color = badgeBg,
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = badgeText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = BrandNavy,
+                        color = badgeTextColor,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -901,7 +910,7 @@ private fun FacultyBentoCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BrandNavy,
+                    color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -910,7 +919,7 @@ private fun FacultyBentoCard(
                     text = subtitle,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
-                    color = BrandTextMuted,
+                    color = subtitleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -928,13 +937,20 @@ private fun FacultyQuickActionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val cardBg = if (isDark) BrandNavy else Color.White
+    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF162D6E)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
+    val iconBg = if (isDark) Color.White.copy(alpha = 0.15f) else BrandIconBadgeBg
+    val iconTint = if (isDark) Color.White else BrandNavy
+    val titleColor = if (isDark) Color.White else BrandNavy
+    val subtitleColor = if (isDark) Color.White.copy(alpha = 0.8f) else BrandTextMuted
+
     Card(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = cardBorder,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -947,13 +963,13 @@ private fun FacultyQuickActionCard(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(BrandIconBadgeBg),
+                    .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = BrandNavy,
+                    tint = iconTint,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -965,14 +981,14 @@ private fun FacultyQuickActionCard(
                     text = title,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BrandNavy,
+                    color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = subtitle,
                     fontSize = 10.sp,
-                    color = BrandTextMuted,
+                    color = subtitleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

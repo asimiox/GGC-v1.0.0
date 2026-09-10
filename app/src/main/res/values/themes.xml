@@ -4,7 +4,7 @@
     <style name="Theme.MyApplication" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Universal Institutional Light Mode: Prevent any OEM or device from force-inverting to dark mode -->
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
-        <item name="android:isLightTheme">true</item>
+        <item name="android:isLightTheme" tools:targetApi="q">true</item>
         <item name="android:windowBackground">#F6F6F6</item>
         <item name="android:colorBackground">#F6F6F6</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>

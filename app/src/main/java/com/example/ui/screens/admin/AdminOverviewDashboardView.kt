@@ -248,7 +248,7 @@ fun AdminOverviewDashboardView(
                         title = "Student Logins",
                         subtitle = "Active Sessions & Audit Trail",
                         icon = Icons.Default.VpnKey,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Live Audit",
                         onClick = { onNavigateSection(AdminNavSection.STUDENT_LOGINS) },
                         modifier = Modifier
@@ -290,7 +290,7 @@ fun AdminOverviewDashboardView(
                         title = "Inter Students",
                         subtitle = "1st & 2nd Year Records",
                         icon = Icons.Default.Group,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Intermediate",
                         onClick = { onNavigateSection(AdminNavSection.STUDENTS) },
                         modifier = Modifier
@@ -308,7 +308,7 @@ fun AdminOverviewDashboardView(
                         title = "Faculty Registry",
                         subtitle = "Teachers & Directory",
                         icon = Icons.Default.SupervisorAccount,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Faculty",
                         onClick = { onNavigateSection(AdminNavSection.FACULTY) },
                         modifier = Modifier
@@ -350,7 +350,7 @@ fun AdminOverviewDashboardView(
                         title = "Announcements",
                         subtitle = "Notices & Circulars",
                         icon = Icons.Default.Campaign,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Publish",
                         onClick = { onNavigateSection(AdminNavSection.CONTENT) },
                         modifier = Modifier
@@ -368,7 +368,7 @@ fun AdminOverviewDashboardView(
                         title = "College Events",
                         subtitle = "Seminars & Galas",
                         icon = Icons.Default.Event,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "Schedule",
                         onClick = { onNavigateSection(AdminNavSection.EVENTS) },
                         modifier = Modifier
@@ -410,7 +410,7 @@ fun AdminOverviewDashboardView(
                         title = "System Settings",
                         subtitle = "Governance & Audit",
                         icon = Icons.Default.Settings,
-                        isDark = false,
+                        isDark = true,
                         badgeText = "System",
                         onClick = { onNavigateSection(AdminNavSection.SETTINGS) },
                         modifier = Modifier
@@ -435,14 +435,23 @@ private fun AdminBentoCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val cardBg = if (isDark) BrandNavy else Color.White
+    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF162D6E)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
+    val iconBg = if (isDark) Color.White.copy(alpha = 0.15f) else BrandIconBadgeBg
+    val iconTint = if (isDark) Color.White else BrandNavy
+    val badgeBg = if (isDark) Color.White.copy(alpha = 0.20f) else Color(0xFFF0F3FA)
+    val badgeTextColor = if (isDark) Color.White else BrandNavy
+    val titleColor = if (isDark) Color.White else BrandNavy
+    val subtitleColor = if (isDark) Color.White.copy(alpha = 0.8f) else BrandTextMuted
+
     Card(
         modifier = modifier
             .height(148.dp)
             .clip(RoundedCornerShape(20.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = cardBorder,
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -460,26 +469,26 @@ private fun AdminBentoCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(BrandIconBadgeBg),
+                        .background(iconBg),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = title,
-                        tint = BrandNavy,
+                        tint = iconTint,
                         modifier = Modifier.size(22.dp)
                     )
                 }
 
                 Surface(
-                    color = Color(0xFFF0F3FA),
+                    color = badgeBg,
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = badgeText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = BrandNavy,
+                        color = badgeTextColor,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -490,7 +499,7 @@ private fun AdminBentoCard(
                     text = title,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = BrandNavy,
+                    color = titleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -499,7 +508,7 @@ private fun AdminBentoCard(
                     text = subtitle,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Normal,
-                    color = BrandTextMuted,
+                    color = subtitleColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
