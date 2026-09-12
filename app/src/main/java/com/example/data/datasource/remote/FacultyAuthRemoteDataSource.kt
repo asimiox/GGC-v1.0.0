@@ -182,31 +182,60 @@ class FacultyAuthRemoteDataSource {
             return AuthResult.Error("Faculty ID / Username and Password are required.")
         }
 
-        // 0. Check if user is logging in with Administrator credentials
-        val isAdminQuery = query.equals("admin", ignoreCase = true) ||
-                query.equals("shark1708", ignoreCase = true) ||
-                query.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
-                query.contains("admin", ignoreCase = true)
-        if (isAdminQuery) {
-            val adminResult = AdminAuthRemoteDataSource().loginAdmin(query, cleanPassword)
-            if (adminResult is AuthResult.Success) {
-                val adminProfile = adminResult.data
-                val facultyAdapterProfile = FacultyProfileDto(
-                    id = adminProfile.id,
-                    username = adminProfile.username,
-                    facultyId = "ADMIN-01",
-                    fullName = adminProfile.fullName,
-                    department = adminProfile.department,
-                    designation = "Super Administrator",
-                    qualification = "Chief Administrator",
-                    institutionalEmail = adminProfile.email
+        var resolvedProfile: FacultyProfileDto? = null
+        var lastErrorMessage: String? = null
+
+        // 0. Primary Check: Official College Credentials Directory (OFFICIAL_CREDENTIALS.txt)
+        // Checks all verified 15 HODs, 41 Faculty Members, Admin Staff, and Principal
+        val officialEntry = com.example.data.datasource.OfficialCredentialsDirectory.findByIdentifier(query)
+        if (officialEntry != null) {
+            val isOfficialPassword = com.example.data.datasource.OfficialCredentialsDirectory.verifyPassword(officialEntry, cleanPassword)
+
+            if (isOfficialPassword) {
+                resolvedProfile = FacultyProfileDto(
+                    id = officialEntry.facultyId,
+                    username = officialEntry.username,
+                    facultyId = officialEntry.facultyId,
+                    fullName = officialEntry.fullName,
+                    department = officialEntry.department,
+                    designation = officialEntry.designation,
+                    qualification = officialEntry.qualification,
+                    institutionalEmail = officialEntry.email
                 )
-                return AuthResult.Success(facultyAdapterProfile, "Administrator access granted.")
+            } else {
+                return AuthResult.Error("Incorrect password for ${officialEntry.fullName}. The default universal password is 00000.")
             }
         }
 
-        var resolvedProfile: FacultyProfileDto? = null
-        var lastErrorMessage: String? = null
+        // 0b. Administrator Override
+        if (resolvedProfile == null) {
+            val isAdminQuery = query.equals("admin", ignoreCase = true) ||
+                    query.equals("principal", ignoreCase = true) ||
+                    query.equals("ADMIN-01", ignoreCase = true) ||
+                    query.equals("FAC-02", ignoreCase = true) ||
+                    query.equals("amir.ahmad", ignoreCase = true) ||
+                    query.equals("ameer.ahmad", ignoreCase = true) ||
+                    query.equals("shark1708", ignoreCase = true) ||
+                    query.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
+                    query.contains("admin", ignoreCase = true)
+            if (isAdminQuery) {
+                val adminResult = AdminAuthRemoteDataSource().loginAdmin(query, cleanPassword)
+                if (adminResult is AuthResult.Success) {
+                    val adminProfile = adminResult.data
+                    val facultyAdapterProfile = FacultyProfileDto(
+                        id = adminProfile.id,
+                        username = adminProfile.username,
+                        facultyId = "ADMIN-01",
+                        fullName = adminProfile.fullName,
+                        department = adminProfile.department,
+                        designation = "Super Administrator",
+                        qualification = "Chief Administrator",
+                        institutionalEmail = adminProfile.email
+                    )
+                    return AuthResult.Success(facultyAdapterProfile, "Administrator access granted.")
+                }
+            }
+        }
 
         // 1. Primary Strategy: Direct Database Authentication via direct_login_faculty RPC
         try {
@@ -343,7 +372,13 @@ class FacultyAuthRemoteDataSource {
 
         // 6. Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Registration)
         val sessionIdentifier = resolvedProfile.facultyId.ifBlank { query }
-        val sessionRole = if (resolvedProfile.designation.contains("HOD", ignoreCase = true)) com.example.data.model.AppRole.HOD else com.example.data.model.AppRole.TEACHER
+        val sessionRole = when {
+            resolvedProfile.designation.contains("Principal", ignoreCase = true) ||
+            resolvedProfile.designation.contains("Chief Administrator", ignoreCase = true) -> com.example.data.model.AppRole.ADMIN
+            resolvedProfile.designation.contains("HOD", ignoreCase = true) ||
+            resolvedProfile.designation.contains("Head of Department", ignoreCase = true) -> com.example.data.model.AppRole.HOD
+            else -> com.example.data.model.AppRole.TEACHER
+        }
         val sessionResult = ActiveSessionRemoteManager.acquireSession(
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
             userIdentifier = sessionIdentifier,

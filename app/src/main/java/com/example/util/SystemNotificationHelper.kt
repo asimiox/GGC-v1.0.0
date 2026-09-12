@@ -83,6 +83,7 @@ object SystemNotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
+                .setOngoing(false)
                 .setSound(defaultSoundUri)
                 .setVibrate(longArrayOf(0, 300, 150, 300))
                 .setContentIntent(pendingIntent)

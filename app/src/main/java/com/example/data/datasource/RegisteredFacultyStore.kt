@@ -675,6 +675,26 @@ object RegisteredFacultyStore {
             indexAccount(account)
         }
 
+        // Strictly synchronize with OfficialCredentialsDirectory (OFFICIAL_CREDENTIALS.txt)
+        OfficialCredentialsDirectory.entries.forEach { entry ->
+            val account = RegisteredAccount(
+                facultyId = entry.facultyId,
+                username = entry.username,
+                fullName = entry.fullName,
+                department = entry.department,
+                designation = entry.designation,
+                qualification = entry.qualification,
+                institutionalEmail = entry.email,
+                password = entry.defaultPassword,
+                isHod = entry.role == com.example.data.model.AppRole.HOD
+            )
+            indexAccount(account)
+            if (entry.legacyId.isNotBlank()) {
+                memoryAccounts[entry.legacyId.uppercase()] = account
+                memoryAccounts[entry.legacyId.lowercase()] = account
+            }
+        }
+
         // Also cross-link all 41 members from OfficialFacultyData.facultyList by numeric FAC-ID & name
         OfficialFacultyData.facultyList.forEach { member ->
             val numIdUpper = "FAC-${member.id}"

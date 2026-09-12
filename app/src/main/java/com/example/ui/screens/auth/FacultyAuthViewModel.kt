@@ -76,6 +76,12 @@ class FacultyAuthViewModel(
                         val activeDeviceName = parts.getOrNull(1)?.ifBlank { "Another Device" } ?: "Another Device"
                         val activeDeviceId = parts.getOrNull(2) ?: ""
                         val userIdentifier = parts.getOrNull(3)?.ifBlank { form.usernameOrFacultyId } ?: form.usernameOrFacultyId
+                        val roleKey = parts.getOrNull(4)
+                        val sessionRole = when (roleKey) {
+                            "admin" -> com.example.data.model.AppRole.ADMIN
+                            "hod" -> com.example.data.model.AppRole.HOD
+                            else -> com.example.data.model.AppRole.TEACHER
+                        }
                         _uiState.value = _uiState.value.copy(
                             isLoading = false,
                             errorMessage = null,
@@ -83,7 +89,7 @@ class FacultyAuthViewModel(
                                 activeDeviceName = activeDeviceName,
                                 activeDeviceId = activeDeviceId,
                                 userIdentifier = userIdentifier,
-                                role = com.example.data.model.AppRole.TEACHER
+                                role = sessionRole
                             )
                         )
                     } else {

@@ -1,10 +1,17 @@
 package com.example.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,7 +33,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Layers
-import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,20 +42,31 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.AppNotificationDto
 import com.example.data.model.NotificationType
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private val BrandNavy = Color(0xFF061B52)
 private val UrgentRed = Color(0xFFD32F2F)
@@ -61,9 +79,24 @@ fun InAppNotificationBanner(
     onOpenContent: (AppNotificationDto) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(notification) {
-        if (notification != null) {
-            delay(7000) // Auto-dismiss after 7 seconds
+    val offsetY = remember { Animatable(0f) }
+    val offsetX = remember { Animatable(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val verticalThresholdPx = with(density) { 40.dp.toPx() }
+    val horizontalThresholdPx = with(density) { 70.dp.toPx() }
+
+    // Reset translation when new notification appears
+    LaunchedEffect(notification?.id) {
+        offsetY.snapTo(0f)
+        offsetX.snapTo(0f)
+    }
+
+    // Auto-dismiss after 7 seconds if user is not actively dragging
+    LaunchedEffect(notification?.id, isDragging) {
+        if (notification != null && !isDragging) {
+            delay(7000)
             onDismiss()
         }
     }
@@ -89,6 +122,73 @@ fun InAppNotificationBanner(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .offset {
+                        IntOffset(
+                            x = offsetX.value.roundToInt(),
+                            y = offsetY.value.roundToInt()
+                        )
+                    }
+                    .graphicsLayer {
+                        // Smoothly fade alpha as card is slid away
+                        val dragUpDist = if (offsetY.value < 0f) abs(offsetY.value) else 0f
+                        val dragSideDist = abs(offsetX.value)
+                        val progress = ((dragUpDist / (verticalThresholdPx * 2f)) + (dragSideDist / (horizontalThresholdPx * 2f))).coerceIn(0f, 1f)
+                        alpha = 1f - (progress * 0.5f)
+                    }
+                    // Vertical slide-up drag gesture to dismiss banner
+                    .draggable(
+                        orientation = Orientation.Vertical,
+                        state = rememberDraggableState { delta ->
+                            scope.launch {
+                                val current = offsetY.value
+                                // Dragging upwards (negative delta) moves directly with finger
+                                // Dragging downwards (positive delta) has rubber-band resistance
+                                val target = if (current + delta > 0f) {
+                                    current + delta * 0.25f
+                                } else {
+                                    current + delta
+                                }
+                                offsetY.snapTo(target)
+                            }
+                        },
+                        onDragStarted = { isDragging = true },
+                        onDragStopped = { velocity ->
+                            isDragging = false
+                            scope.launch {
+                                // Slide up past threshold or flicked up -> dismiss
+                                if (offsetY.value < -verticalThresholdPx || velocity < -500f) {
+                                    offsetY.animateTo(-600f, tween(180))
+                                    onDismiss()
+                                } else {
+                                    // Spring back to resting position
+                                    offsetY.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+                                }
+                            }
+                        }
+                    )
+                    // Horizontal swipe gesture to dismiss banner
+                    .draggable(
+                        orientation = Orientation.Horizontal,
+                        state = rememberDraggableState { delta ->
+                            scope.launch {
+                                offsetX.snapTo(offsetX.value + delta)
+                            }
+                        },
+                        onDragStarted = { isDragging = true },
+                        onDragStopped = { velocity ->
+                            isDragging = false
+                            scope.launch {
+                                val current = offsetX.value
+                                if (abs(current) > horizontalThresholdPx || abs(velocity) > 600f) {
+                                    val target = if (current >= 0f) 1000f else -1000f
+                                    offsetX.animateTo(target, tween(180))
+                                    onDismiss()
+                                } else {
+                                    offsetX.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+                                }
+                            }
+                        }
+                    )
                     .testTag("in_app_notification_banner")
             ) {
                 Card(
@@ -106,8 +206,20 @@ fun InAppNotificationBanner(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
+                        // Drag Indicator Bar at Top
+                        Box(
+                            modifier = Modifier
+                                .width(36.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(alpha = 0.25f))
+                                .align(Alignment.CenterHorizontally)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,

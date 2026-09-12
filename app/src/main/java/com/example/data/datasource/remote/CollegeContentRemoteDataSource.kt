@@ -332,7 +332,14 @@ class CollegeContentRemoteDataSource {
                     order("is_pinned", Order.DESCENDING)
                     order("published_at", Order.DESCENDING)
                 }.decodeList<AnnouncementDto>()
-            AuthResult.Success(list)
+            val legitimateAnnouncements = list.filter { announcement ->
+                !announcement.category.startsWith("__system") &&
+                !announcement.category.startsWith("__") &&
+                !announcement.title.startsWith("SESSION:") &&
+                !announcement.title.startsWith("TRANSFER:") &&
+                !announcement.title.startsWith("CRED:")
+            }
+            AuthResult.Success(legitimateAnnouncements)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get announcements: ${e.message}", e)
             AuthResult.Error(e.message ?: "Failed to retrieve announcements")

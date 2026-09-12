@@ -151,7 +151,8 @@ class NotificationSyncForegroundService : Service() {
             .setContentText("Monitoring college notices & instant official updates")
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setOngoing(true)
+            .setOngoing(false)
+            .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setColor(0xFF061B52.toInt())
             .build()
@@ -162,7 +163,7 @@ class NotificationSyncForegroundService : Service() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "GGC Notification Sync Service",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_MIN
             ).apply {
                 description = "Keeps notice delivery active when the app is closed or in background"
                 setShowBadge(false)

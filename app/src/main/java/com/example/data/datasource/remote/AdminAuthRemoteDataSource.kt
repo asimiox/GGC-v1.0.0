@@ -97,47 +97,33 @@ class AdminAuthRemoteDataSource {
                 Log.d(TAG, "direct_login_admin RPC unavailable or failed: ${rpcEx.message}")
             }
 
-            // 2. Direct Administrator Identity & Credential Verification Fallback
-            val isAdminIdentifier = cleanIdentifier.equals("shark1708", ignoreCase = true) ||
-                    cleanIdentifier.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
+            // 2. Direct Administrator Identity & Credential Verification (OFFICIAL_CREDENTIALS.txt)
+            val isAdminIdentifier = cleanIdentifier.equals("principal", ignoreCase = true) ||
                     cleanIdentifier.equals("admin", ignoreCase = true) ||
+                    cleanIdentifier.equals("ADMIN-01", ignoreCase = true) ||
+                    cleanIdentifier.equals("FAC-02", ignoreCase = true) ||
+                    cleanIdentifier.equals("amir.ahmad", ignoreCase = true) ||
+                    cleanIdentifier.equals("ameer.ahmad", ignoreCase = true) ||
+                    cleanIdentifier.equals("principal@ggcmbdin.edu.pk", ignoreCase = true) ||
+                    cleanIdentifier.equals("shark1708", ignoreCase = true) ||
+                    cleanIdentifier.equals("theasimnawaz@gmail.com", ignoreCase = true) ||
                     cleanIdentifier.equals("admin@ggc.edu.pk", ignoreCase = true) ||
+                    cleanIdentifier.contains("principal", ignoreCase = true) ||
                     cleanIdentifier.contains("admin", ignoreCase = true)
 
-            val isValidAdminPassword = cleanPassword == "shark" ||
+            val isValidAdminPassword = cleanPassword == "00000" ||
+                    cleanPassword == "shark" ||
                     cleanPassword == "admin" ||
-                    cleanPassword == "shark1708" ||
-                    cleanPassword == "00000"
+                    cleanPassword == "shark1708"
 
-            var credentialStoreMatch = false
-            if (isAdminIdentifier && !isValidAdminPassword) {
-                // Check announcements CRED entries
-                try {
-                    val rows = client.from("announcements")
-                        .select {
-                            filter {
-                                eq("category", "__system_credential__")
-                            }
-                            limit(10)
-                        }.decodeList<JsonObject>()
-                    for (row in rows) {
-                        val contentStr = row["content"]?.jsonPrimitive?.content
-                        if (!contentStr.isNullOrBlank() && contentStr.contains(cleanPassword)) {
-                            credentialStoreMatch = true
-                            break
-                        }
-                    }
-                } catch (_: Exception) {}
-            }
-
-            if (isAdminIdentifier && (isValidAdminPassword || credentialStoreMatch)) {
+            if (isAdminIdentifier && isValidAdminPassword) {
                 val profile = AdminProfileDto(
                     id = "00000000-0000-0000-0000-000000000001",
-                    username = if (cleanIdentifier.contains("@")) "shark1708" else cleanIdentifier,
-                    fullName = "Super Administrator",
-                    email = if (cleanIdentifier.contains("@")) cleanIdentifier else "theasimnawaz@gmail.com",
+                    username = if (cleanIdentifier.contains("@")) "principal" else cleanIdentifier,
+                    fullName = "Prof. Ameer Ahmad",
+                    email = if (cleanIdentifier.contains("@")) cleanIdentifier else "principal@ggcmbdin.edu.pk",
                     role = "admin",
-                    department = "Central Administration",
+                    department = "College Administration",
                     isVerified = true
                 )
                 ActiveSessionRemoteManager.acquireSession(

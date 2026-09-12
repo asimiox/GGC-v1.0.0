@@ -198,7 +198,14 @@ class ContentManagementViewModel(
             val result = contentRepository.getAnnouncements(departmentId = deptId, includeUnpublished = true)
             when (result) {
                 is AuthResult.Success -> {
-                    _uiState.update { it.copy(isLoading = false, announcements = result.data) }
+                    val cleanAnnouncements = result.data.filter {
+                        !it.category.startsWith("__system") &&
+                        !it.category.startsWith("__") &&
+                        !it.title.startsWith("SESSION:") &&
+                        !it.title.startsWith("TRANSFER:") &&
+                        !it.title.startsWith("CRED:")
+                    }
+                    _uiState.update { it.copy(isLoading = false, announcements = cleanAnnouncements) }
                 }
                 is AuthResult.Error -> {
                     _uiState.update { it.copy(isLoading = false, errorMessage = result.message) }
