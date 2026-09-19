@@ -296,7 +296,7 @@ class ContentManagementViewModel(
                     _uiState.update {
                         it.copy(
                             isSaving = false,
-                            successMessage = "Announcement saved successfully."
+                            successMessage = "Announcement published successfully."
                         )
                     }
                     loadAnnouncements()

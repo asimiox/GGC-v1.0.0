@@ -3,6 +3,7 @@ package com.example.ui.screens.admin.content
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,49 +14,41 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.UploadFile
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,12 +59,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -87,15 +78,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+// Minimal, light, professional color system matching the design direction
+private val ScreenBg = Color(0xFFF6F6F6)
 private val BrandNavy = Color(0xFF061B52)
-private val BrandNavyDeep = Color(0xFF030F30)
-private val BrandNavySurface = Color(0xFFF4F7FC)
-private val BrandTextMuted = Color(0xFF5A6A85)
-private val BrandTextDark = Color(0xFF0B1938)
-private val BrandGold = Color(0xFFC59B27)
-private val BrandGoldLight = Color(0xFFFFF7E6)
-private val BrandGoldBorder = Color(0xFFE5C067)
-private val BrandGreen = Color(0xFF1E7E34)
+private val TextMain = Color(0xFF061B52)
+private val TextSecondary = Color(0xFF6B7280)
+private val BorderColor = Color(0xFFE5E7EB)
+private val CardBg = Color(0xFFFFFFFF)
+private val InputBg = Color(0xFFFFFFFF)
+private val FieldLabelColor = Color(0xFF111827)
+private val AsteriskColor = Color(0xFFDC2626)
+private val GoldAccent = Color(0xFFC59B27)
 
 val ANNOUNCEMENT_CATEGORIES = listOf(
     "General",
@@ -133,24 +126,30 @@ fun AnnouncementManageDialog(
 ) {
     var title by remember { mutableStateOf(announcement?.title ?: "") }
     var content by remember { mutableStateOf(announcement?.content ?: "") }
-    var category by remember { mutableStateOf(announcement?.category ?: "General") }
+    var category by remember { mutableStateOf(announcement?.category ?: "") }
+    
+    val isHod = userRole == AppRole.HOD
     var selectedDeptId by remember {
         mutableStateOf(
-            if (userRole == AppRole.HOD && userDepartmentId != null) userDepartmentId
+            if (isHod && userDepartmentId != null) userDepartmentId
             else announcement?.departmentId
         )
     }
-    var isPinned by remember { mutableStateOf(announcement?.isPinned ?: false) }
-    var isPublished by remember { mutableStateOf(announcement?.isPublished ?: true) }
+    
+    // Priority: Normal vs Important (maps to isPinned for UI clarity)
+    var isImportant by remember { mutableStateOf(announcement?.isPinned ?: false) }
+    // All announcements created through here are published by default
+    val isPublished = true
 
     var attachmentFileName by remember { mutableStateOf(announcement?.attachmentName) }
     var attachmentBytes by remember { mutableStateOf<ByteArray?>(null) }
 
-    var categoryDropdownExpanded by remember { mutableStateOf(false) }
-    var deptDropdownExpanded by remember { mutableStateOf(false) }
+    var categoryMenuExpanded by remember { mutableStateOf(false) }
+    var audienceMenuExpanded by remember { mutableStateOf(false) }
 
     var titleError by remember { mutableStateOf<String?>(null) }
     var contentError by remember { mutableStateOf<String?>(null) }
+    var categoryError by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -177,476 +176,371 @@ fun AnnouncementManageDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, Color(0xFFD6DFEB)),
-            shadowElevation = 12.dp,
             modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.92f)
-                .testTag("announcement_manage_dialog")
+                .fillMaxSize()
+                .background(ScreenBg)
+                .testTag("announcement_manage_dialog"),
+            color = ScreenBg
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-
-                // ==========================================
-                // 1. OFFICIAL INSTITUTIONAL GOVERNMENT HEADER
-                // ==========================================
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(BrandNavyDeep, BrandNavy)
-                            )
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+            ) {
+                // ----------------------------------------------------
+                // TOP APP BAR (HEADER)
+                // ----------------------------------------------------
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = ScreenBg
                 ) {
-                    // Subtle Top Gold Bar
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(BrandGold, Color(0xFFFFE082), BrandGold)
-                                )
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = onDismiss,
+                            enabled = !isSaving && !isUploadingFile,
+                            modifier = Modifier.testTag("btn_close_announcement")
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = BrandNavy,
+                                modifier = Modifier.size(24.dp)
                             )
-                    )
+                        }
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 18.dp, vertical = 14.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        // Official GGC Crest / Logo
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.White,
+                            border = BorderStroke(0.5.dp, BorderColor),
+                            modifier = Modifier.size(38.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(3.dp)
                             ) {
-                                // Official Crest Emblem
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = Color.White,
-                                    border = BorderStroke(1.dp, BrandGold.copy(alpha = 0.6f)),
-                                    shadowElevation = 3.dp,
-                                    modifier = Modifier.size(44.dp)
-                                ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.padding(4.dp)
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.ic_ggc_logo),
-                                            contentDescription = "GGC Official Crest",
-                                            modifier = Modifier.size(34.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.width(12.dp))
-
-                                Column {
-                                    Text(
-                                        text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 0.8.sp,
-                                        color = Color(0xFFFFD56B)
-                                    )
-                                    Spacer(modifier = Modifier.height(1.dp))
-                                    Text(
-                                        text = if (announcement == null) "New Official Announcement" else "Edit Official Announcement",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = "Higher Education Department • Official Gazette Desk",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White.copy(alpha = 0.8f)
-                                    )
-                                }
-                            }
-
-                            // Dismiss Icon Button
-                            IconButton(
-                                onClick = onDismiss,
-                                enabled = !isSaving && !isUploadingFile,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.12f))
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                    contentDescription = "GGC Logo",
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
 
-                        // Official Gazette Docket Pill
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Surface(
-                                color = Color.White.copy(alpha = 0.10f),
-                                shape = RoundedCornerShape(4.dp),
-                                border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.25f))
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AccountBalance,
-                                        contentDescription = null,
-                                        tint = Color(0xFFFFD56B),
-                                        modifier = Modifier.size(11.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    val docketRef = announcement?.id?.take(8)?.uppercase() ?: "DRAFT-2026"
-                                    Text(
-                                        text = "DISPATCH DOCKET: GGC/MB-$docketRef",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        letterSpacing = 0.4.sp,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = Color.White.copy(alpha = 0.9f)
-                                    )
-                                }
-                            }
-
-                            Surface(
-                                color = if (isPublished) BrandGreen.copy(alpha = 0.35f) else Color(0xFF6C757D).copy(alpha = 0.35f),
-                                shape = RoundedCornerShape(4.dp),
-                                border = BorderStroke(0.5.dp, if (isPublished) Color(0xFF81C784) else Color(0xFFADB5BD))
-                            ) {
-                                Text(
-                                    text = if (isPublished) "STATUS: GAZETTE DISPATCH" else "STATUS: INTERNAL DRAFT",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.3.sp,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Progress Banner (Saving / Uploading)
-                if (isUploadingFile || isSaving) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color(0xFFEBF3FF))
-                            .padding(horizontal = 18.dp, vertical = 10.dp)
-                    ) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(15.dp),
-                                    strokeWidth = 2.dp,
-                                    color = BrandNavy
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = if (isUploadingFile) {
-                                        uploadProgressMessage ?: "Uploading signed circular scan to official repository..."
-                                    } else {
-                                        "Synchronizing and publishing gazette notice..."
-                                    },
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = BrandNavy
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth(),
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.3.sp,
                                 color = BrandNavy,
-                                trackColor = Color(0xFFCDDEFF)
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Official App",
+                                fontSize = 11.sp,
+                                color = TextSecondary
                             )
                         }
                     }
                 }
 
-                // ==========================================
-                // 2. SCROLLABLE FORM BODY (OFFICIAL GAZETTE SECTIONS)
-                // ==========================================
+                // Progress Indicator when uploading or saving
+                if (isUploadingFile || isSaving || isReadingFile) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = BrandNavy,
+                        trackColor = BorderColor
+                    )
+                }
+
+                // ----------------------------------------------------
+                // SCROLLABLE FORM
+                // ----------------------------------------------------
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 18.dp, vertical = 14.dp)
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-
-                    // ----------------------------------------------------
-                    // SECTION 01: NOTIFICATION SUBJECT & CIRCULAR TEXT
-                    // ----------------------------------------------------
-                    FormSectionHeader(
-                        number = "01",
-                        title = "NOTIFICATION PARTICULARS",
-                        subtitle = "Subject and directive order issued under official authority"
+                    // SCREEN TITLE & SUBTITLE
+                    Text(
+                        text = if (announcement == null) "New Announcement" else "Edit Announcement",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextMain
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    // Notice Subject Field
+                    Text(
+                        text = "Share important updates with your college community.",
+                        fontSize = 14.sp,
+                        color = TextSecondary
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 1. TITLE *
+                    FieldLabel(label = "Title", isRequired = true)
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = title,
                         onValueChange = {
                             title = it
-                            titleError = if (it.isBlank()) "Subject / Title is mandatory" else null
+                            if (it.isNotBlank()) titleError = null
                         },
-                        label = { Text("Subject / Title of Notification *") },
-                        placeholder = { Text("e.g. Schedule of BS / Intermediate Annual Examination 2026") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Title,
-                                contentDescription = null,
-                                tint = if (titleError != null) Color(0xFFBA1A1A) else BrandNavy,
-                                modifier = Modifier.size(19.dp)
+                        placeholder = {
+                            Text(
+                                text = "Enter announcement title",
+                                color = TextSecondary.copy(alpha = 0.7f),
+                                fontSize = 14.sp
                             )
                         },
                         isError = titleError != null,
-                        supportingText = titleError?.let { { Text(it, color = Color(0xFFBA1A1A)) } },
+                        supportingText = titleError?.let { { Text(it, color = AsteriskColor, fontSize = 12.sp) } },
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("input_announcement_title"),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandNavy,
-                            focusedLabelColor = BrandNavy,
-                            unfocusedBorderColor = Color(0xFFC7D2E2),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color(0xFFFAFBFE)
+                            unfocusedBorderColor = BorderColor,
+                            focusedContainerColor = InputBg,
+                            unfocusedContainerColor = InputBg,
+                            errorBorderColor = AsteriskColor
                         ),
-                        singleLine = true,
-                        shape = RoundedCornerShape(10.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Notice Content Field (Editorial Style)
-                    OutlinedTextField(
-                        value = content,
-                        onValueChange = {
-                            content = it
-                            contentError = if (it.isBlank()) "Notification body text is required" else null
-                        },
-                        label = { Text("Official Circular / Order Text *") },
-                        placeholder = { Text("Pursuant to the approval of the Academic Council / Principal, it is hereby notified for information of all concerned that...") },
-                        isError = contentError != null,
-                        supportingText = {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = contentError ?: "Official administrative text or student directive",
-                                    color = if (contentError != null) Color(0xFFBA1A1A) else BrandTextMuted,
-                                    fontSize = 11.sp
-                                )
-                                Text(
-                                    text = "${content.length} chars",
-                                    color = BrandTextMuted,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .testTag("input_announcement_content"),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandNavy,
-                            focusedLabelColor = BrandNavy,
-                            unfocusedBorderColor = Color(0xFFC7D2E2),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color(0xFFFAFBFE)
-                        ),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // ----------------------------------------------------
-                    // SECTION 02: CLASSIFICATION & JURISDICTION
-                    // ----------------------------------------------------
-                    FormSectionHeader(
-                        number = "02",
-                        title = "CLASSIFICATION & JURISDICTION",
-                        subtitle = "Select regulatory wing and institutional jurisdiction"
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Category Dropdown
-                    ExposedDropdownMenuBox(
-                        expanded = categoryDropdownExpanded,
-                        onExpandedChange = { categoryDropdownExpanded = it }
-                    ) {
+                    // 2. MESSAGE *
+                    FieldLabel(label = "Message", isRequired = true)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
-                            value = category,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Gazette Category / Branch") },
-                            leadingIcon = {
+                            value = content,
+                            onValueChange = {
+                                if (it.length <= 5000) {
+                                    content = it
+                                    if (it.isNotBlank()) contentError = null
+                                }
+                            },
+                            placeholder = {
+                                Text(
+                                    text = "Write your announcement message here...",
+                                    color = TextSecondary.copy(alpha = 0.7f),
+                                    fontSize = 14.sp
+                                )
+                            },
+                            isError = contentError != null,
+                            supportingText = contentError?.let { { Text(it, color = AsteriskColor, fontSize = 12.sp) } },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp)
+                                .testTag("input_announcement_content"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = BrandNavy,
+                                unfocusedBorderColor = BorderColor,
+                                focusedContainerColor = InputBg,
+                                unfocusedContainerColor = InputBg,
+                                errorBorderColor = AsteriskColor
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        Text(
+                            text = "${content.length}/5000",
+                            fontSize = 11.sp,
+                            color = TextSecondary.copy(alpha = 0.8f),
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 12.dp, bottom = 8.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // 3. CATEGORY *
+                    FieldLabel(label = "Category", isRequired = true)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { categoryMenuExpanded = true }
+                                .testTag("dropdown_announcement_category"),
+                            shape = RoundedCornerShape(12.dp),
+                            color = InputBg,
+                            border = BorderStroke(1.dp, if (categoryError != null) AsteriskColor else BorderColor)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Description,
                                     contentDescription = null,
-                                    tint = BrandNavy,
-                                    modifier = Modifier.size(19.dp)
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                            },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded) },
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = if (category.isNotBlank()) category else "Select category",
+                                    fontSize = 14.sp,
+                                    color = if (category.isNotBlank()) TextMain else TextSecondary.copy(alpha = 0.7f),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Icon(
+                                    imageVector = if (categoryMenuExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = categoryMenuExpanded,
+                            onDismissRequest = { categoryMenuExpanded = false },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-                                .testTag("dropdown_announcement_category"),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = BrandNavy,
-                                focusedLabelColor = BrandNavy,
-                                unfocusedBorderColor = Color(0xFFC7D2E2),
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color(0xFFFAFBFE)
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryDropdownExpanded,
-                            onDismissRequest = { categoryDropdownExpanded = false }
+                                .fillMaxWidth(0.9f)
+                                .background(Color.White)
                         ) {
                             ANNOUNCEMENT_CATEGORIES.forEach { cat ->
                                 DropdownMenuItem(
                                     text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .clip(CircleShape)
-                                                    .background(if (cat == category) BrandNavy else Color.LightGray)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = cat,
-                                                fontWeight = if (cat == category) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (cat == category) BrandNavy else Color.Unspecified
-                                            )
-                                        }
+                                        Text(
+                                            text = cat,
+                                            fontWeight = if (cat == category) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (cat == category) BrandNavy else TextMain
+                                        )
                                     },
                                     onClick = {
                                         category = cat
-                                        categoryDropdownExpanded = false
+                                        categoryError = null
+                                        categoryMenuExpanded = false
                                     }
                                 )
                             }
                         }
                     }
+                    if (categoryError != null) {
+                        Text(
+                            text = categoryError ?: "",
+                            color = AsteriskColor,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                        )
+                    }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
-                    // Department Jurisdiction Scope Selector
-                    val isHod = userRole == AppRole.HOD
-                    val selectedDeptName = departments.firstOrNull { it.id == selectedDeptId }?.name ?: "All College (General Notice)"
+                    // 4. AUDIENCE *
+                    FieldLabel(label = "Audience", isRequired = true)
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    ExposedDropdownMenuBox(
-                        expanded = deptDropdownExpanded && !isHod,
-                        onExpandedChange = { if (!isHod) deptDropdownExpanded = it }
-                    ) {
-                        OutlinedTextField(
-                            value = selectedDeptName,
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = !isHod,
-                            label = { Text(if (isHod) "Department Jurisdiction (Locked to Your Wing)" else "Administrative Scope / Jurisdiction") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.AccountBalance,
-                                    contentDescription = null,
-                                    tint = if (isHod) BrandGold else BrandNavy,
-                                    modifier = Modifier.size(19.dp)
-                                )
-                            },
-                            trailingIcon = {
-                                if (!isHod) ExposedDropdownMenuDefaults.TrailingIcon(expanded = deptDropdownExpanded)
-                            },
+                    val selectedDept = departments.firstOrNull { it.id == selectedDeptId }
+                    val audienceDisplay = if (selectedDeptId == null) {
+                        "All College (Students & Faculty)"
+                    } else {
+                        selectedDept?.name ?: "Selected Department"
+                    }
+
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
+                                .clickable(enabled = !isHod) { audienceMenuExpanded = true }
                                 .testTag("dropdown_announcement_dept"),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = BrandNavy,
-                                focusedLabelColor = BrandNavy,
-                                unfocusedBorderColor = Color(0xFFC7D2E2),
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = if (isHod) Color(0xFFF7F8FA) else Color(0xFFFAFBFE)
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        )
+                            shape = RoundedCornerShape(12.dp),
+                            color = InputBg,
+                            border = BorderStroke(1.dp, BorderColor)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Group,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = audienceDisplay,
+                                    fontSize = 14.sp,
+                                    color = TextMain,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (!isHod) {
+                                    Icon(
+                                        imageVector = if (audienceMenuExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+
                         if (!isHod) {
-                            ExposedDropdownMenu(
-                                expanded = deptDropdownExpanded,
-                                onDismissRequest = { deptDropdownExpanded = false }
+                            DropdownMenu(
+                                expanded = audienceMenuExpanded,
+                                onDismissRequest = { audienceMenuExpanded = false },
+                                modifier = Modifier
+                                    .fillMaxWidth(0.9f)
+                                    .background(Color.White)
                             ) {
                                 DropdownMenuItem(
                                     text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = Icons.Default.Public,
-                                                contentDescription = null,
-                                                tint = BrandNavy,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Text(
-                                                text = "All College (General Notice)",
-                                                fontWeight = if (selectedDeptId == null) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (selectedDeptId == null) BrandNavy else Color.Unspecified
-                                            )
-                                        }
+                                        Text(
+                                            text = "All College (Students & Faculty)",
+                                            fontWeight = if (selectedDeptId == null) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (selectedDeptId == null) BrandNavy else TextMain
+                                        )
                                     },
                                     onClick = {
                                         selectedDeptId = null
-                                        deptDropdownExpanded = false
+                                        audienceMenuExpanded = false
                                     }
                                 )
                                 departments.forEach { dept ->
                                     DropdownMenuItem(
                                         text = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(6.dp)
-                                                        .clip(CircleShape)
-                                                        .background(if (selectedDeptId == dept.id) BrandNavy else Color.LightGray)
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = dept.name,
-                                                    fontWeight = if (selectedDeptId == dept.id) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (selectedDeptId == dept.id) BrandNavy else Color.Unspecified
-                                                )
-                                            }
+                                            Text(
+                                                text = dept.name,
+                                                fontWeight = if (selectedDeptId == dept.id) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (selectedDeptId == dept.id) BrandNavy else TextMain
+                                            )
                                         },
                                         onClick = {
                                             selectedDeptId = dept.id
-                                            deptDropdownExpanded = false
+                                            audienceMenuExpanded = false
                                         }
                                     )
                                 }
@@ -656,398 +550,234 @@ fun AnnouncementManageDialog(
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // ----------------------------------------------------
-                    // SECTION 03: OFFICIAL SIGNED ATTACHMENT / ANNEXURE
-                    // ----------------------------------------------------
-                    FormSectionHeader(
-                        number = "03",
-                        title = "ANNEXURE & ATTACHED DISPATCH",
-                        subtitle = "Attach signed circular copy, gazette notification, or document scan"
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
+                    // 5. ATTACHMENT (OPTIONAL)
+                    FieldLabel(label = "Attachment", isRequired = false)
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { filePickerLauncher.launch("*/*") }
+                            .testTag("btn_attach_announcement_file"),
                         shape = RoundedCornerShape(12.dp),
-                        color = BrandNavySurface,
-                        border = BorderStroke(1.dp, Color(0xFFD3DFEF)),
-                        modifier = Modifier.fillMaxWidth()
+                        color = Color(0xFFF9FAFB),
+                        border = BorderStroke(1.dp, BorderColor)
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Rounded attachment icon badge
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFFE5EDF8),
+                                modifier = Modifier.size(36.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(38.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(BrandNavy.copy(alpha = 0.12f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.AttachFile,
-                                            contentDescription = null,
-                                            tint = BrandNavy,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = "Official Signed Copy (PDF / Scan)",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = BrandTextDark
-                                        )
-                                        Text(
-                                            text = "Verified Annexure / Principal Office Circular",
-                                            fontSize = 11.sp,
-                                            color = BrandTextMuted
-                                        )
-                                    }
-                                }
-
-                                Button(
-                                    onClick = { filePickerLauncher.launch("*/*") },
-                                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                    modifier = Modifier.testTag("btn_attach_announcement_file")
-                                ) {
+                                Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = Icons.Default.UploadFile,
+                                        imageVector = Icons.Default.AttachFile,
                                         contentDescription = null,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (isReadingFile) "Reading..." else if (attachmentFileName == null) "Attach Scan" else "Change",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold
+                                        tint = BrandNavy,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (attachmentFileName.isNullOrBlank()) "Add attachment" else attachmentFileName ?: "",
+                                    fontSize = 14.sp,
+                                    fontWeight = if (attachmentFileName.isNullOrBlank()) FontWeight.Medium else FontWeight.SemiBold,
+                                    color = TextMain,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                val subText = if (attachmentFileName.isNullOrBlank()) {
+                                    "PDF or image"
+                                } else {
+                                    val sizeText = if (attachmentBytes != null) {
+                                        FileUtils.formatFileSize(attachmentBytes?.size?.toLong() ?: 0L)
+                                    } else "Document attached"
+                                    sizeText
+                                }
+                                Text(
+                                    text = subText,
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
                             }
 
                             if (!attachmentFileName.isNullOrBlank()) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                HorizontalDivider(color = Color(0xFFDCE5F2), thickness = 0.8.dp)
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Surface(
-                                    color = Color.White,
-                                    shape = RoundedCornerShape(8.dp),
-                                    border = BorderStroke(1.dp, BrandGreen.copy(alpha = 0.4f)),
-                                    modifier = Modifier.fillMaxWidth()
+                                IconButton(
+                                    onClick = {
+                                        attachmentFileName = null
+                                        attachmentBytes = null
+                                    },
+                                    modifier = Modifier.size(28.dp)
                                 ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.CheckCircle,
-                                                contentDescription = "Verified File",
-                                                tint = BrandGreen,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Column {
-                                                Text(
-                                                    text = attachmentFileName ?: "",
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = BrandNavy,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                val sizeText = if (attachmentBytes != null) {
-                                                    FileUtils.formatFileSize(attachmentBytes?.size?.toLong() ?: 0L)
-                                                } else "Attached Document"
-                                                Text(
-                                                    text = "Official Annexure • $sizeText",
-                                                    fontSize = 10.sp,
-                                                    color = BrandTextMuted
-                                                )
-                                            }
-                                        }
-
-                                        IconButton(
-                                            onClick = {
-                                                attachmentFileName = null
-                                                attachmentBytes = null
-                                            },
-                                            modifier = Modifier.size(28.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Remove Annexure",
-                                                tint = Color(0xFFBA1A1A),
-                                                modifier = Modifier.size(17.dp)
-                                            )
-                                        }
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Remove attachment",
+                                        tint = Color(0xFFDC2626),
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                 }
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.ChevronRight,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // ----------------------------------------------------
-                    // SECTION 04: DISPATCH DIRECTIVES & VISIBILITY
-                    // ----------------------------------------------------
-                    FormSectionHeader(
-                        number = "04",
-                        title = "DISPATCH POLICIES & CONTROLS",
-                        subtitle = "Configure notice board priority and student/faculty publication"
+                    // 6. PRIORITY (Normal | Important segmented control)
+                    Text(
+                        text = "Priority",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = FieldLabelColor
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Directive 1: Pinned / Priority Notice Card
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isPinned) BrandGoldLight else Color(0xFFFAFBFE),
-                        border = BorderStroke(1.dp, if (isPinned) BrandGoldBorder else Color(0xFFE2E8F0)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isPinned = !isPinned }
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color(0xFFEFF2F7),
+                        border = BorderStroke(0.5.dp, BorderColor)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(3.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                            // Normal tab
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { isImportant = false },
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (!isImportant) BrandNavy else Color.Transparent
                             ) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isPinned) BrandGold.copy(alpha = 0.2f) else Color(0xFFECEFF5)),
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(vertical = 10.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PushPin,
-                                        contentDescription = null,
-                                        tint = if (isPinned) BrandGold else BrandTextMuted,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
                                     Text(
-                                        text = "Pin to College Gazette Header",
+                                        text = "Normal",
                                         fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isPinned) Color(0xFF745100) else BrandTextDark
-                                    )
-                                    Text(
-                                        text = "Feature as urgent sticky notice at top of student and faculty feeds",
-                                        fontSize = 11.sp,
-                                        color = BrandTextMuted
+                                        fontWeight = if (!isImportant) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (!isImportant) Color.White else TextSecondary
                                     )
                                 }
                             }
 
-                            Switch(
-                                checked = isPinned,
-                                onCheckedChange = { isPinned = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = BrandGold,
-                                    checkedTrackColor = BrandNavy,
-                                    uncheckedThumbColor = Color.White,
-                                    uncheckedTrackColor = Color(0xFFCBD5E1)
-                                ),
-                                modifier = Modifier.testTag("switch_announcement_pinned")
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Directive 2: Public Dispatch Card
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isPublished) Color(0xFFF1F8F3) else Color(0xFFFAFBFE),
-                        border = BorderStroke(1.dp, if (isPublished) Color(0xFFA5D6A7) else Color(0xFFE2E8F0)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isPublished = !isPublished }
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                            // Important tab
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { isImportant = true },
+                                shape = RoundedCornerShape(20.dp),
+                                color = if (isImportant) BrandNavy else Color.Transparent
                             ) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isPublished) BrandGreen.copy(alpha = 0.15f) else Color(0xFFECEFF5)),
-                                    contentAlignment = Alignment.Center
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(vertical = 10.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = if (isPublished) Icons.Default.NotificationsActive else Icons.Default.VisibilityOff,
-                                        contentDescription = null,
-                                        tint = if (isPublished) BrandGreen else BrandTextMuted,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
                                     Text(
-                                        text = if (isPublished) "Public Gazette Release (Live)" else "Draft Mode (Administrative Review)",
+                                        text = "Important",
                                         fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isPublished) BrandGreen else BrandTextDark
-                                    )
-                                    Text(
-                                        text = if (isPublished) "Instantly dispatched & accessible across all student and faculty apps" else "Hidden from public boards; retained for office clearance",
-                                        fontSize = 11.sp,
-                                        color = BrandTextMuted
+                                        fontWeight = if (isImportant) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isImportant) Color.White else TextSecondary
                                     )
                                 }
                             }
-
-                            Switch(
-                                checked = isPublished,
-                                onCheckedChange = { isPublished = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = BrandGreen,
-                                    uncheckedThumbColor = Color.White,
-                                    uncheckedTrackColor = Color(0xFFCBD5E1)
-                                ),
-                                modifier = Modifier.testTag("switch_announcement_published")
-                            )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                    Spacer(modifier = Modifier.height(28.dp))
 
-                // ==========================================
-                // 3. INSTITUTIONAL STICKY FOOTER ACTION BAR
-                // ==========================================
-                HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 1.dp)
+                    // PRIMARY ACTION: Publish Announcement
+                    Button(
+                        onClick = {
+                            var valid = true
+                            if (title.isBlank()) {
+                                titleError = "Please enter an announcement title"
+                                valid = false
+                            }
+                            if (content.isBlank()) {
+                                contentError = "Please write an announcement message"
+                                valid = false
+                            }
+                            if (category.isBlank()) {
+                                categoryError = "Please select a category"
+                                valid = false
+                            }
 
-                Surface(
-                    color = Color(0xFFF9FBFE),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
+                            if (valid) {
+                                onSave(
+                                    announcement?.id,
+                                    title.trim(),
+                                    content.trim(),
+                                    category,
+                                    selectedDeptId,
+                                    isImportant,
+                                    isPublished,
+                                    attachmentBytes,
+                                    attachmentFileName
+                                )
+                            }
+                        },
+                        enabled = !isSaving && !isUploadingFile,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 18.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .height(52.dp)
+                            .testTag("btn_save_announcement"),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BrandNavy,
+                            disabledContainerColor = BrandNavy.copy(alpha = 0.6f)
+                        ),
+                        shape = RoundedCornerShape(14.dp)
                     ) {
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            enabled = !isSaving && !isUploadingFile,
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFBAC7D5)),
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        if (isSaving || isUploadingFile) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.5.dp
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Discard Draft",
-                                color = BrandTextMuted,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
+                                text = if (isUploadingFile) "Uploading..." else "Publishing...",
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = if (announcement == null) "Publish Announcement" else "Update Announcement",
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
-
-                        Button(
-                            onClick = {
-                                var valid = true
-                                if (title.isBlank()) {
-                                    titleError = "Subject / Title is required"
-                                    valid = false
-                                }
-                                if (content.isBlank()) {
-                                    contentError = "Notification body text is required"
-                                    valid = false
-                                }
-                                if (valid) {
-                                    onSave(
-                                        announcement?.id,
-                                        title,
-                                        content,
-                                        category,
-                                        selectedDeptId,
-                                        isPinned,
-                                        isPublished,
-                                        attachmentBytes,
-                                        attachmentFileName
-                                    )
-                                }
-                            },
-                            enabled = !isSaving && !isUploadingFile,
-                            modifier = Modifier
-                                .weight(1.4f)
-                                .testTag("btn_save_announcement"),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = BrandNavy,
-                                disabledContainerColor = BrandNavy.copy(alpha = 0.6f)
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, BrandGold.copy(alpha = 0.5f))
-                        ) {
-                            if (isSaving || isUploadingFile) {
-                                CircularProgressIndicator(
-                                    color = Color.White,
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (isUploadingFile) "Uploading..." else "Dispatching...",
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = if (isPublished) Icons.AutoMirrored.Filled.Send else Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFFD56B),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (announcement == null) {
-                                        if (isPublished) "Issue & Dispatch" else "Save as Draft"
-                                    } else "Update Gazette Notice",
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
                     }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
@@ -1055,42 +785,29 @@ fun AnnouncementManageDialog(
 }
 
 @Composable
-private fun FormSectionHeader(
-    number: String,
-    title: String,
-    subtitle: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            color = BrandNavy,
-            shape = RoundedCornerShape(4.dp)
-        ) {
+private fun FieldLabel(label: String, isRequired: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = FieldLabelColor
+        )
+        if (isRequired) {
+            Spacer(modifier = Modifier.width(3.dp))
             Text(
-                text = number,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFFFD56B),
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                text = "*",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = AsteriskColor
             )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
+        } else {
+            Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = title,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 0.6.sp,
-                color = BrandNavy
-            )
-            Text(
-                text = subtitle,
-                fontSize = 10.sp,
-                color = BrandTextMuted
+                text = "(Optional)",
+                fontSize = 13.sp,
+                color = TextSecondary
             )
         }
     }
 }
-

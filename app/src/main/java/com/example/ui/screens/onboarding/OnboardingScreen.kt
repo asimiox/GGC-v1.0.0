@@ -1010,19 +1010,18 @@ private fun ChooseLevelStepScreen(
 
         Spacer(modifier = Modifier.height(36.dp))
 
-        // Level Option 1: Intermediate Student (Locked / Under Maintenance)
+        // Level Option 1: Intermediate Student (Locked)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .clickable {
-                    // Do NOT navigate to login page, stop user right here!
                     showIntermediateMaintenanceDialog = true
                 }
                 .testTag("level_card_intermediate"),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color(0xFFFFCC80).copy(alpha = 0.7f)),
+            border = BorderStroke(1.dp, Color(0xFFFEE2E2)),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Row(
@@ -1035,13 +1034,13 @@ private fun ChooseLevelStepScreen(
                     modifier = Modifier
                         .size(46.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFFF3E0)),
+                        .background(Color(0xFFFEF2F2)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Intermediate Locked",
-                        tint = Color(0xFFE65100),
+                        tint = Color(0xFFDC2626),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -1049,33 +1048,15 @@ private fun ChooseLevelStepScreen(
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Intermediate Student",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandNavy
-                        )
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFFFFF3E0),
-                            border = BorderStroke(1.dp, Color(0xFFFFB74D))
-                        ) {
-                            Text(
-                                text = "Under Maintenance",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFE65100),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                        }
-                    }
+                    Text(
+                        text = "Intermediate Student",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = "Portal locked for maintenance. Logins temporarily disabled.",
+                        text = "Higher Secondary Programs (FA / FSc / ICS / I.Com)",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = BrandTextMuted
@@ -1086,13 +1067,13 @@ private fun ChooseLevelStepScreen(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFFFF3E0)),
+                        .background(Color(0xFFFEF2F2)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Locked",
-                        tint = Color(0xFFE65100),
+                        tint = Color(0xFFDC2626),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -1185,13 +1166,13 @@ private fun ChooseLevelStepScreen(
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFFF3E0)),
+                            .background(Color(0xFFFEF2F2)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Build,
-                            contentDescription = "Under Maintenance",
-                            tint = Color(0xFFE65100),
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Locked",
+                            tint = Color(0xFFDC2626),
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -1212,7 +1193,7 @@ private fun ChooseLevelStepScreen(
                         text = "Intermediate Student Portal",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFFE65100),
+                        color = Color(0xFFDC2626),
                         textAlign = TextAlign.Center
                     )
 
@@ -1220,31 +1201,21 @@ private fun ChooseLevelStepScreen(
 
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFFFF8E1),
-                        border = BorderStroke(1.dp, Color(0xFFFFD54F)),
+                        color = Color(0xFFF9FAFB),
+                        border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = "The Intermediate Student Portal is currently undergoing scheduled maintenance. All logins, admissions, and student registrations are temporarily paused.",
                             fontSize = 12.sp,
-                            color = Color(0xFF8D6E63),
+                            color = Color(0xFF4B5563),
                             textAlign = TextAlign.Center,
                             lineHeight = 18.sp,
                             modifier = Modifier.padding(12.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Please check back later or visit the College Administration office for inquiries.",
-                        fontSize = 12.sp,
-                        color = BrandTextMuted,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 17.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = { showIntermediateMaintenanceDialog = false },
