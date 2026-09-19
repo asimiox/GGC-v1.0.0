@@ -1,6 +1,7 @@
 package com.example.ui.screens.profile
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -66,6 +67,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
@@ -79,7 +81,8 @@ private val BrandNavy = Color(0xFF061B52)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    onLogout: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -89,6 +92,7 @@ fun ProfileScreen(
     var showHodDashboard by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showChangeSemesterDialog by remember { mutableStateOf(false) }
+    var showLogoutConfirmDialog by remember { mutableStateOf(false) }
     var currentPasswordInput by remember { mutableStateOf("") }
     var newPasswordInput by remember { mutableStateOf("") }
     var confirmPasswordInput by remember { mutableStateOf("") }
@@ -101,6 +105,8 @@ fun ProfileScreen(
     BackHandler(enabled = true) {
         if (showHodDashboard) {
             showHodDashboard = false
+        } else if (showLogoutConfirmDialog) {
+            showLogoutConfirmDialog = false
         } else if (showChangeSemesterDialog) {
             showChangeSemesterDialog = false
         } else if (showChangePasswordDialog) {
@@ -150,35 +156,58 @@ fun ProfileScreen(
             .verticalScroll(scrollState)
             .testTag("profile_screen_container")
     ) {
-        if (onBack != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.testTag("profile_back_button")
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = BrandNavy,
-                        modifier = Modifier.size(24.dp)
+        // Universal Top Bar Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (onBack != null) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.testTag("profile_back_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = BrandNavy,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+                Column {
+                    Text(
+                        text = "User Profile",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy
+                    )
+                    Text(
+                        text = if (userProfile.isFaculty) "Faculty Portal" else "Student Portal",
+                        fontSize = 12.sp,
+                        color = Color(0xFF7A879D)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "User Profile",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
+            }
+
+            // Prominent Top Bar Quick Logout Button
+            IconButton(
+                onClick = { showLogoutConfirmDialog = true },
+                modifier = Modifier.testTag("profile_top_logout_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = "Log Out",
+                    tint = Color(0xFFDC2626)
                 )
             }
-            HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
         }
+        HorizontalDivider(color = Color(0xFFEBEBEB), thickness = 1.dp)
 
         // Profile Header Card
         Card(
@@ -618,7 +647,29 @@ fun ProfileScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Prominent Logout Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF1F2)),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, Color(0xFFFECDD3)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    ProfileMenuRow(
+                        icon = Icons.AutoMirrored.Filled.Logout,
+                        title = "Log Out of Account",
+                        subtitle = "Sign out and clear session from this device",
+                        tag = "profile_logout_card_row",
+                        iconTint = Color(0xFFDC2626),
+                        titleColor = Color(0xFFDC2626),
+                        containerColor = Color(0xFFFFE4E6),
+                        onClick = { showLogoutConfirmDialog = true }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
             }
         }
     }
@@ -626,6 +677,81 @@ fun ProfileScreen(
     if (showChangePasswordDialog) {
         com.example.ui.components.ChangePasswordDialog(
             onDismissRequest = { showChangePasswordDialog = false }
+        )
+    }
+
+    if (showLogoutConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirmDialog = false },
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFE4E6)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Log Out",
+                        tint = Color(0xFFDC2626),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = "Log Out of Portal?",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to log out of your GGC Portal account? You will need to sign in again to access your records.",
+                    fontSize = 13.sp,
+                    color = Color(0xFF4A5568),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 18.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutConfirmDialog = false
+                        UserProfileManager.clearProfile(context)
+                        onLogout?.invoke()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("confirm_logout_action_btn"),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFDC2626),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Yes, Log Out", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutConfirmDialog = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel", color = Color(0xFF718096), fontWeight = FontWeight.Medium)
+                }
+            }
         )
     }
 
@@ -702,6 +828,9 @@ fun ProfileMenuRow(
     title: String,
     subtitle: String,
     tag: String,
+    iconTint: Color = MaterialTheme.colorScheme.primary,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     onClick: () -> Unit
 ) {
     Row(
@@ -716,13 +845,13 @@ fun ProfileMenuRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(containerColor),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = iconTint,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -734,7 +863,7 @@ fun ProfileMenuRow(
                 text = title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = titleColor
             )
             Text(
                 text = subtitle,

@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -91,29 +93,54 @@ fun MainScreen(
         }
     )
 
+    val topLevelTabs = setOf(
+        NavRoutes.HOME,
+        NavRoutes.ACADEMICS,
+        NavRoutes.NOTICES,
+        NavRoutes.EVENTS,
+        NavRoutes.PROFILE,
+        NavRoutes.ADMISSION,
+        NavRoutes.ALUMNI,
+        NavRoutes.ABOUT
+    )
+
     val navigateTo: (String) -> Unit = { targetRoute ->
         if (currentRoute != targetRoute) {
             previousRoute = currentRoute
             currentRoute = targetRoute
-            if (routeHistory.lastOrNull() != targetRoute) {
+            if (targetRoute == NavRoutes.HOME) {
+                routeHistory.clear()
+                routeHistory.add(NavRoutes.HOME)
+            } else if (targetRoute in topLevelTabs) {
+                // Keep the back stack minimal: [HOME, targetRoute].
+                // Switching between tabs will NEVER create an infinite history chain.
+                routeHistory.clear()
+                routeHistory.add(NavRoutes.HOME)
                 routeHistory.add(targetRoute)
+            } else {
+                // Detail sub-screens (e.g. PROGRAMS, COURSES_OUTLINE, etc.)
+                if (routeHistory.lastOrNull() != targetRoute) {
+                    routeHistory.add(targetRoute)
+                }
             }
         }
     }
 
     val goBack: () -> Unit = {
-        if (routeHistory.size > 1) {
+        if (currentRoute == NavRoutes.HOME) {
+            // Already on Home -> immediately show Logout / Exit dialog
+            showLogoutDialog = true
+        } else if (routeHistory.size > 2) {
+            // Nested sub-page -> pop back to previous sub-destination
             routeHistory.removeAt(routeHistory.lastIndex)
             val prev = routeHistory.last()
             previousRoute = currentRoute
             currentRoute = prev
-        } else if (currentRoute != NavRoutes.HOME) {
+        } else {
+            // Any top-level tab (Profile, Notices, Academics, Events, etc.) -> go straight to Home in 1 step!
             currentRoute = NavRoutes.HOME
             routeHistory.clear()
             routeHistory.add(NavRoutes.HOME)
-        } else {
-            // At root Dashboard -> Ask to Logout or Exit
-            showLogoutDialog = true
         }
     }
 
@@ -155,6 +182,7 @@ fun MainScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.statusBars,
         bottomBar = {
             val activeBottomRoute = when {
                 currentRoute == NavRoutes.CONTENT_MANAGEMENT && userProfile.isFaculty -> NavRoutes.CONTENT_MANAGEMENT
@@ -181,13 +209,15 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(top = 4.dp)
         ) {
             when (currentRoute) {
                 NavRoutes.HOME -> HomeScreen(
                     onNavigateToPrograms = { navigateTo(NavRoutes.PROGRAMS) },
                     onNavigateToCoursesOutline = { navigateTo(NavRoutes.COURSES_OUTLINE) },
                     onNavigateToAdminRegistry = { navigateTo(NavRoutes.ADMIN_REGISTRY) },
-                    onNavigateToContentManagement = { navigateTo(NavRoutes.CONTENT_MANAGEMENT) }
+                    onNavigateToContentManagement = { navigateTo(NavRoutes.CONTENT_MANAGEMENT) },
+                    onLogout = onLogout
                 )
                 NavRoutes.ACADEMICS -> AcademicsScreen(
                     onNavigateToFaculty = { navigateTo(NavRoutes.FACULTY) }
@@ -199,7 +229,8 @@ fun MainScreen(
                     onBack = { goBack() }
                 )
                 NavRoutes.PROFILE -> ProfileScreen(
-                    onBack = { goBack() }
+                    onBack = { goBack() },
+                    onLogout = onLogout
                 )
                 NavRoutes.ADMISSION -> AdmissionScreen(
                     onNavigateToPrograms = { navigateTo(NavRoutes.PROGRAMS) },

@@ -108,7 +108,8 @@ fun HomeScreen(
     onNavigateToPrograms: () -> Unit = {},
     onNavigateToCoursesOutline: () -> Unit = {},
     onNavigateToAdminRegistry: () -> Unit = {},
-    onNavigateToContentManagement: () -> Unit = {}
+    onNavigateToContentManagement: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -190,7 +191,8 @@ fun HomeScreen(
     if (activeSubScreen != HomeSubScreen.NONE) {
         when (activeSubScreen) {
             HomeSubScreen.PROFILE -> ProfileScreen(
-                onBack = { activeSubScreen = HomeSubScreen.NONE }
+                onBack = { activeSubScreen = HomeSubScreen.NONE },
+                onLogout = onLogout
             )
             HomeSubScreen.NOTIFICATION_CENTER -> NotificationCenterScreen(
                 onBack = { activeSubScreen = HomeSubScreen.NONE },
