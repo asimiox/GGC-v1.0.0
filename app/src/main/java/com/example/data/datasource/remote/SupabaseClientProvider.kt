@@ -45,7 +45,9 @@ object SupabaseClientProvider {
         ) {
             httpEngine = OkHttp.create()
             install(Postgrest)
-            install(Auth)
+            install(Auth) {
+                sessionManager = io.github.jan.supabase.auth.MemorySessionManager()
+            }
             install(Storage)
             install(Realtime)
         }

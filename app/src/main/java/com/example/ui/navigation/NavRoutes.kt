@@ -42,6 +42,7 @@ object NavRoutes {
     const val CONTENT_MANAGEMENT = "content_management"
     const val ADMIN_DASHBOARD = "admin_dashboard"
     const val HOD_DASHBOARD = "hod_dashboard"
+    const val GEMINI_CHAT = "gemini_chat"
 }
 
 sealed class BottomNavItem(

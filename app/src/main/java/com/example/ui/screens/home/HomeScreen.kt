@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.VpnKey
@@ -99,7 +100,8 @@ enum class HomeSubScreen {
     DOCUMENTS,
     CONTENT_MANAGEMENT,
     HOD_DASHBOARD,
-    STUDENTS_MANAGEMENT
+    STUDENTS_MANAGEMENT,
+    GEMINI_CHAT
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,6 +111,7 @@ fun HomeScreen(
     onNavigateToCoursesOutline: () -> Unit = {},
     onNavigateToAdminRegistry: () -> Unit = {},
     onNavigateToContentManagement: () -> Unit = {},
+    onNavigateToGeminiChat: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -260,6 +263,11 @@ fun HomeScreen(
                     onBack = { activeSubScreen = HomeSubScreen.NONE }
                 )
             }
+            HomeSubScreen.GEMINI_CHAT -> {
+                com.example.ui.screens.chat.GeminiChatScreen(
+                    onBack = { activeSubScreen = HomeSubScreen.NONE }
+                )
+            }
             HomeSubScreen.NONE -> {}
         }
         return
@@ -335,6 +343,19 @@ fun HomeScreen(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Gemini AI Chatbot Quick Icon
+                IconButton(
+                    onClick = { onNavigateToGeminiChat() },
+                    modifier = Modifier.testTag("home_gemini_chat_btn")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "Gemini AI Chatbot",
+                        tint = Color(0xFFC59B27),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
                 // Profile & Portals Button
                 IconButton(
                     onClick = { activeSubScreen = HomeSubScreen.PROFILE },
@@ -608,6 +629,118 @@ fun HomeScreen(
                             tint = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.size(20.dp)
                         )
+                    }
+                }
+            }
+
+            // Gemini AI Chatbot Featured Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .clickable { onNavigateToGeminiChat() }
+                    .testTag("home_gemini_chatbot_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = BrandNavy),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFC59B27).copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "Gemini AI",
+                                    tint = Color(0xFFC59B27),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Gemini AI Chatbot",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color(0xFFC59B27))
+                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    ) {
+                                        Text(
+                                            text = "Multi-Turn",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BrandNavy
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = "Academic Advisor, Study Mentor & Campus Assistant",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open Chatbot",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf(
+                            "🎓 Advisor",
+                            "📖 Tutor",
+                            "⚡ Quick FAQ",
+                            "💼 Career"
+                        ).forEach { pill ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.White.copy(alpha = 0.12f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = pill,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                        }
                     }
                 }
             }

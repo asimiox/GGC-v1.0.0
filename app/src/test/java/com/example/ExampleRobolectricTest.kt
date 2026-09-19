@@ -2,6 +2,7 @@ package com.example
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.github.jan.supabase.postgrest.from
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -198,6 +199,37 @@ class ExampleRobolectricTest {
 
     val facultyState = state.copy(selectedTab = com.example.ui.screens.admin.OfficialRegistryTab.FACULTY)
     assertEquals(com.example.ui.screens.admin.OfficialRegistryTab.FACULTY, facultyState.selectedTab)
+  }
+
+  @Test
+  fun `diagnose password change issue`() = kotlinx.coroutines.runBlocking {
+    val client = com.example.data.datasource.remote.SupabaseClientProvider.client
+    try {
+      val bsStudents = client.from("bs_student_profiles")
+        .select()
+        .decodeList<kotlinx.serialization.json.JsonObject>()
+      println("DEBUG_BS_PROFILES: count=${bsStudents.size}, profiles=$bsStudents")
+    } catch (e: Exception) {
+      println("DEBUG_BS_PROFILES_ERR: ${e.message}")
+    }
+
+    try {
+      val official = client.from("official_bs_students")
+        .select()
+        .decodeList<kotlinx.serialization.json.JsonObject>()
+      val asim = official.filter { element -> element.toString().contains("Asim", ignoreCase = true) }
+      println("DEBUG_OFFICIAL_ASIM: count=${official.size}, asimMatch=$asim")
+    } catch (e: Exception) {
+      println("DEBUG_OFFICIAL_ERR: ${e.message}")
+    }
+
+    val res = com.example.data.datasource.remote.CentralAuthRemoteManager.changePassword(
+      role = com.example.data.model.AppRole.STUDENT_BS,
+      identifier = "56", // let's try or test
+      currentPassword = "00000",
+      newPassword = "asim"
+    )
+    println("DEBUG_CHANGE_RES: $res")
   }
 }
 

@@ -69,6 +69,7 @@ import com.example.ui.screens.home.HomeScreen
 import com.example.ui.screens.notices.NoticesScreen
 import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.programs.ProgramsScreen
+import com.example.ui.screens.chat.GeminiChatScreen
 
 private val BrandNavy = Color(0xFF061B52)
 
@@ -186,7 +187,7 @@ fun MainScreen(
         bottomBar = {
             val activeBottomRoute = when {
                 currentRoute == NavRoutes.CONTENT_MANAGEMENT && userProfile.isFaculty -> NavRoutes.CONTENT_MANAGEMENT
-                currentRoute in listOf(NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE, NavRoutes.ADMIN_REGISTRY, NavRoutes.CONTENT_MANAGEMENT) -> previousRoute
+                currentRoute in listOf(NavRoutes.PROGRAMS, NavRoutes.FACULTY, NavRoutes.COURSES_OUTLINE, NavRoutes.ADMIN_REGISTRY, NavRoutes.CONTENT_MANAGEMENT, NavRoutes.GEMINI_CHAT) -> previousRoute
                 else -> currentRoute
             }
             val navItems = if (userProfile.isFaculty) {
@@ -217,6 +218,7 @@ fun MainScreen(
                     onNavigateToCoursesOutline = { navigateTo(NavRoutes.COURSES_OUTLINE) },
                     onNavigateToAdminRegistry = { navigateTo(NavRoutes.ADMIN_REGISTRY) },
                     onNavigateToContentManagement = { navigateTo(NavRoutes.CONTENT_MANAGEMENT) },
+                    onNavigateToGeminiChat = { navigateTo(NavRoutes.GEMINI_CHAT) },
                     onLogout = onLogout
                 )
                 NavRoutes.ACADEMICS -> AcademicsScreen(
@@ -262,11 +264,15 @@ fun MainScreen(
                 NavRoutes.HOD_DASHBOARD -> com.example.ui.screens.hod.HodDashboardScreen(
                     onNavigateBack = { goBack() }
                 )
+                NavRoutes.GEMINI_CHAT -> GeminiChatScreen(
+                    onBack = { goBack() }
+                )
                 else -> HomeScreen(
                     onNavigateToPrograms = { navigateTo(NavRoutes.PROGRAMS) },
                     onNavigateToCoursesOutline = { navigateTo(NavRoutes.COURSES_OUTLINE) },
                     onNavigateToAdminRegistry = { navigateTo(NavRoutes.ADMIN_REGISTRY) },
-                    onNavigateToContentManagement = { navigateTo(NavRoutes.CONTENT_MANAGEMENT) }
+                    onNavigateToContentManagement = { navigateTo(NavRoutes.CONTENT_MANAGEMENT) },
+                    onNavigateToGeminiChat = { navigateTo(NavRoutes.GEMINI_CHAT) }
                 )
             }
 
