@@ -59,6 +59,7 @@ fun SessionTransferApprovalHost(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var pendingRequest by remember { mutableStateOf<ActiveSessionRemoteManager.SessionTransferRequest?>(null) }
+    var terminatedDeviceName by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -68,6 +69,14 @@ fun SessionTransferApprovalHost(
             if (user.isVerified) {
                 val userIdentifier = user.rollNumber ?: user.facultyId ?: user.username ?: (if (user.appRole == com.example.data.model.AppRole.ADMIN) "ADMIN_CENTRAL" else user.name)
                 try {
+                    // 1. Check if another device has logged in (Single-Device Enforcement)
+                    val validity = ActiveSessionRemoteManager.checkCurrentDeviceSession(context, userIdentifier)
+                    if (validity is ActiveSessionRemoteManager.SessionCheckResult.TerminatedByOtherDevice) {
+                        terminatedDeviceName = validity.otherDeviceName
+                        break
+                    }
+
+                    // 2. Check if a device transfer approval is requested
                     val req = ActiveSessionRemoteManager.getPendingTransferRequest(
                         userIdentifier = userIdentifier,
                         currentDeviceId = deviceId
@@ -82,6 +91,77 @@ fun SessionTransferApprovalHost(
                 pendingRequest = null
             }
             delay(3000L)
+        }
+    }
+
+    // Modal when account has been logged in on another device
+    val terminatedOn = terminatedDeviceName
+    if (terminatedOn != null) {
+        Dialog(
+            onDismissRequest = { /* Must acknowledge */ },
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp,
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .background(MaterialTheme.colorScheme.error.copy(alpha = 0.12f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Security,
+                            contentDescription = "Security Alert",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Logged Out (Other Device)",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Your account was logged in on another device ($terminatedOn).\n\nUnder college policy, an account can only be active on one device at a time. Your session on this device has ended.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            UserProfileManager.clearProfile(context)
+                            terminatedDeviceName = null
+                            onLoggedOut("Account logged in on $terminatedOn")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Log Out & Return to Sign In", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
         }
     }
 

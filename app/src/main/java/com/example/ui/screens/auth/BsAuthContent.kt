@@ -217,11 +217,11 @@ fun BsAuthContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Username or Roll Number Field
+                // Roll Number or Registration Number Field
                 OutlinedTextField(
                     value = state.loginForm.usernameOrRoll,
                     onValueChange = { viewModel.updateLoginUsernameOrRoll(it) },
-                    label = { Text("Roll No, Reg No, or Username", fontSize = 12.sp) },
+                    label = { Text("Roll Number or Registration Number", fontSize = 12.sp) },
                     placeholder = { Text("e.g. 21014119-001 or BSIT-2022-01", color = Color.Gray, fontSize = 12.sp) },
                     leadingIcon = {
                         Icon(Icons.Default.Person, contentDescription = null, tint = BrandNavy)

@@ -11,26 +11,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,9 +33,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.ui.navigation.BottomNavItem
 import com.example.ui.navigation.NavRoutes
 
@@ -57,18 +46,14 @@ private val NeutralInactiveBg = Color(0xFFF1F4F9)
 private val NeutralInactiveBorder = Color(0xFFD6DFEB)
 
 /**
- * Modern floating bottom navigation bar for Govt Graduate College Mandi Bahauddin.
+ * Modern icon-only bottom navigation bar for Govt Graduate College Mandi Bahauddin.
  *
- * Structure:
- * - Clean white floating surface with rounded corners and subtle drop shadow.
- * - Sits comfortably above the bottom edge with horizontal margins.
- * - Exactly 5 destinations:
- *   [Notices] [Academic Departments] [HOME (Center circle)] [Events] [User Profile]
- * - Center Home button is a circular floating button rising slightly above the bar with
- *   an integrated white outer ring collar.
- * - Active Home button is highlighted in official GGC Brand Navy (#061B52) with subtle scaling.
- * - When any other destination is active, Home returns to its inactive appearance while the selected
- *   item highlights in Brand Navy (#061B52).
+ * Design:
+ * - Transparent / seamless container without any bulky "white plate" background.
+ * - Pure icon navigation (no text labels cluttering the bar).
+ * - 5 evenly spaced destinations:
+ *   [Notices] [Academics/Content] [Center: HOME] [Events] [Profile]
+ * - Standard accessible touch targets (48dp x 48dp) with smooth active indicators.
  */
 @Composable
 fun GgcBottomBar(
@@ -88,9 +73,8 @@ fun GgcBottomBar(
 
     val isHomeSelected = currentRoute == homeItem.route
 
-    // Scale animation for the center circular Home button
     val homeScale by animateFloatAsState(
-        targetValue = if (isHomeSelected) 1.05f else 1.0f,
+        targetValue = if (isHomeSelected) 1.08f else 1.0f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -102,172 +86,102 @@ fun GgcBottomBar(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
-            .height(78.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .height(56.dp)
             .testTag("ggc_bottom_nav_container"),
-        contentAlignment = Alignment.BottomCenter
+        contentAlignment = Alignment.Center
     ) {
-        // 1. Floating White Main Bar Surface
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(62.dp)
-                .align(Alignment.BottomCenter)
-                .shadow(
-                    elevation = 10.dp,
-                    shape = RoundedCornerShape(32.dp),
-                    spotColor = Color.Black.copy(alpha = 0.14f),
-                    ambientColor = Color.Black.copy(alpha = 0.06f)
-                ),
-            shape = RoundedCornerShape(32.dp),
-            color = Color.White
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            // 1. Notices
+            NavIconItem(
+                item = noticesItem,
+                isSelected = currentRoute == noticesItem.route,
+                onNavigate = onNavigateToRoute
+            )
+
+            // 2. Academics / Content Hub
+            NavIconItem(
+                item = academicsItem,
+                isSelected = currentRoute == academicsItem.route,
+                onNavigate = onNavigateToRoute
+            )
+
+            // 3. Center Circular Home Button (no outer white collar plate)
+            val homeBgColor by animateColorAsState(
+                targetValue = if (isHomeSelected) BrandNavy else NeutralInactiveBg,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                label = "home_bg_color"
+            )
+            val homeIconTint by animateColorAsState(
+                targetValue = if (isHomeSelected) Color.White else BrandNavy,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                label = "home_icon_tint"
+            )
+            val homeBorder = if (isHomeSelected) null else BorderStroke(1.dp, NeutralInactiveBorder)
+
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .padding(horizontal = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Left 2 items: Notices, Academic Departments
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    NavItem(
-                        item = noticesItem,
-                        isSelected = currentRoute == noticesItem.route,
-                        onNavigate = onNavigateToRoute
-                    )
-                    NavItem(
-                        item = academicsItem,
-                        isSelected = currentRoute == academicsItem.route,
-                        onNavigate = onNavigateToRoute
-                    )
-                }
-
-                // Dedicated center gap reserved for the circular Home button
-                Spacer(modifier = Modifier.width(66.dp))
-
-                // Right 2 items: Events, User Profile
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    NavItem(
-                        item = eventsItem,
-                        isSelected = currentRoute == eventsItem.route,
-                        onNavigate = onNavigateToRoute
-                    )
-                    NavItem(
-                        item = profileItem,
-                        isSelected = currentRoute == profileItem.route,
-                        onNavigate = onNavigateToRoute
-                    )
-                }
-            }
-        }
-
-        // 2. Center Circular Home Button with integrated outer white ring collar
-        // Overlaps and rises above the top edge of the navigation bar
-        Box(
-            modifier = Modifier
-                .size(66.dp)
-                .align(Alignment.TopCenter),
-            contentAlignment = Alignment.Center
-        ) {
-            // Integrated white outer ring collar matching the bar surface
-            Surface(
-                modifier = Modifier
-                    .size(66.dp)
+                    .size(50.dp)
+                    .scale(homeScale)
                     .shadow(
-                        elevation = 8.dp,
+                        elevation = if (isHomeSelected) 4.dp else 1.dp,
                         shape = CircleShape,
-                        spotColor = Color.Black.copy(alpha = 0.12f),
-                        ambientColor = Color.Black.copy(alpha = 0.06f)
-                    ),
-                shape = CircleShape,
-                color = Color.White
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Inner Circular Home Action Button
-                    val homeBgColor by animateColorAsState(
-                        targetValue = if (isHomeSelected) BrandNavy else NeutralInactiveBg,
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                        label = "home_bg_color"
+                        spotColor = if (isHomeSelected) BrandNavy.copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.08f)
                     )
-
-                    val homeIconTint by animateColorAsState(
-                        targetValue = if (isHomeSelected) Color.White else BrandNavy.copy(alpha = 0.70f),
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                        label = "home_icon_tint"
+                    .clip(CircleShape)
+                    .background(homeBgColor)
+                    .then(
+                        if (homeBorder != null) {
+                            Modifier.border(homeBorder.width, homeBorder.brush, CircleShape)
+                        } else {
+                            Modifier
+                        }
                     )
-
-                    val homeBorder = if (isHomeSelected) {
-                        null
-                    } else {
-                        BorderStroke(1.dp, NeutralInactiveBorder)
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(52.dp)
-                            .scale(homeScale)
-                            .shadow(
-                                elevation = if (isHomeSelected) 6.dp else 1.dp,
-                                shape = CircleShape,
-                                spotColor = if (isHomeSelected) BrandNavy.copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.06f)
-                            )
-                            .clip(CircleShape)
-                            .background(homeBgColor)
-                            .then(
-                                if (homeBorder != null) {
-                                    Modifier.border(homeBorder.width, homeBorder.brush, CircleShape)
-                                } else {
-                                    Modifier
-                                }
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(
-                                    bounded = true,
-                                    color = if (isHomeSelected) Color.White else BrandNavy
-                                )
-                            ) {
-                                if (!isHomeSelected) {
-                                    onNavigateToRoute(homeItem.route)
-                                }
-                            }
-                            .testTag(homeItem.testTag),
-                        contentAlignment = Alignment.Center
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = true, color = if (isHomeSelected) Color.White else BrandNavy)
                     ) {
-                        Icon(
-                            imageVector = if (isHomeSelected) Icons.Filled.Home else Icons.Outlined.Home,
-                            contentDescription = homeItem.title,
-                            tint = homeIconTint,
-                            modifier = Modifier.size(26.dp)
-                        )
+                        if (!isHomeSelected) {
+                            onNavigateToRoute(homeItem.route)
+                        }
                     }
-                }
+                    .testTag(homeItem.testTag),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isHomeSelected) Icons.Filled.Home else Icons.Outlined.Home,
+                    contentDescription = homeItem.title,
+                    tint = homeIconTint,
+                    modifier = Modifier.size(24.dp)
+                )
             }
+
+            // 4. Events
+            NavIconItem(
+                item = eventsItem,
+                isSelected = currentRoute == eventsItem.route,
+                onNavigate = onNavigateToRoute
+            )
+
+            // 5. User Profile
+            NavIconItem(
+                item = profileItem,
+                isSelected = currentRoute == profileItem.route,
+                onNavigate = onNavigateToRoute
+            )
         }
     }
 }
 
 /**
- * Individual navigation item for the 4 flanking destinations (Notices, Academics, Events, Profile).
+ * Individual icon-only navigation item with 48dp minimum touch target and smooth active indicator.
  */
 @Composable
-private fun RowScope.NavItem(
+private fun NavIconItem(
     item: BottomNavItem,
     isSelected: Boolean,
     onNavigate: (String) -> Unit
@@ -277,22 +191,23 @@ private fun RowScope.NavItem(
     val iconColor by animateColorAsState(
         targetValue = if (isSelected) BrandNavy else NeutralUnselected,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "nav_item_icon_color"
+        label = "nav_icon_color"
     )
 
-    val textColor by animateColorAsState(
-        targetValue = if (isSelected) BrandNavy else NeutralUnselected,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "nav_item_text_color"
+    val itemScale by animateFloatAsState(
+        targetValue = if (isSelected) 1.08f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "nav_item_scale"
     )
 
     Box(
         modifier = Modifier
-            .weight(1f)
-            .fillMaxHeight()
+            .size(48.dp)
+            .scale(itemScale)
+            .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = false, radius = 24.dp, color = BrandNavy)
+                indication = ripple(bounded = true, color = BrandNavy)
             ) {
                 if (!isSelected) {
                     onNavigate(item.route)
@@ -301,36 +216,21 @@ private fun RowScope.NavItem(
             .testTag(item.testTag),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                contentDescription = item.title,
-                tint = iconColor,
-                modifier = Modifier.size(22.dp)
-            )
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Text(
-                text = item.title,
-                color = textColor,
-                fontSize = 10.5.sp,
-                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                maxLines = 1,
-                lineHeight = 13.sp
-            )
-
-            // Subtle active dot indicator matching the reference design
+        // Subtle circular highlight for active tab
+        if (isSelected) {
             Box(
                 modifier = Modifier
-                    .padding(top = 2.dp)
-                    .size(3.5.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (isSelected) BrandNavy else Color.Transparent)
+                    .background(BrandNavy.copy(alpha = 0.10f))
             )
         }
+
+        Icon(
+            imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+            contentDescription = item.title,
+            tint = iconColor,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }

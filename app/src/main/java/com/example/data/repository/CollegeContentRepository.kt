@@ -13,6 +13,7 @@ import com.example.data.model.DepartmentDto
 import com.example.data.model.NotificationType
 import com.example.data.model.OfficialDocumentDto
 import com.example.data.model.ProspectusDto
+import com.example.util.ContentSyncBus
 
 /**
  * Clean Architecture repository providing official content management operations
@@ -72,15 +73,20 @@ class CollegeContentRepository(
                 )
             )
         }
+        ContentSyncBus.emitContentChanged("COURSE_OUTLINE")
         return result
     }
 
     suspend fun deleteCourseOutline(id: String): AuthResult<Unit> {
-        return remoteDataSource.deleteCourseOutline(id)
+        val res = remoteDataSource.deleteCourseOutline(id)
+        ContentSyncBus.emitContentChanged("COURSE_OUTLINE")
+        return res
     }
 
     suspend fun setCourseOutlinePublished(id: String, isPublished: Boolean): AuthResult<Unit> {
-        return remoteDataSource.setCourseOutlinePublished(id, isPublished)
+        val res = remoteDataSource.setCourseOutlinePublished(id, isPublished)
+        ContentSyncBus.emitContentChanged("COURSE_OUTLINE")
+        return res
     }
 
     // =========================================================================
@@ -111,15 +117,22 @@ class CollegeContentRepository(
                 )
             )
         }
+        ContentSyncBus.emitContentChanged("ANNOUNCEMENT")
         return result
     }
 
     suspend fun deleteAnnouncement(id: String): AuthResult<Unit> {
-        return remoteDataSource.deleteAnnouncement(id)
+        val res = remoteDataSource.deleteAnnouncement(id)
+        // Also attempt deleting from college_events in case it was stored as an event
+        remoteDataSource.deleteEvent(id)
+        ContentSyncBus.emitContentChanged("ANNOUNCEMENT")
+        return res
     }
 
     suspend fun setAnnouncementPublished(id: String, isPublished: Boolean): AuthResult<Unit> {
-        return remoteDataSource.setAnnouncementPublished(id, isPublished)
+        val res = remoteDataSource.setAnnouncementPublished(id, isPublished)
+        ContentSyncBus.emitContentChanged("ANNOUNCEMENT")
+        return res
     }
 
     // =========================================================================
@@ -148,15 +161,22 @@ class CollegeContentRepository(
                 )
             )
         }
+        ContentSyncBus.emitContentChanged("EVENT")
         return result
     }
 
     suspend fun deleteEvent(id: String): AuthResult<Unit> {
-        return remoteDataSource.deleteEvent(id)
+        val res = remoteDataSource.deleteEvent(id)
+        // Also attempt deleting from announcements in case it was stored as an announcement
+        remoteDataSource.deleteAnnouncement(id)
+        ContentSyncBus.emitContentChanged("EVENT")
+        return res
     }
 
     suspend fun setEventPublished(id: String, isPublished: Boolean): AuthResult<Unit> {
-        return remoteDataSource.setEventPublished(id, isPublished)
+        val res = remoteDataSource.setEventPublished(id, isPublished)
+        ContentSyncBus.emitContentChanged("EVENT")
+        return res
     }
 
     // =========================================================================

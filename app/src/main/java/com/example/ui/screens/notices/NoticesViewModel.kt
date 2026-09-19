@@ -9,6 +9,7 @@ import com.example.data.model.AuthResult
 import com.example.data.repository.CollegeContentRepository
 import com.example.data.repository.CollegeStorageRepository
 import com.example.data.repository.PostAnalyticsRepository
+import com.example.util.ContentSyncBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +36,11 @@ class NoticesViewModel(
 
     init {
         loadPublishedNotices()
+        viewModelScope.launch {
+            ContentSyncBus.contentChangedEvents.collect {
+                loadPublishedNotices()
+            }
+        }
     }
 
     fun loadPublishedNotices() {

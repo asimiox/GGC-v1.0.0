@@ -310,8 +310,14 @@ class ContentManagementViewModel(
     }
 
     fun deleteAnnouncement(id: String, storagePath: String? = null) {
+        // Optimistically remove from state so the announcement disappears immediately
+        _uiState.update { it.copy(
+            announcements = it.announcements.filter { item -> item.id != id },
+            isSaving = true,
+            errorMessage = null,
+            successMessage = null
+        ) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null, successMessage = null) }
             if (!storagePath.isNullOrBlank()) {
                 storageRepository.deleteFile(CollegeStorageRemoteDataSource.BUCKET_ANNOUNCEMENTS, storagePath)
             }
@@ -458,8 +464,14 @@ class ContentManagementViewModel(
     }
 
     fun deleteEvent(id: String, bannerPath: String? = null) {
+        // Optimistically remove from state so the event disappears immediately
+        _uiState.update { it.copy(
+            events = it.events.filter { item -> item.id != id },
+            isSaving = true,
+            errorMessage = null,
+            successMessage = null
+        ) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null, successMessage = null) }
             if (!bannerPath.isNullOrBlank()) {
                 storageRepository.deleteFile(CollegeStorageRemoteDataSource.BUCKET_COLLEGE_MEDIA, bannerPath)
             }

@@ -210,11 +210,11 @@ fun IntermediateAuthContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Username or Roll Field
+                // Roll or Registration Field
                 OutlinedTextField(
                     value = state.loginForm.usernameOrRoll,
                     onValueChange = { viewModel.updateLoginUsernameOrRoll(it) },
-                    label = { Text("Username or College Roll Number", fontSize = 12.sp) },
+                    label = { Text("College Roll Number or Registration Number", fontSize = 12.sp) },
                     placeholder = { Text("e.g. 2024-FSC-01 or 12345", color = Color.Gray, fontSize = 12.sp) },
                     leadingIcon = {
                         Icon(

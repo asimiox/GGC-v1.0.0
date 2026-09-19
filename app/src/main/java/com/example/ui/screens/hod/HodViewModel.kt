@@ -19,6 +19,7 @@ import com.example.data.model.OfficialBsStudentDto
 import com.example.data.model.OfficialFacultyRegistryDto
 import com.example.data.model.OfficialIntermediateStudentDto
 import com.example.data.repository.OfficialRegistryRepository
+import com.example.util.ContentSyncBus
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -101,6 +102,12 @@ class HodViewModel(
 
     init {
         loadHodProfile()
+        viewModelScope.launch {
+            ContentSyncBus.contentChangedEvents.collect {
+                fetchDepartmentPosts()
+                fetchDepartmentAnnouncements()
+            }
+        }
     }
 
     fun loadHodProfile() {
@@ -929,6 +936,7 @@ class HodViewModel(
                     isLoading = false,
                     statusMessage = "Post \"$cleanTitle\" published in $dept successfully!"
                 )
+                ContentSyncBus.emitContentChanged("POST")
                 fetchDepartmentPosts()
             } else {
                 _uiState.value = _uiState.value.copy(
@@ -969,6 +977,7 @@ class HodViewModel(
                     isLoading = false,
                     statusMessage = "Post updated successfully!"
                 )
+                ContentSyncBus.emitContentChanged("POST")
                 fetchDepartmentPosts()
             } else {
                 _uiState.value = _uiState.value.copy(
@@ -980,21 +989,19 @@ class HodViewModel(
     }
 
     fun deletePost(id: String, postTitle: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        // Optimistically remove from state so the post disappears immediately
+        val updatedPosts = _uiState.value.postsList.filter { it.id != id }
+        _uiState.value = _uiState.value.copy(
+            postsList = updatedPosts,
+            totalPostsCount = updatedPosts.size,
+            statusMessage = "Post \"$postTitle\" deleted successfully."
+        )
         viewModelScope.launch {
-            val res = contentDataSource.deleteEvent(id)
-            if (res is AuthResult.Success) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    statusMessage = "Post \"$postTitle\" deleted successfully."
-                )
-                fetchDepartmentPosts()
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to delete post"
-                )
-            }
+            contentDataSource.deleteEvent(id)
+            contentDataSource.deleteAnnouncement(id)
+            ContentSyncBus.emitContentChanged("POST")
+            fetchDepartmentPosts()
+            fetchDepartmentAnnouncements()
         }
     }
 
@@ -1081,6 +1088,7 @@ class HodViewModel(
                     isLoading = false,
                     statusMessage = "Announcement \"$cleanTitle\" published for $dept successfully!"
                 )
+                ContentSyncBus.emitContentChanged("ANNOUNCEMENT")
                 fetchDepartmentAnnouncements()
             } else {
                 _uiState.value = _uiState.value.copy(
@@ -1119,6 +1127,7 @@ class HodViewModel(
                     isLoading = false,
                     statusMessage = "Announcement updated successfully!"
                 )
+                ContentSyncBus.emitContentChanged("ANNOUNCEMENT")
                 fetchDepartmentAnnouncements()
             } else {
                 _uiState.value = _uiState.value.copy(
@@ -1130,21 +1139,19 @@ class HodViewModel(
     }
 
     fun deleteAnnouncement(id: String, title: String) {
-        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+        // Optimistically remove from state so the announcement disappears immediately
+        val updatedAnnouncements = _uiState.value.announcementsList.filter { it.id != id }
+        _uiState.value = _uiState.value.copy(
+            announcementsList = updatedAnnouncements,
+            totalAnnouncementsCount = updatedAnnouncements.size,
+            statusMessage = "Announcement \"$title\" deleted successfully."
+        )
         viewModelScope.launch {
-            val res = contentDataSource.deleteAnnouncement(id)
-            if (res is AuthResult.Success) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    statusMessage = "Announcement \"$title\" deleted successfully."
-                )
-                fetchDepartmentAnnouncements()
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = (res as? AuthResult.Error)?.message ?: "Failed to delete announcement"
-                )
-            }
+            contentDataSource.deleteAnnouncement(id)
+            contentDataSource.deleteEvent(id)
+            ContentSyncBus.emitContentChanged("ANNOUNCEMENT")
+            fetchDepartmentAnnouncements()
+            fetchDepartmentPosts()
         }
     }
 }

@@ -47,6 +47,7 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +84,10 @@ fun EventsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val filteredEvents = viewModel.getFilteredEvents()
     val categories = listOf("All", "College", "Sports", "Academic", "Seminar", "Workshop", "Cultural")
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPublishedEvents()
+    }
 
     if (uiState.selectedEvent != null) {
         val bannerUrl = viewModel.getBannerUrl(uiState.selectedEvent?.bannerStoragePath)

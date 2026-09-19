@@ -331,7 +331,7 @@ class IntermediateAuthRemoteDataSource {
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
             userIdentifier = sessionIdentifier,
             role = com.example.data.model.AppRole.STUDENT_INTERMEDIATE,
-            forceOverride = true
+            forceOverride = false
         )
         if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
             return AuthResult.Error(

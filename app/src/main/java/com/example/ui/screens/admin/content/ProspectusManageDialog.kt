@@ -3,26 +3,33 @@ package com.example.ui.screens.admin.content
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,13 +55,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.data.model.ProspectusDto
 import com.example.ui.util.FileUtils
 import kotlinx.coroutines.Dispatchers
@@ -62,8 +74,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val BrandNavy = Color(0xFF061B52)
+private val BrandNavyDeep = Color(0xFF030D29)
 private val BrandTextMuted = Color(0xFF5A6A85)
 private val BrandGold = Color(0xFFC59B27)
+private val BrandGoldLight = Color(0xFFF7E7A9)
 
 val PROSPECTUS_LEVELS = listOf(
     "Comprehensive (BS & Intermediate)",
@@ -133,63 +147,167 @@ fun ProspectusManageDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(22.dp),
             color = Color.White,
+            border = BorderStroke(1.dp, Color(0xFFD6DFEB)),
+            shadowElevation = 12.dp,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.92f)
                 .testTag("prospectus_manage_dialog")
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp)
-            ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(BrandNavy.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Description,
-                                contentDescription = null,
-                                tint = BrandNavy,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = if (prospectus == null) "Upload Prospectus" else "Edit Prospectus",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandNavy
-                            )
-                            Text(
-                                text = "Institutional Academic Guidebook",
-                                fontSize = 12.sp,
-                                color = BrandTextMuted
-                            )
-                        }
-                    }
+            Column(modifier = Modifier.fillMaxWidth()) {
 
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = BrandTextMuted)
+                // 1. EXECUTIVE GOVERNMENT HEADER
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(BrandNavyDeep, BrandNavy)
+                            )
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(BrandGold, Color(0xFFFFE082), BrandGold)
+                                )
+                            )
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(Color.White.copy(alpha = 0.12f), CircleShape)
+                                        .border(BorderStroke(1.5.dp, BrandGold.copy(alpha = 0.7f)), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                        contentDescription = "College Seal",
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            letterSpacing = 1.1.sp,
+                                            color = BrandGoldLight
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            imageVector = Icons.Default.Verified,
+                                            contentDescription = "Official",
+                                            tint = BrandGold,
+                                            modifier = Modifier.size(11.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = if (prospectus == null) "Official Prospectus Dispatch" else "Edit Academic Prospectus",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Office of Admissions & Student Affairs",
+                                        fontSize = 10.5.sp,
+                                        color = Color.White.copy(alpha = 0.75f)
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(Color.White.copy(alpha = 0.10f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                // 2. SCROLLABLE FORM BODY
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(Color(0xFFF9FAFC))
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                ) {
+                    // Authority Notice Banner
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFF1F5F9),
+                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalance,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "OFFICIAL PROSPECTUS ARCHIVE",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy,
+                                    letterSpacing = 0.8.sp
+                                )
+                                Text(
+                                    text = "The active prospectus is published on the public portal and mobile app home screen for student admission guidance.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF475569),
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                 // Title
                 OutlinedTextField(
@@ -435,57 +553,82 @@ fun ProspectusManageDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                }
 
-                // Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // 3. STICKY EXECUTIVE FOOTER
+                Surface(
+                    color = Color.White,
+                    shadowElevation = 8.dp,
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Cancel", color = BrandTextMuted)
-                    }
-
-                    Button(
-                        onClick = {
-                            var valid = true
-                            if (title.isBlank()) {
-                                titleError = "Title is required"
-                                valid = false
-                            }
-                            if (academicSession.isBlank()) {
-                                sessionError = "Academic session is required"
-                                valid = false
-                            }
-                            if (fileName.isNullOrBlank() && fileBytes == null) {
-                                fileError = "Please select a prospectus PDF file"
-                                valid = false
-                            }
-                            if (valid) {
-                                onSave(
-                                    prospectus?.id,
-                                    title,
-                                    academicSession,
-                                    programLevel,
-                                    description,
-                                    isCurrent,
-                                    isPublished,
-                                    fileBytes,
-                                    fileName
-                                )
-                            }
-                        },
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .testTag("btn_save_prospectus"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                        shape = RoundedCornerShape(12.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(if (prospectus == null) "Upload" else "Save Changes", color = Color.White)
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        ) {
+                            Text("Dismiss", color = BrandTextMuted, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Button(
+                            onClick = {
+                                var valid = true
+                                if (title.isBlank()) {
+                                    titleError = "Title is required"
+                                    valid = false
+                                }
+                                if (academicSession.isBlank()) {
+                                    sessionError = "Academic session is required"
+                                    valid = false
+                                }
+                                if (fileName.isNullOrBlank() && fileBytes == null) {
+                                    fileError = "Please select a prospectus PDF file"
+                                    valid = false
+                                }
+                                if (valid) {
+                                    onSave(
+                                        prospectus?.id,
+                                        title,
+                                        academicSession,
+                                        programLevel,
+                                        description,
+                                        isCurrent,
+                                        isPublished,
+                                        fileBytes,
+                                        fileName
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .height(46.dp)
+                                .testTag("btn_save_prospectus"),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Verified,
+                                contentDescription = null,
+                                tint = BrandGold,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (prospectus == null) "Publish Prospectus" else "Save Changes",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

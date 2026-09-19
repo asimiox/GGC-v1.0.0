@@ -383,7 +383,7 @@ class FacultyAuthRemoteDataSource {
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
             userIdentifier = sessionIdentifier,
             role = sessionRole,
-            forceOverride = true
+            forceOverride = false
         )
         if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
             return AuthResult.Error(

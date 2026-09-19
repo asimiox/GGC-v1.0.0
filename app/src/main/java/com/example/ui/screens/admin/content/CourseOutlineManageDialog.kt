@@ -58,9 +58,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.data.model.AcademicCatalogDefaults
 import com.example.data.model.AcademicProgramDto
 import com.example.data.model.AppRole
@@ -74,7 +86,9 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 private val BrandNavy = Color(0xFF061B52)
+private val BrandNavyDeep = Color(0xFF030D29)
 private val BrandGold = Color(0xFFC59B27)
+private val BrandGoldLight = Color(0xFFF7E7A9)
 private val BrandTextMuted = Color(0xFF5A6A85)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -202,63 +216,167 @@ fun CourseOutlineManageDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(22.dp),
             color = Color.White,
+            border = BorderStroke(1.dp, Color(0xFFD6DFEB)),
+            shadowElevation = 12.dp,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.92f)
                 .testTag("course_outline_manage_dialog")
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(22.dp)
-            ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(BrandNavy.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
-                                contentDescription = null,
-                                tint = BrandNavy,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = if (outline == null) "New Course Outline" else "Edit Outline",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandNavy
-                            )
-                            Text(
-                                text = "Syllabus, Topics & PDF Attachment",
-                                fontSize = 12.sp,
-                                color = BrandTextMuted
-                            )
-                        }
-                    }
+            Column(modifier = Modifier.fillMaxWidth()) {
 
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Close", tint = BrandTextMuted)
+                // 1. EXECUTIVE GOVERNMENT HEADER
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(BrandNavyDeep, BrandNavy)
+                            )
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(BrandGold, Color(0xFFFFE082), BrandGold)
+                                )
+                            )
+                    )
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(Color.White.copy(alpha = 0.12f), CircleShape)
+                                        .border(BorderStroke(1.5.dp, BrandGold.copy(alpha = 0.7f)), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                        contentDescription = "College Seal",
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            letterSpacing = 1.1.sp,
+                                            color = BrandGoldLight
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            imageVector = Icons.Default.Verified,
+                                            contentDescription = "Official",
+                                            tint = BrandGold,
+                                            modifier = Modifier.size(11.dp)
+                                        )
+                                    }
+                                    Text(
+                                        text = if (outline == null) "Curriculum & Course Syllabus Dispatch" else "Edit Academic Outline",
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "Academic Council • Departmental Syllabus Management",
+                                        fontSize = 10.5.sp,
+                                        color = Color.White.copy(alpha = 0.75f)
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(Color.White.copy(alpha = 0.10f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
+                // 2. SCROLLABLE FORM BODY
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(Color(0xFFF9FAFC))
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 18.dp)
+                ) {
+                    // Authority Notice Banner
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFF1F5F9),
+                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalance,
+                                contentDescription = null,
+                                tint = BrandNavy,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "OFFICIAL CURRICULUM DISPATCH",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandNavy,
+                                    letterSpacing = 0.8.sp
+                                )
+                                Text(
+                                    text = "Ensure correct Department, Academic Program, and Semester alignment according to University of Gujrat / BISE affiliation guidelines.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF475569),
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                 // 1. Department Selection
                 val currentDept = effectiveDepartments.firstOrNull { it.id == selectedDeptId }
@@ -755,68 +873,93 @@ fun CourseOutlineManageDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(22.dp))
+                }
 
-                // Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // 3. STICKY EXECUTIVE FOOTER
+                Surface(
+                    color = Color.White,
+                    shadowElevation = 8.dp,
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Cancel", color = BrandTextMuted)
-                    }
-
-                    Button(
-                        onClick = {
-                            var valid = true
-                            var finalCourseId = selectedCourseId
-
-                            if (isCustomCourseMode) {
-                                if (customCourseCode.isBlank() || customCourseTitle.isBlank()) {
-                                    courseError = "Please enter both Course Code and Title"
-                                    valid = false
-                                } else {
-                                    finalCourseId = UUID.randomUUID().toString()
-                                }
-                            } else {
-                                if (finalCourseId.isBlank()) {
-                                    courseError = "Please select a course"
-                                    valid = false
-                                }
-                            }
-
-                            if (title.isBlank()) {
-                                titleError = "Title is required"
-                                valid = false
-                            }
-
-                            if (valid) {
-                                onSave(
-                                    outline?.id,
-                                    finalCourseId,
-                                    selectedProgramId,
-                                    selectedDeptId,
-                                    title,
-                                    sessionYear,
-                                    semesterNumber,
-                                    outlineContent,
-                                    isPublished,
-                                    fileBytes,
-                                    fileName
-                                )
-                            }
-                        },
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .testTag("btn_save_outline"),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                        shape = RoundedCornerShape(12.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(if (outline == null) "Create Outline" else "Save Changes", color = Color.White)
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, Color(0xFFCBD5E1))
+                        ) {
+                            Text("Dismiss", color = BrandTextMuted, fontWeight = FontWeight.SemiBold)
+                        }
+
+                        Button(
+                            onClick = {
+                                var valid = true
+                                var finalCourseId = selectedCourseId
+
+                                if (isCustomCourseMode) {
+                                    if (customCourseCode.isBlank() || customCourseTitle.isBlank()) {
+                                        courseError = "Please enter both Course Code and Title"
+                                        valid = false
+                                    } else {
+                                        finalCourseId = UUID.randomUUID().toString()
+                                    }
+                                } else {
+                                    if (finalCourseId.isBlank()) {
+                                        courseError = "Please select a course"
+                                        valid = false
+                                    }
+                                }
+
+                                if (title.isBlank()) {
+                                    titleError = "Title is required"
+                                    valid = false
+                                }
+
+                                if (valid) {
+                                    onSave(
+                                        outline?.id,
+                                        finalCourseId,
+                                        selectedProgramId,
+                                        selectedDeptId,
+                                        title,
+                                        sessionYear,
+                                        semesterNumber,
+                                        outlineContent,
+                                        isPublished,
+                                        fileBytes,
+                                        fileName
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .height(46.dp)
+                                .testTag("btn_save_outline"),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Verified,
+                                contentDescription = null,
+                                tint = BrandGold,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (outline == null) "Dispatch Outline" else "Save Changes",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }

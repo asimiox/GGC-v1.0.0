@@ -227,7 +227,7 @@ class BsAuthViewModel(
     fun loginStudent(context: Context, onSuccess: () -> Unit) {
         val form = _uiState.value.loginForm
         if (form.usernameOrRoll.trim().isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Please enter your Roll No, University Reg No, or Username.")
+            _uiState.value = _uiState.value.copy(errorMessage = "Please enter your Roll Number or Registration Number.")
             return
         }
         if (form.password.isBlank()) {

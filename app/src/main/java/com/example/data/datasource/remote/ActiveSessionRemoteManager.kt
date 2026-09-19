@@ -61,6 +61,11 @@ object ActiveSessionRemoteManager {
         data class Error(val message: String) : SessionAcquireResult()
     }
 
+    sealed class SessionCheckResult {
+        object Active : SessionCheckResult()
+        data class TerminatedByOtherDevice(val otherDeviceName: String) : SessionCheckResult()
+    }
+
     /**
      * Checks if this account is currently active on another device in the database.
      * If free or on the same device, claims the active session lock.
@@ -109,9 +114,9 @@ object ActiveSessionRemoteManager {
 
                 val isSameDevice = activeDeviceId.equals(currentDeviceId, ignoreCase = true)
 
-                if (!isSameDevice && !forceOverride && role != AppRole.ADMIN) {
+                if (!isSameDevice && !forceOverride) {
                     // BLOCKED: Active on another device
-                    val blockMsg = "This account is currently active on $activeDeviceName. You cannot log in here unless you first log out from that device, or request College Administration to reset your session."
+                    val blockMsg = "This account is currently active on $activeDeviceName. Under college security regulations, you cannot be logged in on multiple devices at the same time. Please log out from $activeDeviceName first, or request approval to transfer your session."
                     Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $activeDeviceName)")
                     return@withContext SessionAcquireResult.Blocked(
                         activeDeviceName = activeDeviceName,
@@ -211,9 +216,9 @@ object ActiveSessionRemoteManager {
                 if (existingSession != null && existingSession.isActive) {
                     val isSameDevice = existingSession.deviceId.equals(currentDeviceId, ignoreCase = true)
 
-                    if (!isSameDevice && !forceOverride && role != AppRole.ADMIN) {
+                    if (!isSameDevice && !forceOverride) {
                         val deviceLabel = existingSession.deviceName.ifBlank { "Another Device" }
-                        val blockMsg = "This account is currently active on $deviceLabel. You cannot log in here unless you first log out from that device, or request College Administration to reset your session."
+                        val blockMsg = "This account is currently active on $deviceLabel. Under college security regulations, you cannot be logged in on multiple devices at the same time. Please log out from $deviceLabel first, or request approval to transfer your session."
                         Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $deviceLabel)")
                         return@withContext SessionAcquireResult.Blocked(
                             activeDeviceName = deviceLabel,
@@ -461,6 +466,72 @@ object ActiveSessionRemoteManager {
             Log.e(TAG, "Error forcibly terminating session: ${e.message}", e)
         }
         true
+    }
+
+    /**
+     * Actively verifies whether this current device still holds the active session in Supabase.
+     * If another device has logged in or taken over the session, returns TerminatedByOtherDevice.
+     */
+    suspend fun checkCurrentDeviceSession(
+        context: Context?,
+        userIdentifier: String
+    ): SessionCheckResult = withContext(Dispatchers.IO) {
+        val cleanId = userIdentifier.trim().uppercase()
+        if (cleanId.isBlank()) return@withContext SessionCheckResult.Active
+        val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
+        val client = SupabaseClientProvider.client
+
+        // 1. Check public.user_sessions table
+        try {
+            val rows = client.from("user_sessions")
+                .select {
+                    filter {
+                        eq("user_identifier", cleanId)
+                        eq("active", true)
+                    }
+                    limit(1)
+                }.decodeList<JsonObject>()
+
+            if (rows.isNotEmpty()) {
+                val row = rows.first()
+                val activeDeviceId = row["device_id"]?.jsonPrimitive?.content.orEmpty()
+                val activeDeviceName = row["device_name"]?.jsonPrimitive?.content?.ifBlank { "Another Device" } ?: "Another Device"
+
+                if (activeDeviceId.isNotBlank() && !activeDeviceId.equals(currentDeviceId, ignoreCase = true)) {
+                    Log.w(TAG, "Single-Device Enforcement: Active session on $activeDeviceName ($activeDeviceId), current: $currentDeviceId")
+                    return@withContext SessionCheckResult.TerminatedByOtherDevice(activeDeviceName)
+                }
+                return@withContext SessionCheckResult.Active
+            }
+        } catch (_: Exception) {}
+
+        // 2. Check fallback announcements table
+        try {
+            val title = "SESSION:$cleanId"
+            val rows = client.from("announcements")
+                .select {
+                    filter {
+                        eq("category", SYSTEM_SESSION_CATEGORY)
+                        eq("title", title)
+                    }
+                    limit(1)
+                }.decodeList<JsonObject>()
+
+            if (rows.isNotEmpty()) {
+                val row = rows.first()
+                val contentStr = row["content"]?.jsonPrimitive?.content
+                if (!contentStr.isNullOrBlank()) {
+                    val session = json.decodeFromString<ActiveDeviceSession>(contentStr)
+                    if (session.isActive && !session.deviceId.equals(currentDeviceId, ignoreCase = true)) {
+                        val activeName = session.deviceName.ifBlank { "Another Device" }
+                        Log.w(TAG, "Single-Device Enforcement (fallback): Active on $activeName, current: $currentDeviceId")
+                        return@withContext SessionCheckResult.TerminatedByOtherDevice(activeName)
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        SessionCheckResult.Active
     }
 
     private suspend fun syncFallbackSession(cleanId: String, session: ActiveDeviceSession, nowIso: String) {

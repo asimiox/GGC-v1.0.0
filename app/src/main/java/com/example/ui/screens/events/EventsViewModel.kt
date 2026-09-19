@@ -6,6 +6,7 @@ import com.example.data.model.AuthResult
 import com.example.data.model.CollegeEventDto
 import com.example.data.repository.CollegeContentRepository
 import com.example.data.repository.CollegeStorageRepository
+import com.example.util.ContentSyncBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +34,11 @@ class EventsViewModel(
 
     init {
         loadPublishedEvents()
+        viewModelScope.launch {
+            ContentSyncBus.contentChangedEvents.collect {
+                loadPublishedEvents()
+            }
+        }
     }
 
     fun loadPublishedEvents() {

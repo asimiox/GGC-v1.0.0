@@ -47,7 +47,10 @@ import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Translate
@@ -57,6 +60,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.OutlinedTextField
@@ -204,9 +210,7 @@ fun OnboardingScreen(
                     onBack = { currentStep = OnboardingStep.CONTINUE_AS },
                     onSelectLevel = { level ->
                         selectedLevel = level
-                        if (level == "Intermediate") {
-                            currentStep = OnboardingStep.INTERMEDIATE_AUTH
-                        } else {
+                        if (level == "BS") {
                             currentStep = OnboardingStep.BS_AUTH
                         }
                     }
@@ -353,39 +357,50 @@ private fun WelcomeStepScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Stylized Quote Below Image
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
+                    .padding(horizontal = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "“Education is not something\nyou can finish.”",
+                    text = "Ibn Mas’ūd رضي الله عنه said:",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = BrandTextMuted,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "“Verily, no one is born knowledgeable;\nknowledge comes by way of studies.”",
                     fontFamily = FontFamily.Serif,
                     fontStyle = FontStyle.Italic,
-                    fontSize = 17.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = BrandNavy,
                     textAlign = TextAlign.Center,
-                    lineHeight = 24.sp
+                    lineHeight = 23.sp
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "～ Isaac Asimov",
+                    text = "[كتاب الزهد الإمام أحمد بن حنبل ٥٠٩]",
                     fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = BrandTextMuted,
                     textAlign = TextAlign.Center
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
         }
 
         // Elevated CTA Button safely above system navigation bar
@@ -937,6 +952,8 @@ private fun ChooseLevelStepScreen(
     onBack: () -> Unit,
     onSelectLevel: (String) -> Unit
 ) {
+    var showIntermediateMaintenanceDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -988,15 +1005,19 @@ private fun ChooseLevelStepScreen(
 
         Spacer(modifier = Modifier.height(36.dp))
 
-        // Level Option 1: Intermediate Student
+        // Level Option 1: Intermediate Student (Locked / Under Maintenance)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .clickable { onSelectLevel("Intermediate") }
+                .clickable {
+                    // Do NOT navigate to login page, stop user right here!
+                    showIntermediateMaintenanceDialog = true
+                }
                 .testTag("level_card_intermediate"),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFFFCC80).copy(alpha = 0.7f)),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Row(
@@ -1009,13 +1030,13 @@ private fun ChooseLevelStepScreen(
                     modifier = Modifier
                         .size(46.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(BrandIconBadgeBg),
+                        .background(Color(0xFFFFF3E0)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.School,
-                        contentDescription = null,
-                        tint = BrandNavy,
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Intermediate Locked",
+                        tint = Color(0xFFE65100),
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -1023,27 +1044,53 @@ private fun ChooseLevelStepScreen(
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Intermediate Student",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFFFF3E0),
+                            border = BorderStroke(1.dp, Color(0xFFFFB74D))
+                        ) {
+                            Text(
+                                text = "Under Maintenance",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFE65100),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = "Intermediate Student",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandNavy
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Verified Portal Login & Registration (2 Years)",
+                        text = "Portal locked for maintenance. Logins temporarily disabled.",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         color = BrandTextMuted
                     )
                 }
 
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = BrandTextMuted,
-                    modifier = Modifier.size(22.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFF3E0)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Locked",
+                        tint = Color(0xFFE65100),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
 
@@ -1108,6 +1155,104 @@ private fun ChooseLevelStepScreen(
             }
         }
     }
+
+    // Modal dialog stopping user when Intermediate is clicked
+    if (showIntermediateMaintenanceDialog) {
+        Dialog(
+            onDismissRequest = { showIntermediateMaintenanceDialog = false },
+            properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color.White,
+                tonalElevation = 6.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFF3E0)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Build,
+                            contentDescription = "Under Maintenance",
+                            tint = Color(0xFFE65100),
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Under Maintenance",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Intermediate Student Portal",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFE65100),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFFFF8E1),
+                        border = BorderStroke(1.dp, Color(0xFFFFD54F)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "The Intermediate Student Portal is currently undergoing scheduled maintenance. All logins, admissions, and student registrations are temporarily paused.",
+                            fontSize = 12.sp,
+                            color = Color(0xFF8D6E63),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 18.sp,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Please check back later or visit the College Administration office for inquiries.",
+                        fontSize = 12.sp,
+                        color = BrandTextMuted,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 17.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Button(
+                        onClick = { showIntermediateMaintenanceDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+                    ) {
+                        Text("Understood", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                }
+            }
+        }
+    }
 }
 
 // -------------------------------------------------------------
@@ -1159,10 +1304,95 @@ private fun IntermediateAuthStepScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Intermediate Auth Card
-        IntermediateAuthContent(
-            onAuthSuccess = onAuthSuccess
-        )
+        // Intermediate Under Maintenance Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFFFCC80).copy(alpha = 0.7f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFF3E0)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Build,
+                        contentDescription = "Maintenance",
+                        tint = Color(0xFFE65100),
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Under Maintenance",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Intermediate Student Portal",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFE65100),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFFFF8E1),
+                    border = BorderStroke(1.dp, Color(0xFFFFD54F)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "The Intermediate Student Portal is currently locked for maintenance. All logins and student services for Intermediate programs are temporarily paused.",
+                        fontSize = 12.sp,
+                        color = Color(0xFF8D6E63),
+                        textAlign = TextAlign.Center,
+                        lineHeight = 18.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Please check back later or visit the College Administration office for assistance.",
+                    fontSize = 12.sp,
+                    color = BrandTextMuted,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 17.sp
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy)
+                ) {
+                    Text("Return to Program Selection", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
     }

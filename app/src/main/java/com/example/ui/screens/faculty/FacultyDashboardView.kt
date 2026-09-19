@@ -275,7 +275,7 @@ fun FacultyDashboardView(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp)
+                            .padding(horizontal = 22.dp, vertical = 22.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -297,7 +297,7 @@ fun FacultyDashboardView(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -305,7 +305,7 @@ fun FacultyDashboardView(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(52.dp)
+                                    .size(56.dp)
                                     .clip(CircleShape)
                                     .background(Color.White.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
@@ -314,11 +314,11 @@ fun FacultyDashboardView(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = "Faculty Member",
                                     tint = Color.White,
-                                    modifier = Modifier.size(30.dp)
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(14.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
@@ -330,7 +330,7 @@ fun FacultyDashboardView(
                                     overflow = TextOverflow.Ellipsis
                                 )
 
-                                Spacer(modifier = Modifier.height(3.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
 
                                 val designationText = userProfile.designation ?: "Assistant Professor / Lecturer"
                                 val departmentText = userProfile.department ?: "Department of IT & Academics"
@@ -345,52 +345,12 @@ fun FacultyDashboardView(
                                 )
                             }
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Verification and affiliation badge
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Surface(
-                                color = Color.White.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Verified,
-                                        contentDescription = "Verified Staff",
-                                        tint = BrandSoftBlue,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Official Faculty Staff • Verified",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = "View Profile",
-                                tint = Color.White.copy(alpha = 0.85f),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
                     }
                 }
             }
         }
 
-        // 2.5. Role-Specific Banner: HOD Command Center (HOD only) OR Teacher Content Studio (Teacher only)
+        // 2.5. Role-Specific Banner: HOD Command Center (HOD only)
         if (userProfile.isHod || userProfile.isAdmin) {
             item {
                 Column(
@@ -471,172 +431,9 @@ fun FacultyDashboardView(
                     }
                 }
             }
-        } else {
-            // Teacher Publishing & CRUD Hub Banner
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 4.dp)
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(18.dp))
-                            .clickable { onNavigateToContentTab(ContentSectionTab.ANNOUNCEMENTS) }
-                            .testTag("teacher_content_hub_banner"),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2B66)),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Campaign,
-                                    contentDescription = "Teacher Studio",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(14.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "Teacher Posting & CRUD Hub",
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        color = Color(0xFF2E7D32),
-                                        shape = RoundedCornerShape(6.dp)
-                                    ) {
-                                        Text(
-                                            text = "TEACHER",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White,
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Manage Students, Post Notices, Lecture Notes, Outlines, Events",
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.85f)
-                                )
-                            }
-
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint = Color.White.copy(alpha = 0.85f),
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
-            }
         }
 
-        // 3. Quick Action Hub (Alternating Navy & White 2x2 Grid)
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = "Quick Actions",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
-                )
-                Text(
-                    text = "Manage department students and academic content with one tap",
-                    fontSize = 12.sp,
-                    color = BrandTextMuted
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // Row 1: Students Roster & + Notice
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        FacultyQuickActionCard(
-                            title = "Students Roster",
-                            subtitle = "Enroll & manage",
-                            icon = Icons.Default.School,
-                            isDark = true,
-                            onClick = onNavigateToStudentsManagement,
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("quick_action_add_student")
-                        )
-                        FacultyQuickActionCard(
-                            title = "+ Notice",
-                            subtitle = "Publish announcement",
-                            icon = Icons.Default.Campaign,
-                            isDark = false,
-                            onClick = { onNavigateToContentTab(ContentSectionTab.ANNOUNCEMENTS) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("quick_action_add_notice")
-                        )
-                    }
-
-                    // Row 2: + Course Outline & + Event
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        FacultyQuickActionCard(
-                            title = "+ Course Outline",
-                            subtitle = "Syllabus & notes",
-                            icon = Icons.Default.AutoStories,
-                            isDark = false,
-                            onClick = { onNavigateToContentTab(ContentSectionTab.COURSE_OUTLINES) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("quick_action_add_outline")
-                        )
-                        FacultyQuickActionCard(
-                            title = "+ Event",
-                            subtitle = "Seminars & sports",
-                            icon = Icons.Default.Event,
-                            isDark = true,
-                            onClick = { onNavigateToContentTab(ContentSectionTab.EVENTS) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("quick_action_add_event")
-                        )
-                    }
-                }
-            }
-        }
-
-        // 4. Dedicated Faculty Management Bento Grid (Alternating Navy-White Ladder)
+        // 3. Dedicated Faculty Management Bento Grid (Alternating Navy-White Ladder)
         item {
             Column(
                 modifier = Modifier
@@ -928,72 +725,5 @@ private fun FacultyBentoCard(
     }
 }
 
-@Composable
-private fun FacultyQuickActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    isDark: Boolean = false,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val cardBg = if (isDark) BrandNavy else Color.White
-    val cardBorder = if (isDark) BorderStroke(1.dp, Color(0xFF162D6E)) else BorderStroke(1.dp, Color(0xFFE2E8F0))
-    val iconBg = if (isDark) Color.White.copy(alpha = 0.15f) else BrandIconBadgeBg
-    val iconTint = if (isDark) Color.White else BrandNavy
-    val titleColor = if (isDark) Color.White else BrandNavy
-    val subtitleColor = if (isDark) Color.White.copy(alpha = 0.8f) else BrandTextMuted
 
-    Card(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        border = cardBorder,
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(iconBg),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = titleColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    fontSize = 10.sp,
-                    color = subtitleColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
 
