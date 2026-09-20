@@ -11,6 +11,7 @@ import com.example.data.model.GeminiGenerateResponse
 import com.example.data.model.GeminiGenerationConfig
 import com.example.data.model.GeminiModelType
 import com.example.data.model.GeminiPart
+import com.example.util.ChatTextFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -163,7 +164,8 @@ class GeminiChatRepository(
                 return@withContext Result.failure(Exception("Received empty response from Gemini model."))
             }
 
-            Result.success(candidateText.trim())
+            val cleanedText = ChatTextFormatter.clean(candidateText)
+            Result.success(cleanedText.ifBlank { candidateText.trim() })
         } catch (e: Exception) {
             Log.e(TAG, "Exception calling Gemini API", e)
             Result.failure(e)

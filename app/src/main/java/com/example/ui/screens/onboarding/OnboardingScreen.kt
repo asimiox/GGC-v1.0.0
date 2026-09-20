@@ -437,7 +437,7 @@ private fun WelcomeStepScreen(
 }
 
 // -------------------------------------------------------------
-// STEP 2: CONTINUE AS (Role Selection)
+// STEP 2: CONTINUE AS (Role Selection / Choose Login Portal)
 // -------------------------------------------------------------
 @Composable
 private fun ContinueAsStepScreen(
@@ -445,26 +445,33 @@ private fun ContinueAsStepScreen(
     onSelectStudent: () -> Unit,
     onSelectTeacher: () -> Unit
 ) {
+    val portalCardBorder = Color(0xFFE9EDF5)
+    val portalIconBg = Color(0xFFEEF2F8)
+    val portalArrowGold = Color(0xFFC59B27)
+    val portalTextSubtitle = Color(0xFF7A879D)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 22.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            // Top Bar
-            Row(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // HEADER BAR: Navy Back Arrow + Center-aligned Official Logo & App Name
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(top = 4.dp, bottom = 28.dp)
             ) {
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.testTag("continue_as_back_btn")
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .size(40.dp)
+                        .testTag("continue_as_back_btn")
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -472,61 +479,90 @@ private fun ContinueAsStepScreen(
                         tint = BrandNavy
                     )
                 }
+
+                Row(
+                    modifier = Modifier.align(Alignment.Center),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_ggc_logo),
+                        contentDescription = "GGC Logo",
+                        modifier = Modifier.size(38.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column {
+                        Text(
+                            text = "GGC M.B.Din",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy,
+                            lineHeight = 18.sp
+                        )
+                        Text(
+                            text = "Official App",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = portalTextSubtitle,
+                            lineHeight = 14.sp
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
+            // PAGE TITLE & SUBTITLE
             Text(
                 text = "Choose Login Portal",
-                fontSize = 24.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = BrandNavy,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.padding(horizontal = 2.dp)
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = "Select your designated official portal to sign in",
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = BrandTextMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                color = portalTextSubtitle,
+                modifier = Modifier.padding(horizontal = 2.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // Portal Option 1: Student (BS / Intermediate)
-            Card(
+            // CARD 1: Student Portal
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable { onSelectStudent() }
                     .testTag("role_option_student"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = BrandNavy),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, portalCardBorder),
+                shadowElevation = 0.5.dp
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(horizontal = 18.dp, vertical = 22.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Circular icon container
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                            .clip(CircleShape)
+                            .background(portalIconBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.School,
                             contentDescription = "Student Portal",
-                            tint = Color(0xFFE5C058),
-                            modifier = Modifier.size(30.dp)
+                            tint = BrandNavy,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
 
@@ -535,73 +571,62 @@ private fun ContinueAsStepScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Student Portal",
-                            fontSize = 18.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = BrandNavy
                         )
-                        Spacer(modifier = Modifier.height(3.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "BS Honors (4-Year) & Intermediate",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.85f)
+                            text = "BS Honors (4-Year) &\nIntermediate",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = portalTextSubtitle,
+                            lineHeight = 17.sp
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color.White.copy(alpha = 0.15f))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "Academics · Outlines · Roll No Login",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFFE5C058)
-                            )
-                        }
                     }
 
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(22.dp)
+                        tint = portalArrowGold,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Portal Option 2: Teacher & Staff (Faculty / HOD / Admin)
-            Card(
+            // CARD 2: Teacher & Staff Portal
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable { onSelectTeacher() }
                     .testTag("role_option_teacher"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF0C245E)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                shape = RoundedCornerShape(16.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, portalCardBorder),
+                shadowElevation = 0.5.dp
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(horizontal = 18.dp, vertical = 22.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Circular icon container
                     Box(
                         modifier = Modifier
                             .size(54.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFC59B27).copy(alpha = 0.25f)),
+                            .clip(CircleShape)
+                            .background(portalIconBg),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Badge,
                             contentDescription = "Teacher & Staff Portal",
-                            tint = Color(0xFFE5C058),
-                            modifier = Modifier.size(30.dp)
+                            tint = BrandNavy,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
 
@@ -610,51 +635,66 @@ private fun ContinueAsStepScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Teacher & Staff Portal",
-                            fontSize = 18.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = BrandNavy
                         )
-                        Spacer(modifier = Modifier.height(3.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Teaching Faculty · HODs · Administration",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.85f)
+                            text = "Teaching Faculty · HODs ·\nAdministration",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = portalTextSubtitle,
+                            lineHeight = 17.sp
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color.White.copy(alpha = 0.15f))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "Courses · Notes · Department Command",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFFE5C058)
-                            )
-                        }
                     }
 
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        tint = Color(0xFFE5C058),
-                        modifier = Modifier.size(22.dp)
+                        tint = portalArrowGold,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(36.dp))
+
+            // SUBTLE DIVIDER MESSAGE: "Choose the portal that matches your role."
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(1.dp)
+                        .background(Color(0xFFDDE3EC))
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Choose the portal that matches your role.",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = portalTextSubtitle
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(1.dp)
+                        .background(Color(0xFFDDE3EC))
+                )
+            }
         }
 
-        // Bottom college footer notice
+        // BOTTOM FOOTER: "GGC M.B.Din · Official App"
         Text(
-            text = "Official Academic App · Govt. Graduate College Mandi Bahauddin",
-            fontSize = 11.sp,
+            text = "GGC M.B.Din · Official App",
+            fontSize = 12.sp,
             fontWeight = FontWeight.Normal,
-            color = BrandTextMuted,
+            color = portalTextSubtitle,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -881,56 +921,17 @@ private fun TeacherAuthStepScreen(
     onBack: () -> Unit,
     onAuthSuccess: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        // Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.testTag("teacher_auth_back_btn")
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = BrandNavy
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column {
-                Text(
-                    text = "Faculty Portal",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandNavy
-                )
-                Text(
-                    text = "Official Teacher Login & Claim",
-                    fontSize = 12.sp,
-                    color = BrandTextMuted
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Embedded Supabase Faculty Verification and Authentication
         FacultyAuthContent(
+            onBack = onBack,
             onAuthSuccess = onAuthSuccess,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
@@ -1727,53 +1728,20 @@ private fun BsAuthStepScreen(
     onBack: () -> Unit,
     onAuthSuccess: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
-
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(BrandBackground)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 16.dp)
             .testTag("bs_auth_step_container")
     ) {
-        // Top Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.testTag("bs_auth_back_btn")
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = BrandNavy
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "BS Student Login",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // BS Auth Card
         BsAuthContent(
             initialProgram = initialProgram,
             initialSemester = initialSemester,
-            onAuthSuccess = onAuthSuccess
+            onBack = onBack,
+            onAuthSuccess = onAuthSuccess,
+            modifier = Modifier.fillMaxSize()
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
     }
 }

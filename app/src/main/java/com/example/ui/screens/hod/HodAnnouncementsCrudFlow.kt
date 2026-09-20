@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,6 +46,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -517,210 +520,205 @@ fun HodComposeAnnouncementDialog(
     var category by remember { mutableStateOf("General Notice") }
     var isPinned by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
+    var titleError by remember { mutableStateOf<String?>(null) }
+    var contentError by remember { mutableStateOf<String?>(null) }
 
     val categories = listOf("General Notice", "College Event", "Fees Notice", "Date Sheet / Exam", "Holiday Notice", "Scholarship")
+    val screenBg = Color(0xFFF6F6F6)
+    val borderColor = Color(0xFFD5DDE7)
+    val cardBg = Color.White
+    val textSecondary = Color(0xFF64748B)
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, Color(0xFFD6DFEB)),
-            shadowElevation = 12.dp,
             modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.90f)
-                .testTag("hod_compose_announcement_dialog")
+                .fillMaxSize()
+                .background(screenBg)
+                .testTag("hod_compose_announcement_dialog"),
+            color = screenBg
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Executive Government Header
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(BrandNavyDeep, BrandNavy)
-                            )
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+            ) {
+                // Top App Bar
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = screenBg
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(BrandGold, Color(0xFFFFE082), BrandGold)
-                                )
-                            )
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.testTag("btn_close_hod_announcement")
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .background(Color.White.copy(alpha = 0.12f), CircleShape)
-                                        .border(BorderStroke(1.5.dp, BrandGold.copy(alpha = 0.7f)), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_ggc_logo),
-                                        contentDescription = "College Seal",
-                                        modifier = Modifier
-                                            .size(34.dp)
-                                            .clip(CircleShape)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            letterSpacing = 1.1.sp,
-                                            color = BrandGoldLight
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Icon(
-                                            imageVector = Icons.Default.Verified,
-                                            contentDescription = "Official",
-                                            tint = BrandGold,
-                                            modifier = Modifier.size(11.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "Official Notice Dispatch",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Text(
-                                        text = "Department: $departmentName",
-                                        fontSize = 11.sp,
-                                        color = Color.White.copy(alpha = 0.85f)
-                                    )
-                                }
-                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = BrandNavy,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
 
-                            IconButton(
-                                onClick = onDismiss,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .background(Color.White.copy(alpha = 0.10f), CircleShape)
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.White,
+                            border = BorderStroke(0.5.dp, borderColor),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(3.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                    contentDescription = "GGC Logo",
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.3.sp,
+                                color = BrandNavy,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Department of ",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
                         }
                     }
                 }
 
-                // Scrollable Body
+                // Scrollable form
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
-                        .background(Color(0xFFF9FAFC))
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color(0xFFF1F5F9),
-                        border = BorderStroke(1.dp, Color(0xFFCBD5E1)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "New Announcement",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        letterSpacing = (-0.5).sp
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Publish updates, notices, and notifications for  students and faculty.",
+                        fontSize = 14.sp,
+                        color = textSecondary,
+                        lineHeight = 20.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Title
+                    Text("Announcement Title *", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = {
+                            title = it
+                            if (titleError != null) titleError = null
+                        },
+                        placeholder = { Text("e.g., Mid-Term Examination Schedule", color = textSecondary) },
+                        modifier = Modifier.fillMaxWidth().testTag("hod_input_announcement_title"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = cardBg,
+                            unfocusedContainerColor = cardBg,
+                            focusedBorderColor = BrandNavy,
+                            unfocusedBorderColor = borderColor,
+                            focusedTextColor = BrandNavy,
+                            unfocusedTextColor = Color(0xFF1E293B)
+                        ),
+                        singleLine = true,
+                        isError = titleError != null
+                    )
+                    if (titleError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = titleError!!, color = Color(0xFFDC2626), fontSize = 12.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Category
+                    Text("Category *", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { categoryExpanded = true }
+                                .testTag("hod_select_announcement_category"),
+                            shape = RoundedCornerShape(14.dp),
+                            color = cardBg,
+                            border = BorderStroke(1.dp, borderColor)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountBalance,
-                                contentDescription = null,
-                                tint = BrandNavy,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 15.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text(
-                                    text = "DEPARTMENTAL BROADCAST AUTHORITY",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    text = category,
+                                    fontSize = 15.sp,
                                     color = BrandNavy,
-                                    letterSpacing = 0.8.sp
+                                    fontWeight = FontWeight.Medium
                                 )
-                                Text(
-                                    text = "This notice will be published to the institutional notice board under $departmentName.",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF475569)
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Select Category",
+                                    tint = textSecondary,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
-                    }
 
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Announcement Title *", color = BrandNavy) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = BrandNavy,
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        )
-                    )
-
-                    ExposedDropdownMenuBox(
-                        expanded = categoryExpanded,
-                        onExpandedChange = { categoryExpanded = !categoryExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = category,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Category / Notice Classification", color = BrandNavy) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
-                                focusedBorderColor = BrandNavy,
-                                unfocusedBorderColor = Color(0xFFCBD5E1)
-                            )
-                        )
-                        ExposedDropdownMenu(
+                        DropdownMenu(
                             expanded = categoryExpanded,
-                            onDismissRequest = { categoryExpanded = false }
+                            onDismissRequest = { categoryExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.9f).background(Color.White)
                         ) {
-                            categories.forEach { c ->
+                            categories.forEach { cat ->
                                 DropdownMenuItem(
-                                    text = { Text(c) },
+                                    text = {
+                                        Text(
+                                            text = cat,
+                                            fontWeight = if (category == cat) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (category == cat) BrandNavy else Color(0xFF1E293B)
+                                        )
+                                    },
                                     onClick = {
-                                        category = c
+                                        category = cat
                                         categoryExpanded = false
                                     }
                                 )
@@ -728,94 +726,113 @@ fun HodComposeAnnouncementDialog(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Message Content
+                    Text("Message Content *", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = content,
-                        onValueChange = { content = it },
-                        label = { Text("Notice Content / Circular Text *", color = BrandNavy) },
-                        minLines = 4,
-                        maxLines = 8,
-                        modifier = Modifier.fillMaxWidth(),
+                        onValueChange = {
+                            content = it
+                            if (contentError != null) contentError = null
+                        },
+                        placeholder = { Text("Write your full announcement details here...", color = textSecondary) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .testTag("hod_input_announcement_content"),
+                        shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = cardBg,
+                            unfocusedContainerColor = cardBg,
                             focusedBorderColor = BrandNavy,
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        )
+                            unfocusedBorderColor = borderColor,
+                            focusedTextColor = BrandNavy,
+                            unfocusedTextColor = Color(0xFF1E293B)
+                        ),
+                        maxLines = 8,
+                        isError = contentError != null
                     )
+                    if (contentError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = contentError!!, color = Color(0xFFDC2626), fontSize = 12.sp)
+                    }
 
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        modifier = Modifier.fillMaxWidth()
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Pin toggle card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                        border = BorderStroke(1.dp, borderColor)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
-                                Text("Pin to Top of Notice Board", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = BrandNavy)
-                                Text("High priority departmental banner", fontSize = 11.sp, color = Color(0xFF64748B))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Pin to top of feed",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = BrandNavy
+                                )
+                                Text(
+                                    text = "Highlights this notice at the top of the department announcements list.",
+                                    fontSize = 12.sp,
+                                    color = textSecondary
+                                )
                             }
                             Switch(
                                 checked = isPinned,
                                 onCheckedChange = { isPinned = it },
-                                colors = SwitchDefaults.colors(checkedThumbColor = BrandGold, checkedTrackColor = BrandNavy)
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = BrandNavy
+                                )
                             )
                         }
                     }
-                }
 
-                // Sticky Footer
-                Surface(
-                    color = Color.White,
-                    shadowElevation = 8.dp,
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // Primary button
+                    Button(
+                        onClick = {
+                            var valid = true
+                            if (title.isBlank()) {
+                                titleError = "Title is required"
+                                valid = false
+                            }
+                            if (content.isBlank()) {
+                                contentError = "Content is required"
+                                valid = false
+                            }
+                            if (valid) {
+                                onConfirm(title.trim(), content.trim(), category, isPinned)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .height(52.dp)
+                            .testTag("hod_btn_publish_announcement"),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                        shape = RoundedCornerShape(14.dp)
                     ) {
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFCBD5E1))
-                        ) {
-                            Text("Dismiss", color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Button(
-                            onClick = {
-                                if (title.isNotBlank() && content.isNotBlank()) {
-                                    onConfirm(title, content, category, isPinned)
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1.3f)
-                                .height(46.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Verified,
-                                contentDescription = null,
-                                tint = BrandGold,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Broadcast Notice", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
+                        Text(
+                            text = "Publish Announcement",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }
@@ -836,176 +853,204 @@ fun HodEditAnnouncementDialog(
     var isPinned by remember { mutableStateOf(announcement.isPinned) }
     var isPublished by remember { mutableStateOf(announcement.isPublished) }
     var categoryExpanded by remember { mutableStateOf(false) }
+    var titleError by remember { mutableStateOf<String?>(null) }
+    var contentError by remember { mutableStateOf<String?>(null) }
 
     val categories = listOf("General Notice", "College Event", "Fees Notice", "Date Sheet / Exam", "Holiday Notice", "Scholarship")
+    val screenBg = Color(0xFFF6F6F6)
+    val borderColor = Color(0xFFD5DDE7)
+    val cardBg = Color.White
+    val textSecondary = Color(0xFF64748B)
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         Surface(
-            shape = RoundedCornerShape(22.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, Color(0xFFD6DFEB)),
-            shadowElevation = 12.dp,
             modifier = Modifier
-                .fillMaxWidth(0.95f)
-                .fillMaxHeight(0.90f)
-                .testTag("hod_edit_announcement_dialog")
+                .fillMaxSize()
+                .background(screenBg)
+                .testTag("hod_edit_announcement_dialog"),
+            color = screenBg
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Executive Government Header
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(BrandNavyDeep, BrandNavy)
-                            )
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+            ) {
+                // Top App Bar
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = screenBg
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
-                            .background(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(BrandGold, Color(0xFFFFE082), BrandGold)
-                                )
-                            )
-                    )
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.testTag("btn_close_edit_hod_announcement")
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .background(Color.White.copy(alpha = 0.12f), CircleShape)
-                                        .border(BorderStroke(1.5.dp, BrandGold.copy(alpha = 0.7f)), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_ggc_logo),
-                                        contentDescription = "College Seal",
-                                        modifier = Modifier
-                                            .size(34.dp)
-                                            .clip(CircleShape)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            letterSpacing = 1.1.sp,
-                                            color = BrandGoldLight
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Icon(
-                                            imageVector = Icons.Default.Verified,
-                                            contentDescription = "Official",
-                                            tint = BrandGold,
-                                            modifier = Modifier.size(11.dp)
-                                        )
-                                    }
-                                    Text(
-                                        text = "Modify Official Circular",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Text(
-                                        text = "Department: $departmentName",
-                                        fontSize = 11.sp,
-                                        color = Color.White.copy(alpha = 0.85f)
-                                    )
-                                }
-                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = BrandNavy,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
 
-                            IconButton(
-                                onClick = onDismiss,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .background(Color.White.copy(alpha = 0.10f), CircleShape)
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color.White,
+                            border = BorderStroke(0.5.dp, borderColor),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(3.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                Image(
+                                    painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                    contentDescription = "GGC Logo",
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GOVT. GRADUATE COLLEGE MANDI BAHAUDDIN",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.3.sp,
+                                color = BrandNavy,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = "Department of ",
+                                fontSize = 11.sp,
+                                color = textSecondary
+                            )
                         }
                     }
                 }
 
-                // Scrollable Body
+                // Scrollable form
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
-                        .background(Color(0xFFF9FAFC))
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                        .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Announcement Title", color = BrandNavy) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = BrandNavy,
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        )
+                    Text(
+                        text = "Edit Announcement",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandNavy,
+                        letterSpacing = (-0.5).sp
                     )
 
-                    ExposedDropdownMenuBox(
-                        expanded = categoryExpanded,
-                        onExpandedChange = { categoryExpanded = !categoryExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = category,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Category / Notice Classification", color = BrandNavy) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Modify announcement details, category, or publication status.",
+                        fontSize = 14.sp,
+                        color = textSecondary,
+                        lineHeight = 20.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Title
+                    Text("Announcement Title *", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = {
+                            title = it
+                            if (titleError != null) titleError = null
+                        },
+                        modifier = Modifier.fillMaxWidth().testTag("hod_edit_input_title"),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = cardBg,
+                            unfocusedContainerColor = cardBg,
+                            focusedBorderColor = BrandNavy,
+                            unfocusedBorderColor = borderColor,
+                            focusedTextColor = BrandNavy,
+                            unfocusedTextColor = Color(0xFF1E293B)
+                        ),
+                        singleLine = true,
+                        isError = titleError != null
+                    )
+                    if (titleError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = titleError!!, color = Color(0xFFDC2626), fontSize = 12.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Category
+                    Text("Category *", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Surface(
                             modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color.White,
-                                unfocusedContainerColor = Color.White,
-                                focusedBorderColor = BrandNavy,
-                                unfocusedBorderColor = Color(0xFFCBD5E1)
-                            )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = categoryExpanded,
-                            onDismissRequest = { categoryExpanded = false }
+                                .fillMaxWidth()
+                                .clickable { categoryExpanded = true }
+                                .testTag("hod_edit_select_category"),
+                            shape = RoundedCornerShape(14.dp),
+                            color = cardBg,
+                            border = BorderStroke(1.dp, borderColor)
                         ) {
-                            categories.forEach { c ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 15.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = category,
+                                    fontSize = 15.sp,
+                                    color = BrandNavy,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Select Category",
+                                    tint = textSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = categoryExpanded,
+                            onDismissRequest = { categoryExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.9f).background(Color.White)
+                        ) {
+                            categories.forEach { cat ->
                                 DropdownMenuItem(
-                                    text = { Text(c) },
+                                    text = {
+                                        Text(
+                                            text = cat,
+                                            fontWeight = if (category == cat) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (category == cat) BrandNavy else Color(0xFF1E293B)
+                                        )
+                                    },
                                     onClick = {
-                                        category = c
+                                        category = cat
                                         categoryExpanded = false
                                     }
                                 )
@@ -1013,112 +1058,146 @@ fun HodEditAnnouncementDialog(
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Message Content
+                    Text("Message Content *", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1E293B))
+                    Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = content,
-                        onValueChange = { content = it },
-                        label = { Text("Notice Content / Circular Text", color = BrandNavy) },
-                        minLines = 4,
-                        maxLines = 8,
-                        modifier = Modifier.fillMaxWidth(),
+                        onValueChange = {
+                            content = it
+                            if (contentError != null) contentError = null
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .testTag("hod_edit_input_content"),
+                        shape = RoundedCornerShape(14.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = cardBg,
+                            unfocusedContainerColor = cardBg,
                             focusedBorderColor = BrandNavy,
-                            unfocusedBorderColor = Color(0xFFCBD5E1)
-                        )
+                            unfocusedBorderColor = borderColor,
+                            focusedTextColor = BrandNavy,
+                            unfocusedTextColor = Color(0xFF1E293B)
+                        ),
+                        maxLines = 8,
+                        isError = contentError != null
                     )
+                    if (contentError != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = contentError!!, color = Color(0xFFDC2626), fontSize = 12.sp)
+                    }
 
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        modifier = Modifier.fillMaxWidth()
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Pin & Published toggles
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                        border = BorderStroke(1.dp, borderColor)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column {
-                                    Text("Pin to Top", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = BrandNavy)
-                                    Text("Keep pinned to departmental notice board", fontSize = 11.sp, color = Color(0xFF64748B))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Pin to top of feed",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = BrandNavy
+                                    )
+                                    Text(
+                                        text = "Keep at top of department feed",
+                                        fontSize = 12.sp,
+                                        color = textSecondary
+                                    )
                                 }
                                 Switch(
                                     checked = isPinned,
                                     onCheckedChange = { isPinned = it },
-                                    colors = SwitchDefaults.colors(checkedThumbColor = BrandGold, checkedTrackColor = BrandNavy)
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = BrandNavy
+                                    )
                                 )
                             }
 
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), color = Color(0xFFF1F5F9))
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider(color = borderColor)
+                            Spacer(modifier = Modifier.height(12.dp))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column {
-                                    Text("Published Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = BrandNavy)
-                                    Text("Active visibility on student portals", fontSize = 11.sp, color = Color(0xFF64748B))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Published to Students",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = BrandNavy
+                                    )
+                                    Text(
+                                        text = if (isPublished) "Visible to all department students" else "Saved as draft (hidden)",
+                                        fontSize = 12.sp,
+                                        color = textSecondary
+                                    )
                                 }
                                 Switch(
                                     checked = isPublished,
                                     onCheckedChange = { isPublished = it },
-                                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = BrandNavy)
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = BrandNavy
+                                    )
                                 )
                             }
                         }
                     }
-                }
 
-                // Sticky Footer
-                Surface(
-                    color = Color.White,
-                    shadowElevation = 8.dp,
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // Primary button
+                    Button(
+                        onClick = {
+                            var valid = true
+                            if (title.isBlank()) {
+                                titleError = "Title is required"
+                                valid = false
+                            }
+                            if (content.isBlank()) {
+                                contentError = "Content is required"
+                                valid = false
+                            }
+                            if (valid) {
+                                announcement.id?.let {
+                                    onConfirm(it, title.trim(), content.trim(), category, isPinned, isPublished)
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .height(52.dp)
+                            .testTag("hod_btn_save_changes"),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                        shape = RoundedCornerShape(14.dp)
                     ) {
-                        OutlinedButton(
-                            onClick = onDismiss,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(46.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFCBD5E1))
-                        ) {
-                            Text("Dismiss", color = Color(0xFF64748B), fontWeight = FontWeight.SemiBold)
-                        }
-
-                        Button(
-                            onClick = {
-                                announcement.id?.let {
-                                    onConfirm(it, title, content, category, isPinned, isPublished)
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1.3f)
-                                .height(46.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Verified,
-                                contentDescription = null,
-                                tint = BrandGold,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Save Changes", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
+                        Text(
+                            text = "Save Changes",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
             }
         }

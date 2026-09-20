@@ -33,6 +33,8 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -294,13 +296,17 @@ fun HomeScreen(
         return
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BrandBackground)
-            .verticalScroll(scrollState)
             .testTag("home_screen_container")
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BrandBackground)
+                .verticalScroll(scrollState)
+        ) {
         // 1. Official App Header
         Row(
             modifier = Modifier
@@ -633,118 +639,6 @@ fun HomeScreen(
                 }
             }
 
-            // Gemini AI Chatbot Featured Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .clickable { onNavigateToGeminiChat() }
-                    .testTag("home_gemini_chatbot_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = BrandNavy),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 18.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFC59B27).copy(alpha = 0.2f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = "Gemini AI",
-                                    tint = Color(0xFFC59B27),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(14.dp))
-
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "Gemini AI Chatbot",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(Color(0xFFC59B27))
-                                            .padding(horizontal = 4.dp, vertical = 1.dp)
-                                    ) {
-                                        Text(
-                                            text = "Multi-Turn",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = BrandNavy
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(3.dp))
-                                Text(
-                                    text = "Academic Advisor, Study Mentor & Campus Assistant",
-                                    fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Open Chatbot",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf(
-                            "🎓 Advisor",
-                            "📖 Tutor",
-                            "⚡ Quick FAQ",
-                            "💼 Career"
-                        ).forEach { pill ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.White.copy(alpha = 0.12f))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = pill,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.White.copy(alpha = 0.9f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
             // 3. Grid of Bento Action Buttons (Alternating Blue-White Ladder Structure)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1025,9 +919,34 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(84.dp))
         }
     }
+
+    // Circular Material 3 Assistant FAB for Gemini AI Chatbot
+    FloatingActionButton(
+        onClick = { onNavigateToGeminiChat() },
+        shape = CircleShape,
+        containerColor = BrandNavy,
+        contentColor = Color(0xFFE5B842),
+        elevation = FloatingActionButtonDefaults.elevation(
+            defaultElevation = 3.dp,
+            pressedElevation = 6.dp
+        ),
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(end = 20.dp, bottom = 20.dp)
+            .size(56.dp)
+            .testTag("home_gemini_fab")
+    ) {
+        Icon(
+            imageVector = Icons.Default.AutoAwesome,
+            contentDescription = "Open AI Assistant",
+            tint = Color(0xFFE5B842),
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
 }
 
 @Composable

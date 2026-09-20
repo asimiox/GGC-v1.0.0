@@ -81,7 +81,7 @@ class GeminiChatViewModel(
             // Append a small system transition note
             val switchNote = ChatMessage(
                 role = ChatRole.MODEL,
-                text = "Switched to **${role.title}** mode (${role.iconEmoji}). How can I help you in this role?",
+                text = "Switched to ${role.title} mode (${role.iconEmoji}). How can I help you in this role?",
                 modelType = _uiState.value.selectedModel,
                 roleUsedName = role.title
             )
