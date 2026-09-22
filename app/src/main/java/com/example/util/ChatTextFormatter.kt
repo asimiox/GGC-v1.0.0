@@ -15,65 +15,39 @@ object ChatTextFormatter {
     fun clean(raw: String): String {
         if (raw.isBlank()) return ""
 
-        val lines = raw.lines()
-        val cleanedLines = mutableListOf<String>()
+        var text = raw
 
-        for (line in lines) {
-            var l = line.trimEnd()
+        // Remove horizontal rules (---, ***, ___)
+        text = text.replace(Regex("""(?m)^[-*_]{3,}\s*$"""), "")
 
-            // Remove markdown horizontal rules (e.g. ---, ***, ___)
-            if (l.trim().matches(Regex("""^[-*_]{3,}$"""))) {
-                continue
-            }
+        // Strip markdown header hashes at start of lines (e.g. #, ##, ###, ####)
+        text = text.replace(Regex("""(?m)^\s*#{1,6}\s*"""), "")
 
-            // 1. Strip markdown header hashes at start of line:
-            // e.g. "### 1. Computing & IT" -> "1. Computing & IT", "## Overview" -> "Overview"
-            l = l.replace(Regex("""^\s*#{1,6}\s*"""), "")
+        // Convert list bullets (*, -, +) at start of lines to clean unicode bullet (•)
+        text = text.replace(Regex("""(?m)^(\s*)[\*\-\+]\s+"""), "$1• ")
 
-            // 2. Convert list asterisks, hyphens, and pluses into clean unicode bullets
-            // Preserves indentation for nested bullets
-            val bulletMatch = Regex("""^(\s*)([\*\-\+])\s+(.*)$""").find(l)
-            if (bulletMatch != null) {
-                val indent = bulletMatch.groupValues[1]
-                val content = bulletMatch.groupValues[3]
-                l = "$indent• $content"
-            }
+        // Strip bold/italic asterisks (***text***, **text**, *text*)
+        text = text.replace(Regex("""\*{1,3}(.+?)\*{1,3}"""), "$1")
 
-            // 3. Strip bold/italic asterisks:
-            // Triple asterisks: ***text*** -> text
-            l = l.replace(Regex("""\*{3}(.+?)\*{3}"""), "$1")
-            // Double asterisks: **text** -> text
-            l = l.replace(Regex("""\*{2}(.+?)\*{2}"""), "$1")
-            // Single asterisks: *text* -> text
-            l = l.replace(Regex("""\*(.+?)\*"""), "$1")
+        // Strip any residual standalone or grouped asterisks anywhere (*, **, ***)
+        text = text.replace("*", "")
 
-            // 4. Strip markdown bold/italic underscores: __text__ -> text, _text_ -> text
-            l = l.replace(Regex("""_{2}(.+?)_{2}"""), "$1")
-            l = l.replace(Regex("""(?<=\s|^)_(.+?)_(?=\s|$)"""), "$1")
+        // Strip any residual hashes anywhere
+        text = text.replace("#", "")
 
-            // 5. Strip inline code backticks: `code` -> code
-            l = l.replace(Regex("""`([^`]+)`"""), "$1")
+        // Strip markdown bold/italic underscores
+        text = text.replace(Regex("""_{1,2}(.+?)_{1,2}"""), "$1")
 
-            // 6. Strip code fence lines like ```kotlin or ```
-            if (l.trim().startsWith("```")) {
-                continue
-            }
+        // Strip blockquotes
+        text = text.replace(Regex("""(?m)^\s*>\s*"""), "")
 
-            // 7. Strip blockquote prefixes: > Text -> Text
-            l = l.replace(Regex("""^\s*>\s*"""), "")
+        // Strip backticks
+        text = text.replace("`", "")
 
-            // 8. Strip any remaining solitary asterisks (e.g. stray * or **)
-            l = l.replace("*", "")
-
-            // 9. Strip any remaining heading hashes that might have slipped through
-            l = l.replace(Regex("""^\s*#{1,6}\s*"""), "")
-
-            cleanedLines.add(l)
-        }
-
-        // Rejoin and collapse excessive consecutive blank lines
-        val joined = cleanedLines.joinToString("\n")
-        return joined
+        // Clean up empty lines and normalize spacing
+        return text
+            .lines()
+            .joinToString("\n") { it.trimEnd() }
             .replace(Regex("""\n{3,}"""), "\n\n")
             .trim()
     }

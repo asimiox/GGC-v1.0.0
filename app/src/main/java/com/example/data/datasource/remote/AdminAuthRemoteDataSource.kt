@@ -171,7 +171,8 @@ class AdminAuthRemoteDataSource {
                         val sessionResult = ActiveSessionRemoteManager.acquireSession(
                             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
                             userIdentifier = "ADMIN_CENTRAL",
-                            role = AppRole.ADMIN
+                            role = AppRole.ADMIN,
+                            forceOverride = true
                         )
                         if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
                             return AuthResult.Error(
@@ -217,7 +218,8 @@ class AdminAuthRemoteDataSource {
                     val sessionResult = ActiveSessionRemoteManager.acquireSession(
                         context = com.example.util.DeviceIdentifierHelper.getAppContext(),
                         userIdentifier = "ADMIN_CENTRAL",
-                        role = AppRole.ADMIN
+                        role = AppRole.ADMIN,
+                        forceOverride = true
                     )
                     if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
                         return AuthResult.Error(
@@ -232,7 +234,7 @@ class AdminAuthRemoteDataSource {
                 Log.d(TAG, "Admin server access verification: ${checkEx.message}")
             }
 
-            AuthResult.Error("Access Denied: Invalid Administrator credentials or unauthorized role.")
+            AuthResult.Error("Invalid Credentials.")
         } catch (e: Exception) {
             Log.e(TAG, "Admin login error: ${e.message}", e)
             AuthResult.Error(SupabaseClientProvider.formatErrorMessage(e, "Admin authentication failed. Please verify credentials."))

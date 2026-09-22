@@ -79,6 +79,10 @@ fun FacultyAuthContent(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
 
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.checkLockoutStatus(context)
+    }
+
     state.transferPromptData?.let { promptData ->
         com.example.ui.components.SessionTransferPromptDialog(
             data = promptData,
@@ -246,9 +250,21 @@ fun FacultyAuthContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Alerts: Error Message
+        // Alerts: 24-Hour Security Lockout Card
         AnimatedVisibility(
-            visible = state.errorMessage != null,
+            visible = state.isLockedOut,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            com.example.ui.components.LockoutTimerCard(
+                remainingTime = state.lockoutRemainingTime ?: "24:00:00",
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
+        // Alerts: Error Message (When not locked out)
+        AnimatedVisibility(
+            visible = !state.isLockedOut && state.errorMessage != null,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
@@ -344,7 +360,7 @@ fun FacultyAuthContent(
             // Field 1: Faculty ID / Username / Email
             OutlinedTextField(
                 value = state.loginForm.usernameOrFacultyId,
-                onValueChange = { viewModel.updateLoginUsernameOrFacultyId(it) },
+                onValueChange = { viewModel.updateLoginUsernameOrFacultyId(it, context) },
                 label = { Text("Faculty ID / Username / Email") },
                 placeholder = { Text("Enter your Faculty ID / Username / Email", color = Color(0xFF94A3B8)) },
                 leadingIcon = {
@@ -426,7 +442,7 @@ fun FacultyAuthContent(
             // PRIMARY ACTION BUTTON
             Button(
                 onClick = { viewModel.loginFaculty(context, onAuthSuccess) },
-                enabled = !state.isLoading,
+                enabled = !state.isLoading && !state.isLockedOut,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -449,14 +465,14 @@ fun FacultyAuthContent(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Sign In to Faculty Portal",
+                            text = if (state.isLockedOut) "Account Blocked" else "Sign In to Faculty Portal",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            imageVector = if (state.isLockedOut) Icons.Default.Lock else Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)

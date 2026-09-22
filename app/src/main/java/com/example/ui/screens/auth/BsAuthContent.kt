@@ -85,6 +85,7 @@ fun BsAuthContent(
 
     LaunchedEffect(initialProgram, initialSemester) {
         viewModel.initialize(initialProgram, initialSemester)
+        viewModel.checkLockoutStatus(context)
     }
 
     state.transferPromptData?.let { promptData ->
@@ -198,9 +199,21 @@ fun BsAuthContent(
                 modifier = Modifier.padding(bottom = 22.dp)
             )
 
+            // Alerts (24-Hour Security Lockout Card)
+            AnimatedVisibility(
+                visible = state.isLockedOut,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                com.example.ui.components.LockoutTimerCard(
+                    remainingTime = state.lockoutRemainingTime ?: "24:00:00",
+                    modifier = Modifier.padding(bottom = 14.dp)
+                )
+            }
+
             // Alerts (Error Banner & Success Banner)
             AnimatedVisibility(
-                visible = state.errorMessage != null,
+                visible = !state.isLockedOut && state.errorMessage != null,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
@@ -277,7 +290,7 @@ fun BsAuthContent(
             // FIELD 1: Roll Number or Registration Number
             OutlinedTextField(
                 value = state.loginForm.usernameOrRoll,
-                onValueChange = { viewModel.updateLoginUsernameOrRoll(it) },
+                onValueChange = { viewModel.updateLoginUsernameOrRoll(it, context) },
                 label = { Text("Roll Number or Registration Number") },
                 placeholder = { Text("Enter your roll number or registration number", color = Color(0xFF94A3B8)) },
                 leadingIcon = {
@@ -383,7 +396,7 @@ fun BsAuthContent(
             // PRIMARY BUTTON: "Sign In as BS Student" with right arrow
             Button(
                 onClick = { viewModel.loginStudent(context, onAuthSuccess) },
-                enabled = !state.isLoading,
+                enabled = !state.isLoading && !state.isLockedOut,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -406,14 +419,14 @@ fun BsAuthContent(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Sign In as BS Student",
+                            text = if (state.isLockedOut) "Account Blocked" else "Sign In as BS Student",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            imageVector = if (state.isLockedOut) Icons.Default.Lock else Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(18.dp)

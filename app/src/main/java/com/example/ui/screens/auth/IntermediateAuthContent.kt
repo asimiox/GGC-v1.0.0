@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -70,6 +71,10 @@ fun IntermediateAuthContent(
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.checkLockoutStatus(context)
+    }
 
     state.transferPromptData?.let { promptData ->
         com.example.ui.components.SessionTransferPromptDialog(
@@ -135,9 +140,21 @@ fun IntermediateAuthContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 24-Hour Security Lockout Card
+            AnimatedVisibility(
+                visible = state.isLockedOut,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                com.example.ui.components.LockoutTimerCard(
+                    remainingTime = state.lockoutRemainingTime ?: "24:00:00",
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+            }
+
             // Error Banner
             AnimatedVisibility(
-                visible = state.errorMessage != null,
+                visible = !state.isLockedOut && state.errorMessage != null,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
@@ -213,7 +230,7 @@ fun IntermediateAuthContent(
                 // Roll or Registration Field
                 OutlinedTextField(
                     value = state.loginForm.usernameOrRoll,
-                    onValueChange = { viewModel.updateLoginUsernameOrRoll(it) },
+                    onValueChange = { viewModel.updateLoginUsernameOrRoll(it, context) },
                     label = { Text("College Roll Number or Registration Number", fontSize = 12.sp) },
                     placeholder = { Text("e.g. 2024-FSC-01 or 12345", color = Color.Gray, fontSize = 12.sp) },
                     leadingIcon = {
@@ -322,7 +339,7 @@ fun IntermediateAuthContent(
                 // Login Button
                 Button(
                     onClick = { viewModel.loginStudent(context, onAuthSuccess) },
-                    enabled = !state.isLoading,
+                    enabled = !state.isLoading && !state.isLockedOut,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -338,7 +355,7 @@ fun IntermediateAuthContent(
                         )
                     } else {
                         Text(
-                            text = "Sign In as Intermediate Student",
+                            text = if (state.isLockedOut) "Account Blocked" else "Sign In as Intermediate Student",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White

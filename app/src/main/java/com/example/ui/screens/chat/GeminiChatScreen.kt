@@ -12,7 +12,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +42,6 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteSweep
@@ -88,16 +89,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.R
 import com.example.data.model.ChatBotRole
 import com.example.data.model.ChatMessage
 import com.example.data.model.ChatRole
 import com.example.data.model.GeminiModelType
+import com.example.util.ChatTextFormatter
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -169,27 +173,12 @@ fun GeminiChatScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Gemini AI Chatbot",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandNavy
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = BrandGold.copy(alpha = 0.15f)
-                            ) {
-                                Text(
-                                    text = "GGC Assistant",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = BrandGold,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
+                        Text(
+                            text = "Gemini AI Chatbot",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BrandNavy
+                        )
                         Text(
                             text = "${uiState.selectedRole.title} • ${uiState.selectedModel.displayName}",
                             fontSize = 11.sp,
@@ -754,14 +743,14 @@ private fun ChatMessageBubble(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(BrandNavy),
+                    .background(Color.White)
+                    .border(1.dp, Color(0xFFE2E8F0), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = "Bot Avatar",
-                    tint = BrandGold,
-                    modifier = Modifier.size(18.dp)
+                Image(
+                    painter = painterResource(id = R.drawable.ic_ggc_logo),
+                    contentDescription = "GGC College Official Logo",
+                    modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -820,9 +809,12 @@ private fun ChatMessageBubble(
                     }
 
                     // Message text
+                    val displayText = remember(message.text) {
+                        if (isUser) message.text else ChatTextFormatter.clean(message.text)
+                    }
                     SelectionContainer {
                         Text(
-                            text = message.text,
+                            text = displayText,
                             fontSize = 13.5.sp,
                             color = when {
                                 message.isError -> Color(0xFFC62828)
@@ -867,7 +859,7 @@ private fun ChatMessageBubble(
                             }
 
                             IconButton(
-                                onClick = { onCopy(message.text) },
+                                onClick = { onCopy(displayText) },
                                 modifier = Modifier.size(20.dp)
                             ) {
                                 Icon(
@@ -928,14 +920,14 @@ private fun ChatLoadingBubble(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(BrandNavy),
+                .background(Color.White)
+                .border(1.dp, Color(0xFFE2E8F0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = BrandGold,
-                modifier = Modifier.size(18.dp)
+            Image(
+                painter = painterResource(id = R.drawable.ic_ggc_logo),
+                contentDescription = "GGC College Official Logo",
+                modifier = Modifier.size(24.dp)
             )
         }
 

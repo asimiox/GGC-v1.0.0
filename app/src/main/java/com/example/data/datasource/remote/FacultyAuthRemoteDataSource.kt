@@ -203,7 +203,7 @@ class FacultyAuthRemoteDataSource {
                     institutionalEmail = officialEntry.email
                 )
             } else {
-                return AuthResult.Error("Incorrect password for ${officialEntry.fullName}. The default universal password is 00000.")
+                return AuthResult.Error("Invalid Credentials.")
             }
         }
 
@@ -280,6 +280,11 @@ class FacultyAuthRemoteDataSource {
                 }
             }
         } catch (_: Exception) {}
+
+        // If RPC failed and password is not default universal 00000, reject
+        if (resolvedProfile == null && cleanPassword != "00000") {
+            return AuthResult.Error("Invalid Credentials.")
+        }
 
         // 2. Direct database query to faculty_profiles
         if (resolvedProfile == null) {
@@ -367,7 +372,7 @@ class FacultyAuthRemoteDataSource {
         }
 
         if (resolvedProfile == null) {
-            return AuthResult.Error(lastErrorMessage ?: "Invalid Faculty ID, username, or incorrect credentials.")
+            return AuthResult.Error("Invalid Credentials.")
         }
 
         // 6. Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Registration)
@@ -383,7 +388,7 @@ class FacultyAuthRemoteDataSource {
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
             userIdentifier = sessionIdentifier,
             role = sessionRole,
-            forceOverride = false
+            forceOverride = true
         )
         if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
             return AuthResult.Error(

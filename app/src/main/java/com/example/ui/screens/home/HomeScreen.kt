@@ -24,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.VpnKey
@@ -349,16 +348,15 @@ fun HomeScreen(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Gemini AI Chatbot Quick Icon
+                // Gemini AI Chatbot Quick Icon using College Official Logo
                 IconButton(
                     onClick = { onNavigateToGeminiChat() },
                     modifier = Modifier.testTag("home_gemini_chat_btn")
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_ggc_logo),
                         contentDescription = "Gemini AI Chatbot",
-                        tint = Color(0xFFC59B27),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(26.dp)
                     )
                 }
 
@@ -923,15 +921,15 @@ fun HomeScreen(
         }
     }
 
-    // Circular Material 3 Assistant FAB for Gemini AI Chatbot
+    // Circular Material 3 Assistant FAB for Gemini AI Chatbot with College Official Logo
     FloatingActionButton(
         onClick = { onNavigateToGeminiChat() },
         shape = CircleShape,
-        containerColor = BrandNavy,
-        contentColor = Color(0xFFE5B842),
+        containerColor = Color.White,
+        contentColor = BrandNavy,
         elevation = FloatingActionButtonDefaults.elevation(
-            defaultElevation = 3.dp,
-            pressedElevation = 6.dp
+            defaultElevation = 4.dp,
+            pressedElevation = 8.dp
         ),
         modifier = Modifier
             .align(Alignment.BottomEnd)
@@ -939,11 +937,10 @@ fun HomeScreen(
             .size(56.dp)
             .testTag("home_gemini_fab")
     ) {
-        Icon(
-            imageVector = Icons.Default.AutoAwesome,
-            contentDescription = "Open AI Assistant",
-            tint = Color(0xFFE5B842),
-            modifier = Modifier.size(24.dp)
+        Image(
+            painter = painterResource(id = R.drawable.ic_ggc_logo),
+            contentDescription = "Open Gemini AI Assistant",
+            modifier = Modifier.size(36.dp)
         )
     }
 }

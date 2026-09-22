@@ -113,8 +113,9 @@ object ActiveSessionRemoteManager {
                 val createdAtIso = existingRow["created_at"]?.jsonPrimitive?.content
 
                 val isSameDevice = activeDeviceId.equals(currentDeviceId, ignoreCase = true)
+                val effectiveForceOverride = forceOverride || role == AppRole.ADMIN || role == AppRole.HOD || role == AppRole.TEACHER
 
-                if (!isSameDevice && !forceOverride) {
+                if (!isSameDevice && !effectiveForceOverride) {
                     // BLOCKED: Active on another device
                     val blockMsg = "This account is currently active on $activeDeviceName. Under college security regulations, you cannot be logged in on multiple devices at the same time. Please log out from $activeDeviceName first, or request approval to transfer your session."
                     Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $activeDeviceName)")
@@ -128,13 +129,15 @@ object ActiveSessionRemoteManager {
                     )
                 }
 
-                // Same device or forceOverride: Refresh session
+                // Same device or forceOverride: Refresh session and claim device
                 if (!existingSessionId.isNullOrBlank()) {
                     client.from("user_sessions").update(
                         buildJsonObject {
+                            put("device_id", currentDeviceId)
                             put("device_name", currentDeviceName)
                             put("session_token_hash", sessionTokenHash)
                             put("last_seen_at", nowIso)
+                            put("active", true)
                         }
                     ) {
                         filter { eq("id", existingSessionId) }
@@ -215,8 +218,9 @@ object ActiveSessionRemoteManager {
 
                 if (existingSession != null && existingSession.isActive) {
                     val isSameDevice = existingSession.deviceId.equals(currentDeviceId, ignoreCase = true)
+                    val effectiveForceOverride = forceOverride || role == AppRole.ADMIN || role == AppRole.HOD || role == AppRole.TEACHER
 
-                    if (!isSameDevice && !forceOverride) {
+                    if (!isSameDevice && !effectiveForceOverride) {
                         val deviceLabel = existingSession.deviceName.ifBlank { "Another Device" }
                         val blockMsg = "This account is currently active on $deviceLabel. Under college security regulations, you cannot be logged in on multiple devices at the same time. Please log out from $deviceLabel first, or request approval to transfer your session."
                         Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $deviceLabel)")

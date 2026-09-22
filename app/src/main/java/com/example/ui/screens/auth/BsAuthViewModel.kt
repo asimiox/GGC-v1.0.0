@@ -26,6 +26,8 @@ data class BsAuthUiState(
     val successMessage: String? = null,
     val isPasswordVisible: Boolean = false,
     val isConfirmPasswordVisible: Boolean = false,
+    val isLockedOut: Boolean = false,
+    val lockoutRemainingTime: String? = null,
     val transferPromptData: com.example.ui.components.SessionTransferPromptData? = null
 )
 
@@ -50,6 +52,7 @@ class BsAuthViewModel(
     )
 
     val semesters = (1..8).map { "Semester $it" }
+    private var countdownJob: kotlinx.coroutines.Job? = null
 
     fun initialize(program: String? = null, semester: String? = null) {
         if (!program.isNullOrBlank()) {
@@ -148,18 +151,72 @@ class BsAuthViewModel(
         )
     }
 
-    fun updateLoginUsernameOrRoll(value: String) {
+    fun updateLoginUsernameOrRoll(value: String, context: Context? = null) {
         _uiState.value = _uiState.value.copy(
             loginForm = _uiState.value.loginForm.copy(usernameOrRoll = value),
-            errorMessage = null
+            errorMessage = if (_uiState.value.isLockedOut) _uiState.value.errorMessage else null
         )
+        if (context != null) {
+            checkLockoutStatus(context, value)
+        }
     }
 
     fun updateLoginPassword(value: String) {
         _uiState.value = _uiState.value.copy(
             loginForm = _uiState.value.loginForm.copy(password = value),
-            errorMessage = null
+            errorMessage = if (_uiState.value.isLockedOut) _uiState.value.errorMessage else null
         )
+    }
+
+    fun checkLockoutStatus(context: Context, idInput: String? = null) {
+        val id = idInput ?: _uiState.value.loginForm.usernameOrRoll
+        if (id.isNotBlank() && com.example.data.datasource.LoginAttemptManager.isBlocked(context, id)) {
+            val remaining = com.example.data.datasource.LoginAttemptManager.getRemainingBlockTimeMs(context, id)
+            val formatted = com.example.data.datasource.LoginAttemptManager.formatRemainingTime(remaining)
+            _uiState.value = _uiState.value.copy(
+                isLockedOut = true,
+                lockoutRemainingTime = formatted,
+                errorMessage = "Account blocked for 24 hours. Time remaining: $formatted"
+            )
+            startCountdownTimer(context, id)
+        } else if (_uiState.value.isLockedOut && (id.isBlank() || !com.example.data.datasource.LoginAttemptManager.isBlocked(context, id))) {
+            stopCountdownTimer()
+            _uiState.value = _uiState.value.copy(
+                isLockedOut = false,
+                lockoutRemainingTime = null,
+                errorMessage = null
+            )
+        }
+    }
+
+    private fun startCountdownTimer(context: Context, id: String) {
+        countdownJob?.cancel()
+        countdownJob = viewModelScope.launch {
+            while (true) {
+                val remaining = com.example.data.datasource.LoginAttemptManager.getRemainingBlockTimeMs(context, id)
+                if (remaining <= 0) {
+                    com.example.data.datasource.LoginAttemptManager.clearLockout(context, id)
+                    _uiState.value = _uiState.value.copy(
+                        isLockedOut = false,
+                        lockoutRemainingTime = null,
+                        errorMessage = null
+                    )
+                    break
+                }
+                val formatted = com.example.data.datasource.LoginAttemptManager.formatRemainingTime(remaining)
+                _uiState.value = _uiState.value.copy(
+                    isLockedOut = true,
+                    lockoutRemainingTime = formatted,
+                    errorMessage = "Account blocked for 24 hours. Time remaining: $formatted"
+                )
+                kotlinx.coroutines.delay(1000L)
+            }
+        }
+    }
+
+    private fun stopCountdownTimer() {
+        countdownJob?.cancel()
+        countdownJob = null
     }
 
     fun registerStudent(context: Context, onSuccess: () -> Unit) {
@@ -226,12 +283,54 @@ class BsAuthViewModel(
 
     fun loginStudent(context: Context, onSuccess: () -> Unit) {
         val form = _uiState.value.loginForm
-        if (form.usernameOrRoll.trim().isBlank()) {
+        val identifier = form.usernameOrRoll.trim()
+
+        if (identifier.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Please enter your Roll Number or Registration Number.")
             return
         }
+
+        // Check if currently locked out
+        if (com.example.data.datasource.LoginAttemptManager.isBlocked(context, identifier)) {
+            val remaining = com.example.data.datasource.LoginAttemptManager.getRemainingBlockTimeMs(context, identifier)
+            val formatted = com.example.data.datasource.LoginAttemptManager.formatRemainingTime(remaining)
+            _uiState.value = _uiState.value.copy(
+                isLockedOut = true,
+                lockoutRemainingTime = formatted,
+                errorMessage = "Account blocked for 24 hours. Time remaining: $formatted"
+            )
+            startCountdownTimer(context, identifier)
+            return
+        }
+
         if (form.password.isBlank()) {
             _uiState.value = _uiState.value.copy(errorMessage = "Please enter your password.")
+            return
+        }
+
+        // Student password requirement: STRICTLY 00000. Reject any other password with attempt counter.
+        if (form.password.trim() != "00000") {
+            val attemptResult = com.example.data.datasource.LoginAttemptManager.recordFailedAttempt(context, identifier)
+            when (attemptResult) {
+                is com.example.data.datasource.LoginAttemptManager.AttemptResult.Failed -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLockedOut = false,
+                        lockoutRemainingTime = null,
+                        errorMessage = attemptResult.message
+                    )
+                }
+                is com.example.data.datasource.LoginAttemptManager.AttemptResult.Blocked -> {
+                    val formatted = com.example.data.datasource.LoginAttemptManager.formatRemainingTime(attemptResult.remainingMs)
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isLockedOut = true,
+                        lockoutRemainingTime = formatted,
+                        errorMessage = attemptResult.message
+                    )
+                    startCountdownTimer(context, identifier)
+                }
+            }
             return
         }
 
@@ -240,8 +339,12 @@ class BsAuthViewModel(
             val result = repository.loginBsStudent(context, form)
             when (result) {
                 is AuthResult.Success -> {
+                    com.example.data.datasource.LoginAttemptManager.recordSuccessfulLogin(context, identifier)
+                    stopCountdownTimer()
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
+                        isLockedOut = false,
+                        lockoutRemainingTime = null,
                         successMessage = "Login successful!"
                     )
                     onSuccess()
@@ -263,10 +366,27 @@ class BsAuthViewModel(
                             )
                         )
                     } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = result.message
-                        )
+                        val attemptResult = com.example.data.datasource.LoginAttemptManager.recordFailedAttempt(context, identifier)
+                        when (attemptResult) {
+                            is com.example.data.datasource.LoginAttemptManager.AttemptResult.Failed -> {
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    isLockedOut = false,
+                                    lockoutRemainingTime = null,
+                                    errorMessage = attemptResult.message
+                                )
+                            }
+                            is com.example.data.datasource.LoginAttemptManager.AttemptResult.Blocked -> {
+                                val formatted = com.example.data.datasource.LoginAttemptManager.formatRemainingTime(attemptResult.remainingMs)
+                                _uiState.value = _uiState.value.copy(
+                                    isLoading = false,
+                                    isLockedOut = true,
+                                    lockoutRemainingTime = formatted,
+                                    errorMessage = attemptResult.message
+                                )
+                                startCountdownTimer(context, identifier)
+                            }
+                        }
                     }
                 }
             }
@@ -291,5 +411,10 @@ class BsAuthViewModel(
             }
             loginStudent(context, onSuccess)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopCountdownTimer()
     }
 }

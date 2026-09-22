@@ -289,7 +289,12 @@ class BsAuthRemoteDataSource {
             Log.w(TAG, "direct_login_bs_student RPC error: ${rpcErr.message}")
         }
 
-        // 3. Check registered bs_student_profiles in database
+        // Student password is strictly 00000 for all rosters/fallbacks. Reject any other password.
+        if (resolvedProfile == null && cleanPassword != "00000") {
+            return AuthResult.Error("Invalid Credentials.")
+        }
+
+        // 3. Check registered bs_student_profiles in database (Only if password is 00000)
         if (resolvedProfile == null) {
             try {
                 val profiles = client.from("bs_student_profiles")
@@ -334,7 +339,7 @@ class BsAuthRemoteDataSource {
         }
 
         if (resolvedProfile == null) {
-            return AuthResult.Error(lastErrorMessage ?: "Student record not found or invalid credentials. Please contact College Administration / HOD.")
+            return AuthResult.Error("Invalid Credentials.")
         }
 
         // 6. Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Registration)
