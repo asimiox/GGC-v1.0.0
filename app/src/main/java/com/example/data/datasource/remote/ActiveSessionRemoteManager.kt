@@ -67,9 +67,8 @@ object ActiveSessionRemoteManager {
     }
 
     /**
-     * Checks if this account is currently active on another device in the database.
-     * If free or on the same device, claims the active session lock.
-     * If locked on a different device, blocks the login.
+     * Multi-device login: Concurrency lock removed per request.
+     * All devices can log in concurrently without blocking or conflict.
      */
     suspend fun acquireSession(
         context: Context? = null,
@@ -78,229 +77,26 @@ object ActiveSessionRemoteManager {
         forceOverride: Boolean = false
     ): SessionAcquireResult = withContext(Dispatchers.IO) {
         val cleanId = userIdentifier.trim().uppercase()
-        if (cleanId.isBlank()) {
-            return@withContext SessionAcquireResult.Error("Invalid user identifier for session.")
-        }
-
         val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
         val currentDeviceName = DeviceIdentifierHelper.getDeviceDisplayName()
-        val sessionToken = DeviceIdentifierHelper.getSessionToken(context)
-        val sessionTokenHash = DeviceIdentifierHelper.hashSessionToken(sessionToken)
-        val client = SupabaseClientProvider.client
+        Log.d(TAG, "Multi-device login granted for $cleanId on $currentDeviceName")
 
-        val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
-        val now = System.currentTimeMillis()
-        val nowIso = isoFormat.format(Date(now))
-
-        // 1. Primary Strategy: Check public.user_sessions table in Supabase
-        try {
-            val rows = client.from("user_sessions")
-                .select {
-                    filter {
-                        eq("user_identifier", cleanId)
-                        eq("active", true)
-                    }
-                    limit(1)
-                }.decodeList<JsonObject>()
-
-            if (rows.isNotEmpty()) {
-                val existingRow = rows.first()
-                val existingSessionId = existingRow["id"]?.jsonPrimitive?.content
-                val activeDeviceId = existingRow["device_id"]?.jsonPrimitive?.content.orEmpty()
-                val activeDeviceName = existingRow["device_name"]?.jsonPrimitive?.content?.ifBlank { "Another Device" } ?: "Another Device"
-                val createdAtIso = existingRow["created_at"]?.jsonPrimitive?.content
-
-                val isSameDevice = activeDeviceId.equals(currentDeviceId, ignoreCase = true)
-                val effectiveForceOverride = forceOverride || role == AppRole.ADMIN || role == AppRole.HOD || role == AppRole.TEACHER
-
-                if (!isSameDevice && !effectiveForceOverride) {
-                    // BLOCKED: Active on another device
-                    val blockMsg = "This account is currently active on $activeDeviceName. Under college security regulations, you cannot be logged in on multiple devices at the same time. Please log out from $activeDeviceName first, or request approval to transfer your session."
-                    Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $activeDeviceName)")
-                    return@withContext SessionAcquireResult.Blocked(
-                        activeDeviceName = activeDeviceName,
-                        activeDeviceId = activeDeviceId,
-                        userIdentifier = cleanId,
-                        role = role,
-                        loggedInAtIso = createdAtIso,
-                        message = blockMsg
-                    )
-                }
-
-                // Same device or forceOverride: Refresh session and claim device
-                if (!existingSessionId.isNullOrBlank()) {
-                    client.from("user_sessions").update(
-                        buildJsonObject {
-                            put("device_id", currentDeviceId)
-                            put("device_name", currentDeviceName)
-                            put("session_token_hash", sessionTokenHash)
-                            put("last_seen_at", nowIso)
-                            put("active", true)
-                        }
-                    ) {
-                        filter { eq("id", existingSessionId) }
-                    }
-                }
-
-                val activeSession = ActiveDeviceSession(
-                    deviceId = currentDeviceId,
-                    deviceName = currentDeviceName,
-                    userIdentifier = cleanId,
-                    role = role.roleKey,
-                    isActive = true,
-                    loggedInAt = now,
-                    lastSeenAt = now,
-                    loggedInAtIso = nowIso
-                )
-                // Also update fallback mirror
-                syncFallbackSession(cleanId, activeSession, nowIso)
-                return@withContext SessionAcquireResult.Success(activeSession)
-
-            } else {
-                // No active session in user_sessions -> Claim new session
-                client.from("user_sessions").insert(
-                    buildJsonObject {
-                        put("user_id", cleanId)
-                        put("user_identifier", cleanId)
-                        put("role", role.roleKey)
-                        put("device_id", currentDeviceId)
-                        put("device_name", currentDeviceName)
-                        put("session_token_hash", sessionTokenHash)
-                        put("active", true)
-                        put("created_at", nowIso)
-                        put("last_seen_at", nowIso)
-                    }
-                )
-                val activeSession = ActiveDeviceSession(
-                    deviceId = currentDeviceId,
-                    deviceName = currentDeviceName,
-                    userIdentifier = cleanId,
-                    role = role.roleKey,
-                    isActive = true,
-                    loggedInAt = now,
-                    lastSeenAt = now,
-                    loggedInAtIso = nowIso
-                )
-                syncFallbackSession(cleanId, activeSession, nowIso)
-                return@withContext SessionAcquireResult.Success(activeSession)
-            }
-        } catch (dbErr: Exception) {
-            Log.d(TAG, "user_sessions query failed, evaluating fallback synchronization: ${dbErr.message}")
-        }
-
-        // 2. Secondary Strategy: Fallback Synchronization Table
-        try {
-            val title = "SESSION:$cleanId"
-            val rows = client.from("announcements")
-                .select {
-                    filter {
-                        eq("category", SYSTEM_SESSION_CATEGORY)
-                        eq("title", title)
-                    }
-                    limit(1)
-                }.decodeList<JsonObject>()
-
-            if (rows.isNotEmpty()) {
-                val existingRow = rows.first()
-                val existingId = existingRow["id"]?.jsonPrimitive?.content
-                val contentStr = existingRow["content"]?.jsonPrimitive?.content
-
-                var existingSession: ActiveDeviceSession? = null
-                if (!contentStr.isNullOrBlank()) {
-                    try {
-                        existingSession = json.decodeFromString<ActiveDeviceSession>(contentStr)
-                    } catch (parseErr: Exception) {
-                        Log.w(TAG, "Failed to parse session content: ${parseErr.message}")
-                    }
-                }
-
-                if (existingSession != null && existingSession.isActive) {
-                    val isSameDevice = existingSession.deviceId.equals(currentDeviceId, ignoreCase = true)
-                    val effectiveForceOverride = forceOverride || role == AppRole.ADMIN || role == AppRole.HOD || role == AppRole.TEACHER
-
-                    if (!isSameDevice && !effectiveForceOverride) {
-                        val deviceLabel = existingSession.deviceName.ifBlank { "Another Device" }
-                        val blockMsg = "This account is currently active on $deviceLabel. Under college security regulations, you cannot be logged in on multiple devices at the same time. Please log out from $deviceLabel first, or request approval to transfer your session."
-                        Log.w(TAG, "Single-Device Enforcement: Blocked login for $cleanId on $currentDeviceName (active on $deviceLabel)")
-                        return@withContext SessionAcquireResult.Blocked(
-                            activeDeviceName = deviceLabel,
-                            activeDeviceId = existingSession.deviceId,
-                            userIdentifier = cleanId,
-                            role = role,
-                            loggedInAtIso = existingSession.loggedInAtIso,
-                            message = blockMsg
-                        )
-                    }
-                }
-
-                val updatedSession = ActiveDeviceSession(
-                    deviceId = currentDeviceId,
-                    deviceName = currentDeviceName,
-                    userIdentifier = cleanId,
-                    role = role.roleKey,
-                    isActive = true,
-                    loggedInAt = now,
-                    lastSeenAt = now,
-                    loggedInAtIso = nowIso
-                )
-                val updatedContent = json.encodeToString(ActiveDeviceSession.serializer(), updatedSession)
-
-                if (!existingId.isNullOrBlank()) {
-                    client.from("announcements").update(
-                        buildJsonObject {
-                            put("content", updatedContent)
-                            put("updated_at", nowIso)
-                        }
-                    ) {
-                        filter { eq("id", existingId) }
-                    }
-                }
-                return@withContext SessionAcquireResult.Success(updatedSession)
-
-            } else {
-                val newSession = ActiveDeviceSession(
-                    deviceId = currentDeviceId,
-                    deviceName = currentDeviceName,
-                    userIdentifier = cleanId,
-                    role = role.roleKey,
-                    isActive = true,
-                    loggedInAt = now,
-                    lastSeenAt = now,
-                    loggedInAtIso = nowIso
-                )
-                val newContent = json.encodeToString(ActiveDeviceSession.serializer(), newSession)
-
-                val insertPayload = buildJsonObject {
-                    put("title", title)
-                    put("content", newContent)
-                    put("category", SYSTEM_SESSION_CATEGORY)
-                    put("is_published", false)
-                    put("is_pinned", false)
-                }
-                client.from("announcements").insert(insertPayload)
-                return@withContext SessionAcquireResult.Success(newSession)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to verify or acquire session for $cleanId: ${e.message}", e)
-            val fallbackSession = ActiveDeviceSession(
+        SessionAcquireResult.Success(
+            ActiveDeviceSession(
                 deviceId = currentDeviceId,
                 deviceName = currentDeviceName,
                 userIdentifier = cleanId,
                 role = role.roleKey,
                 isActive = true,
-                loggedInAt = now,
-                lastSeenAt = now,
-                loggedInAtIso = nowIso
+                loggedInAt = System.currentTimeMillis(),
+                lastSeenAt = System.currentTimeMillis(),
+                loggedInAtIso = null
             )
-            SessionAcquireResult.Success(fallbackSession)
-        }
+        )
     }
 
     /**
      * Releases the session lock when the user logs out from this device.
-     * Marks active = false in Supabase so another device can now log in.
      */
     suspend fun releaseSession(
         context: Context? = null,
@@ -473,68 +269,12 @@ object ActiveSessionRemoteManager {
     }
 
     /**
-     * Actively verifies whether this current device still holds the active session in Supabase.
-     * If another device has logged in or taken over the session, returns TerminatedByOtherDevice.
+     * Multi-device mode: Current device session is always valid and active.
      */
     suspend fun checkCurrentDeviceSession(
         context: Context?,
         userIdentifier: String
     ): SessionCheckResult = withContext(Dispatchers.IO) {
-        val cleanId = userIdentifier.trim().uppercase()
-        if (cleanId.isBlank()) return@withContext SessionCheckResult.Active
-        val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
-        val client = SupabaseClientProvider.client
-
-        // 1. Check public.user_sessions table
-        try {
-            val rows = client.from("user_sessions")
-                .select {
-                    filter {
-                        eq("user_identifier", cleanId)
-                        eq("active", true)
-                    }
-                    limit(1)
-                }.decodeList<JsonObject>()
-
-            if (rows.isNotEmpty()) {
-                val row = rows.first()
-                val activeDeviceId = row["device_id"]?.jsonPrimitive?.content.orEmpty()
-                val activeDeviceName = row["device_name"]?.jsonPrimitive?.content?.ifBlank { "Another Device" } ?: "Another Device"
-
-                if (activeDeviceId.isNotBlank() && !activeDeviceId.equals(currentDeviceId, ignoreCase = true)) {
-                    Log.w(TAG, "Single-Device Enforcement: Active session on $activeDeviceName ($activeDeviceId), current: $currentDeviceId")
-                    return@withContext SessionCheckResult.TerminatedByOtherDevice(activeDeviceName)
-                }
-                return@withContext SessionCheckResult.Active
-            }
-        } catch (_: Exception) {}
-
-        // 2. Check fallback announcements table
-        try {
-            val title = "SESSION:$cleanId"
-            val rows = client.from("announcements")
-                .select {
-                    filter {
-                        eq("category", SYSTEM_SESSION_CATEGORY)
-                        eq("title", title)
-                    }
-                    limit(1)
-                }.decodeList<JsonObject>()
-
-            if (rows.isNotEmpty()) {
-                val row = rows.first()
-                val contentStr = row["content"]?.jsonPrimitive?.content
-                if (!contentStr.isNullOrBlank()) {
-                    val session = json.decodeFromString<ActiveDeviceSession>(contentStr)
-                    if (session.isActive && !session.deviceId.equals(currentDeviceId, ignoreCase = true)) {
-                        val activeName = session.deviceName.ifBlank { "Another Device" }
-                        Log.w(TAG, "Single-Device Enforcement (fallback): Active on $activeName, current: $currentDeviceId")
-                        return@withContext SessionCheckResult.TerminatedByOtherDevice(activeName)
-                    }
-                }
-            }
-        } catch (_: Exception) {}
-
         SessionCheckResult.Active
     }
 
@@ -724,42 +464,12 @@ object ActiveSessionRemoteManager {
     }
 
     /**
-     * Called by the active logged-in device (Device A) to check if any other device has requested login.
+     * Multi-device mode: No transfer requests needed.
      */
     suspend fun getPendingTransferRequest(
         userIdentifier: String,
         currentDeviceId: String
     ): SessionTransferRequest? = withContext(Dispatchers.IO) {
-        val cleanId = userIdentifier.trim().uppercase()
-        if (cleanId.isBlank()) return@withContext null
-
-        val client = SupabaseClientProvider.client
-        val reqTitle = "TRANSFER_REQ:$cleanId"
-
-        try {
-            val rows = client.from("announcements")
-                .select {
-                    filter {
-                        eq("category", SYSTEM_TRANSFER_CATEGORY)
-                        eq("title", reqTitle)
-                    }
-                    limit(1)
-                }.decodeList<JsonObject>()
-
-            if (rows.isNotEmpty()) {
-                val contentStr = rows.first()["content"]?.jsonPrimitive?.content
-                if (!contentStr.isNullOrBlank()) {
-                    val req = json.decodeFromString<SessionTransferRequest>(contentStr)
-                    if (req.status == "PENDING" && System.currentTimeMillis() <= req.expiresAt) {
-                        if (!req.toDeviceId.equals(currentDeviceId, ignoreCase = true)) {
-                            return@withContext req
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.d(TAG, "getPendingTransferRequest note: ${e.message}")
-        }
         null
     }
 

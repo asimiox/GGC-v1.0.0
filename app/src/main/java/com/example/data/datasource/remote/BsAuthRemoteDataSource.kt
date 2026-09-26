@@ -342,20 +342,14 @@ class BsAuthRemoteDataSource {
             return AuthResult.Error("Invalid Credentials.")
         }
 
-        // 6. Single-Device Concurrency Enforcement ("WhatsApp-Like" Session Registration)
+        // Multi-device concurrency allowed: Acquire session without blocking
         val sessionIdentifier = resolvedProfile.rollNumber.ifBlank { query }
-        val sessionResult = ActiveSessionRemoteManager.acquireSession(
+        ActiveSessionRemoteManager.acquireSession(
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
             userIdentifier = sessionIdentifier,
             role = com.example.data.model.AppRole.STUDENT_BS,
-            forceOverride = false
+            forceOverride = true
         )
-        if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
-            return AuthResult.Error(
-                message = sessionResult.message,
-                code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
-            )
-        }
 
         // 5. Save student record locally without storing plaintext password
         com.example.data.datasource.RegisteredStudentStore.saveBsAccount(

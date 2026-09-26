@@ -201,6 +201,7 @@ class ExampleRobolectricTest {
     assertEquals(com.example.ui.screens.admin.OfficialRegistryTab.FACULTY, facultyState.selectedTab)
   }
 
+  @org.junit.Ignore("Manual remote diagnostic test requires active network and Supabase credentials")
   @Test
   fun `diagnose password change issue`() = kotlinx.coroutines.runBlocking {
     val client = com.example.data.datasource.remote.SupabaseClientProvider.client

@@ -384,18 +384,12 @@ class FacultyAuthRemoteDataSource {
             resolvedProfile.designation.contains("Head of Department", ignoreCase = true) -> com.example.data.model.AppRole.HOD
             else -> com.example.data.model.AppRole.TEACHER
         }
-        val sessionResult = ActiveSessionRemoteManager.acquireSession(
+        ActiveSessionRemoteManager.acquireSession(
             context = com.example.util.DeviceIdentifierHelper.getAppContext(),
             userIdentifier = sessionIdentifier,
             role = sessionRole,
             forceOverride = true
         )
-        if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
-            return AuthResult.Error(
-                message = sessionResult.message,
-                code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
-            )
-        }
 
         // Save into local RegisteredFacultyStore without storing plaintext password
         com.example.data.datasource.RegisteredFacultyStore.saveAccount(

@@ -2,13 +2,18 @@ package com.example.ui.screens.onboarding
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,14 +24,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,40 +50,42 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Biotech
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -88,26 +102,23 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.R
 import com.example.data.UserProfileManager
 import com.example.ui.screens.auth.AdminAuthContent
 import com.example.ui.screens.auth.BsAuthContent
 import com.example.ui.screens.auth.FacultyAuthContent
 import com.example.ui.screens.auth.IntermediateAuthContent
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.material.icons.filled.AdminPanelSettings
+import kotlinx.coroutines.launch
 
 private val BrandNavy = Color(0xFF061B52)
+private val BrandGold = Color(0xFFC5A059)
 private val BrandNavyDark = Color(0xFF030D2B)
 private val BrandBackground = Color(0xFFF6F6F6)
 private val BrandTextMuted = Color(0xFF7A879D)
@@ -145,11 +156,53 @@ private val bsList = listOf(
     OnboardingProgramItem("BS Zoology", "Department of Zoology", Icons.Default.Pets)
 )
 
+private data class OnboardingPageData(
+    val title: String,
+    val description: String,
+    val imageRes: Int,
+    val isOfficialLogo: Boolean = false
+)
+
+private val onboardingPages = listOf(
+    OnboardingPageData(
+        title = "Welcome to GGC M.B.Din",
+        description = "Your official college app for academics, announcements and campus information.",
+        imageRes = R.drawable.img_hero_01,
+        isOfficialLogo = false
+    ),
+    OnboardingPageData(
+        title = "Everything You Need for Your Studies",
+        description = "Explore programs, courses, faculty information and academic resources in one place.",
+        imageRes = R.drawable.img_onboarding_academics,
+        isOfficialLogo = false
+    ),
+    OnboardingPageData(
+        title = "Stay Connected With Your College",
+        description = "Keep up with official announcements, notices, events and important college updates.",
+        imageRes = R.drawable.img_onboarding_updates,
+        isOfficialLogo = false
+    ),
+    OnboardingPageData(
+        title = "Your College Experience, Organized",
+        description = "Keep your academic information and student services together in one simple place.",
+        imageRes = R.drawable.img_onboarding_student,
+        isOfficialLogo = false
+    ),
+    OnboardingPageData(
+        title = "GGC M.B.Din Official App",
+        description = "Your official digital connection to Government Graduate College Mandi Bahauddin.",
+        imageRes = R.drawable.ic_ggc_logo,
+        isOfficialLogo = true
+    )
+)
+
 @Composable
 fun OnboardingScreen(
     onOnboardingFinished: () -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
     var currentStep by remember { mutableStateOf(OnboardingStep.WELCOME) }
 
     var studentName by remember { mutableStateOf("") }
@@ -157,18 +210,26 @@ fun OnboardingScreen(
     var selectedProgram by remember { mutableStateOf("") }
     var selectedSemester by remember { mutableStateOf<String?>("Semester 1") }
 
-    BackHandler(enabled = currentStep != OnboardingStep.WELCOME) {
-        currentStep = when (currentStep) {
-            OnboardingStep.WELCOME -> OnboardingStep.WELCOME
-            OnboardingStep.CONTINUE_AS -> OnboardingStep.WELCOME
-            OnboardingStep.CHOOSE_LEVEL -> OnboardingStep.CONTINUE_AS
-            OnboardingStep.INTERMEDIATE_AUTH -> OnboardingStep.CHOOSE_LEVEL
-            OnboardingStep.BS_PROGRAMS -> OnboardingStep.CHOOSE_LEVEL
-            OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_AUTH
-            OnboardingStep.BS_AUTH -> OnboardingStep.CHOOSE_LEVEL
-            OnboardingStep.TEACHER_AUTH -> OnboardingStep.CONTINUE_AS
-            OnboardingStep.HOD_AUTH -> OnboardingStep.CONTINUE_AS
-            OnboardingStep.ADMIN_AUTH -> OnboardingStep.CONTINUE_AS
+    BackHandler(enabled = currentStep != OnboardingStep.WELCOME || pagerState.currentPage > 0) {
+        if (currentStep == OnboardingStep.WELCOME) {
+            if (pagerState.currentPage > 0) {
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                }
+            }
+        } else {
+            currentStep = when (currentStep) {
+                OnboardingStep.WELCOME -> OnboardingStep.WELCOME
+                OnboardingStep.CONTINUE_AS -> OnboardingStep.WELCOME
+                OnboardingStep.CHOOSE_LEVEL -> OnboardingStep.CONTINUE_AS
+                OnboardingStep.INTERMEDIATE_AUTH -> OnboardingStep.CHOOSE_LEVEL
+                OnboardingStep.BS_PROGRAMS -> OnboardingStep.CHOOSE_LEVEL
+                OnboardingStep.SELECT_SEMESTER -> OnboardingStep.BS_AUTH
+                OnboardingStep.BS_AUTH -> OnboardingStep.CHOOSE_LEVEL
+                OnboardingStep.TEACHER_AUTH -> OnboardingStep.CONTINUE_AS
+                OnboardingStep.HOD_AUTH -> OnboardingStep.CONTINUE_AS
+                OnboardingStep.ADMIN_AUTH -> OnboardingStep.CONTINUE_AS
+            }
         }
     }
 
@@ -192,7 +253,8 @@ fun OnboardingScreen(
             label = "onboarding_step_flow"
         ) { step ->
             when (step) {
-                OnboardingStep.WELCOME -> WelcomeStepScreen(
+                OnboardingStep.WELCOME -> ModernOnboardingWalkthroughScreen(
+                    pagerState = pagerState,
                     onGetStarted = { currentStep = OnboardingStep.CONTINUE_AS }
                 )
 
@@ -272,165 +334,349 @@ fun OnboardingScreen(
 }
 
 // -------------------------------------------------------------
-// STEP 1: WELCOME SCREEN (Reference Image: Screen 2)
+// STEP 1: MODERN ONBOARDING WALKTHROUGH (5-PAGE VISUAL STORYTELLING)
 // -------------------------------------------------------------
 @Composable
-private fun WelcomeStepScreen(
+private fun ModernOnboardingWalkthroughScreen(
+    pagerState: PagerState,
     onGetStarted: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val isFinalPage = pagerState.currentPage == onboardingPages.lastIndex
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(BrandBackground)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-            modifier = Modifier.verticalScroll(rememberScrollState())
+        // TOP NAVIGATION BAR (Back / Identity + Skip)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // App Identity Header
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_ggc_logo),
-                    contentDescription = "GGC Logo",
-                    modifier = Modifier.size(38.dp)
-                )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column {
+            if (pagerState.currentPage > 0) {
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                        }
+                    },
+                    modifier = Modifier
+                        .size(44.dp)
+                        .testTag("onboarding_back_btn")
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Previous Page",
+                        tint = BrandNavy
+                    )
+                }
+            } else {
+                // College Mini Identity Badge on Page 1
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_ggc_logo),
+                        contentDescription = "GGC Official Logo",
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "GGC M.B.Din",
-                        fontSize = 16.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = BrandNavy
-                    )
-                    Text(
-                        text = "Official App",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = BrandTextMuted
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            if (!isFinalPage) {
+                TextButton(
+                    onClick = onGetStarted,
+                    modifier = Modifier
+                        .height(44.dp)
+                        .testTag("onboarding_skip_btn")
+                ) {
+                    Text(
+                        text = "Skip",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = BrandNavy
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.width(44.dp))
+            }
+        }
 
-            Text(
-                text = "Welcome",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = BrandNavy
-            )
+        // HORIZONTAL PAGER: HERO VISUAL + HEADING + SUBTITLE
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) { pageIndex ->
+            val page = onboardingPages[pageIndex]
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Large Hero Visual Area (~50% height with generous whitespace)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (page.isOfficialLogo) {
+                        // FINAL PAGE: Official GGC Seal Crest Presentation
+                        Surface(
+                            modifier = Modifier
+                                .size(240.dp)
+                                .testTag("onboarding_final_seal"),
+                            shape = CircleShape,
+                            color = Color.White,
+                            border = BorderStroke(2.dp, BrandGold.copy(alpha = 0.5f)),
+                            shadowElevation = 3.dp
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFFFAFBFE)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // Concentric Inner Ring
+                                Box(
+                                    modifier = Modifier
+                                        .size(196.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White)
+                                        .border(1.dp, Color(0xFFE2E8F0), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.ic_ggc_logo),
+                                        contentDescription = "GGC M.B.Din Official Seal",
+                                        modifier = Modifier
+                                            .size(140.dp)
+                                            .testTag("onboarding_official_logo")
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // Large Rounded Hero Visual Card
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 220.dp, max = 290.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            border = BorderStroke(1.dp, Color(0xFFE9EDF5)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = page.imageRes),
+                                contentDescription = page.title,
+                                contentScale = if (page.imageRes == R.drawable.img_hero_01) ContentScale.Crop else ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(if (page.imageRes == R.drawable.img_hero_01) 0.dp else 16.dp)
+                            )
+                        }
+                    }
+                }
 
-            Text(
-                text = "Education · Excellence · Integrity",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = BrandTextMuted
-            )
+                Spacer(modifier = Modifier.height(26.dp))
 
-            Spacer(modifier = Modifier.height(22.dp))
+                // Short Strong Heading
+                Text(
+                    text = page.title,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandNavy,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 30.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
 
-            // Hero Image with Soft Rounded Corners
-            Card(
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // One Concise Supporting Sentence
+                Text(
+                    text = page.description,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = BrandTextMuted,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 21.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+
+        // BOTTOM CONTROLS & PAGINATION
+        if (!isFinalPage) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(210.dp),
-                shape = RoundedCornerShape(18.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                colors = CardDefaults.cardColors(containerColor = BrandBackground)
+                    .padding(bottom = 16.dp, top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_hero_01),
-                    contentDescription = "Govt Graduate College Mandi Bahauddin Campus",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                // Animated Page Indicator
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.testTag("onboarding_page_indicator")
+                ) {
+                    for (i in onboardingPages.indices) {
+                        val isSelected = pagerState.currentPage == i
+                        val width by animateDpAsState(
+                            targetValue = if (isSelected) 26.dp else 7.dp,
+                            animationSpec = tween(durationMillis = 280),
+                            label = "indicator_width"
+                        )
+                        val color by animateColorAsState(
+                            targetValue = if (isSelected) BrandNavy else Color(0xFFCBD5E1),
+                            animationSpec = tween(durationMillis = 280),
+                            label = "indicator_color"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .height(7.dp)
+                                .width(width)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(color)
+                        )
+                    }
+                }
+
+                // Modern Circular Next Button
+                Surface(
+                    modifier = Modifier
+                        .size(54.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        }
+                        .testTag("onboarding_next_btn"),
+                    shape = CircleShape,
+                    color = BrandNavy,
+                    shadowElevation = 2.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Next Page",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Stylized Quote Below Image
+        } else {
+            // FINAL PAGE: Indicator + Large Primary CTA "Get Started"
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .padding(bottom = 12.dp, top = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Ibn Mas’ūd رضي الله عنه said:",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = BrandTextMuted,
-                    textAlign = TextAlign.Center
-                )
+                // Centered Animated Indicator
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(bottom = 18.dp)
+                        .testTag("onboarding_page_indicator_final")
+                ) {
+                    for (i in onboardingPages.indices) {
+                        val isSelected = pagerState.currentPage == i
+                        val width by animateDpAsState(
+                            targetValue = if (isSelected) 26.dp else 7.dp,
+                            animationSpec = tween(durationMillis = 280),
+                            label = "final_indicator_width"
+                        )
+                        val color by animateColorAsState(
+                            targetValue = if (isSelected) BrandNavy else Color(0xFFCBD5E1),
+                            animationSpec = tween(durationMillis = 280),
+                            label = "final_indicator_color"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .height(7.dp)
+                                .width(width)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(color)
+                        )
+                    }
+                }
+
+                // Get Started Button
+                Button(
+                    onClick = onGetStarted,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .testTag("welcome_get_started_btn"),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Get Started",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                Text(
-                    text = "“Verily, no one is born knowledgeable;\nknowledge comes by way of studies.”",
-                    fontFamily = FontFamily.Serif,
-                    fontStyle = FontStyle.Italic,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = BrandNavy,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 23.sp
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "[كتاب الزهد الإمام أحمد بن حنبل ٥٠٩]",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = BrandTextMuted,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-        }
-
-        // Elevated CTA Button safely above system navigation bar
-        Button(
-            onClick = onGetStarted,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp)
-                .height(52.dp)
-                .testTag("welcome_get_started_btn"),
-            colors = ButtonDefaults.buttonColors(containerColor = BrandNavy),
-            shape = RoundedCornerShape(14.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Get Started",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
+                // Secondary Portal Access Link
+                TextButton(
+                    onClick = onGetStarted,
+                    modifier = Modifier.height(44.dp)
+                ) {
+                    Text(
+                        text = "Sign in to Student or Faculty Portal",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = BrandTextMuted
+                    )
+                }
             }
         }
     }

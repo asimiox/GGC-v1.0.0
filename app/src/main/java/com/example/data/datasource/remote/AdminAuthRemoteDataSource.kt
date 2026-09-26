@@ -69,19 +69,13 @@ class AdminAuthRemoteDataSource {
                                 isVerified = true
                             )
 
-                            // Enforce Single-Device Concurrency Lock (Admin never blocked)
-                            val sessionResult = ActiveSessionRemoteManager.acquireSession(
+                            // Multi-device concurrency allowed: Acquire session without blocking
+                            ActiveSessionRemoteManager.acquireSession(
                                 context = com.example.util.DeviceIdentifierHelper.getAppContext(),
                                 userIdentifier = "ADMIN_CENTRAL",
                                 role = AppRole.ADMIN,
                                 forceOverride = true
                             )
-                            if (sessionResult is ActiveSessionRemoteManager.SessionAcquireResult.Blocked) {
-                                return AuthResult.Error(
-                                    message = sessionResult.message,
-                                    code = "SESSION_BLOCKED:${sessionResult.activeDeviceName}:${sessionResult.activeDeviceId}:${sessionResult.userIdentifier}:${sessionResult.role.roleKey}"
-                                )
-                            }
 
                             return AuthResult.Success(profile, "Administrator identity verified. Super Control granted.")
                         }
