@@ -683,6 +683,13 @@ object OfficialCredentialsDirectory {
                 return true
             }
         }
+        // Support updated personalized passwords
+        if (PasswordRegistryStore.verifyPassword(entry.facultyId, cleanPassword) ||
+            PasswordRegistryStore.verifyPassword(entry.username, cleanPassword) ||
+            PasswordRegistryStore.verifyPassword(entry.legacyId, cleanPassword) ||
+            PasswordRegistryStore.verifyPassword(entry.email, cleanPassword)) {
+            return true
+        }
         return false
     }
 }

@@ -82,30 +82,7 @@ object NotificationBackgroundSyncManager {
                 }
             }
 
-            // 3. Check for security login transfer requests from other devices
-            try {
-                val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
-                val userIdentifier = userProfile.rollNumber ?: userProfile.facultyId ?: userProfile.username ?: userProfile.name
-                val transferReq = com.example.data.datasource.remote.ActiveSessionRemoteManager.getPendingTransferRequest(userIdentifier, currentDeviceId)
-                if (transferReq != null) {
-                    val notifId = "transfer_${transferReq.requestId}"
-                    if (!deliveredIds.contains(notifId)) {
-                        SystemNotificationHelper.showSystemPushNotification(
-                            context = context,
-                            notification = AppNotificationDto(
-                                id = notifId,
-                                notificationType = NotificationType.ANNOUNCEMENT_PRIORITY.key,
-                                title = "Security Alert: Login Request",
-                                message = "Someone is trying to log in from ${transferReq.toDeviceName}. Tap to Approve or Reject.",
-                                targetRole = "all",
-                                isPriority = true
-                            )
-                        )
-                        deliveredIds.add(notifId)
-                        newNotifsDispatched++
-                    }
-                }
-            } catch (_: Exception) {}
+            // 3. Concurrency: Multi-device login is fully allowed without security restrictions or conflict checks.
 
             // 4. Filter notifications authorized for the current user profile
             val authorized = pendingNotifications.filter { it.isAuthorizedFor(userProfile) }

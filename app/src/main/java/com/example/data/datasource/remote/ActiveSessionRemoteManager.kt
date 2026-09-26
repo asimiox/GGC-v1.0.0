@@ -347,81 +347,21 @@ object ActiveSessionRemoteManager {
         val cleanId = userIdentifier.trim().uppercase()
         val currentDeviceId = DeviceIdentifierHelper.getDeviceId(context)
         val currentDeviceName = DeviceIdentifierHelper.getDeviceDisplayName()
-        val client = SupabaseClientProvider.client
         val now = System.currentTimeMillis()
-        val requestId = "req_${cleanId}_${now}"
 
-        val request = SessionTransferRequest(
-            requestId = requestId,
+        // Multi-device concurrency allowed: Instantly approved without security alerts or blocking.
+        SessionTransferRequest(
+            requestId = "req_${cleanId}_${now}",
             userIdentifier = cleanId,
             role = role.roleKey,
             fromDeviceId = activeDeviceId,
             fromDeviceName = activeDeviceName,
             toDeviceId = currentDeviceId,
             toDeviceName = currentDeviceName,
-            status = "PENDING",
+            status = "APPROVED",
             createdAt = now,
             expiresAt = now + 90_000L
         )
-
-        val reqTitle = "TRANSFER_REQ:$cleanId"
-        val reqContent = json.encodeToString(SessionTransferRequest.serializer(), request)
-
-        try {
-            val rows = client.from("announcements")
-                .select {
-                    filter {
-                        eq("category", SYSTEM_TRANSFER_CATEGORY)
-                        eq("title", reqTitle)
-                    }
-                    limit(1)
-                }.decodeList<JsonObject>()
-
-            if (rows.isNotEmpty()) {
-                val rowId = rows.first()["id"]?.jsonPrimitive?.content
-                if (!rowId.isNullOrBlank()) {
-                    client.from("announcements").update(
-                        buildJsonObject {
-                            put("content", reqContent)
-                            put("updated_at", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date(now)))
-                        }
-                    ) {
-                        filter { eq("id", rowId) }
-                    }
-                }
-            } else {
-                client.from("announcements").insert(
-                    buildJsonObject {
-                        put("title", reqTitle)
-                        put("content", reqContent)
-                        put("category", SYSTEM_TRANSFER_CATEGORY)
-                        put("is_published", false)
-                        put("is_pinned", false)
-                    }
-                )
-            }
-
-            try {
-                val notificationRemote = NotificationRemoteDataSource()
-                notificationRemote.insertNotification(
-                    com.example.data.model.AppNotificationDto(
-                        id = "notif_transfer_$requestId",
-                        notificationType = com.example.data.model.NotificationType.ANNOUNCEMENT_PRIORITY.key,
-                        title = "Security Alert: Login Request",
-                        message = "Someone is trying to log in from $currentDeviceName. Tap to Approve or Reject.",
-                        targetRole = role.roleKey,
-                        departmentId = cleanId,
-                        isPriority = true
-                    )
-                )
-            } catch (notifEx: Exception) {
-                Log.d(TAG, "Notification insert note: ${notifEx.message}")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error creating transfer request: ${e.message}", e)
-        }
-
-        request
     }
 
     /**

@@ -279,8 +279,15 @@ class IntermediateAuthRemoteDataSource {
             Log.w(TAG, "direct_login_intermediate_student RPC error: ${rpcErr.message}")
         }
 
-        // Student password is strictly 00000 for all rosters/fallbacks. Reject any other password.
-        if (resolvedProfile == null && cleanPassword != "00000") {
+        // Password verification for rosters/fallbacks (supports default "00000" or custom updated password)
+        val isPasswordValid = if (cleanPassword == "00000") {
+            !com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(query) ||
+            !com.example.data.datasource.PasswordRegistryStore.hasStoredHash(query)
+        } else {
+            com.example.data.datasource.PasswordRegistryStore.verifyPassword(query, cleanPassword)
+        }
+
+        if (resolvedProfile == null && !isPasswordValid) {
             return AuthResult.Error("Invalid Credentials.")
         }
 

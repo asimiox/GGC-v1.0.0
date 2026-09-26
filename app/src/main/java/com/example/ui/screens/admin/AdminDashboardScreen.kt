@@ -88,7 +88,6 @@ fun AdminDashboardScreen(
     val context = LocalContext.current
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
-    var showFirstLoginPrompt by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(true) }
 
     val userProfile by UserProfileManager.userProfile.collectAsState()
     val isRootDashboard = uiState.activeSection == AdminNavSection.DASHBOARD
@@ -97,11 +96,21 @@ fun AdminDashboardScreen(
     val hasCustomPassword = remember(adminIdentifier, showChangePasswordDialog) {
         com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(adminIdentifier)
     }
+    var showFirstLoginPrompt by androidx.compose.runtime.saveable.rememberSaveable(adminIdentifier, hasCustomPassword) {
+        mutableStateOf(!hasCustomPassword && !com.example.data.datasource.PasswordRegistryStore.hasShownLoginPasswordPrompt(adminIdentifier))
+    }
 
     if (!hasCustomPassword && showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
-            onDismissRequest = { showFirstLoginPrompt = false },
-            onOpenChangePassword = { showChangePasswordDialog = true }
+            onDismissRequest = {
+                showFirstLoginPrompt = false
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(adminIdentifier)
+            },
+            onOpenChangePassword = {
+                showFirstLoginPrompt = false
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(adminIdentifier)
+                showChangePasswordDialog = true
+            }
         )
     }
 

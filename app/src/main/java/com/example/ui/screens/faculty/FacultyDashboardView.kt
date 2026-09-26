@@ -118,14 +118,17 @@ fun FacultyDashboardView(
         ?: userProfile.name.ifBlank { "faculty" }
 
     val hasCustomPassword = remember(facultyIdentifier, showChangePasswordDialog) {
-        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(facultyIdentifier)
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(facultyIdentifier) ||
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(userProfile.facultyId) ||
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(userProfile.username) ||
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(userProfile.institutionalEmail)
     }
 
-    var showFirstLoginPrompt by remember(facultyIdentifier) {
+    var showFirstLoginPrompt by remember(facultyIdentifier, hasCustomPassword) {
         mutableStateOf(!hasCustomPassword && !com.example.data.datasource.PasswordRegistryStore.hasShownLoginPasswordPrompt(facultyIdentifier))
     }
 
-    if (showFirstLoginPrompt) {
+    if (!hasCustomPassword && showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
             onDismissRequest = {
                 showFirstLoginPrompt = false

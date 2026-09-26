@@ -131,16 +131,19 @@ fun HomeScreen(
         ?: userProfile.name.ifBlank { "student" }
 
     val hasCustomPassword = remember(studentIdentifier, showChangePasswordDialog) {
-        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(studentIdentifier)
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(studentIdentifier) ||
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(userProfile.rollNumber) ||
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(userProfile.registrationNumber) ||
+        com.example.data.datasource.PasswordRegistryStore.hasCustomPassword(userProfile.username)
     }
 
-    var showFirstLoginPrompt by remember(studentIdentifier) {
+    var showFirstLoginPrompt by remember(studentIdentifier, hasCustomPassword) {
         mutableStateOf(!hasCustomPassword && !com.example.data.datasource.PasswordRegistryStore.hasShownLoginPasswordPrompt(studentIdentifier))
     }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scrollState = rememberScrollState()
 
-    if (showFirstLoginPrompt) {
+    if (!hasCustomPassword && showFirstLoginPrompt) {
         com.example.ui.components.FirstLoginPasswordPromptDialog(
             onDismissRequest = {
                 showFirstLoginPrompt = false

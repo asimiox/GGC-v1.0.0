@@ -294,7 +294,14 @@ fun ChangePasswordDialog(
                         errorMessage = null
                     },
                     label = { Text("New Password") },
-                    placeholder = { Text("At least 4 characters") },
+                    placeholder = { Text("Min 4 chars (letters + numbers)") },
+                    supportingText = {
+                        Text(
+                            text = "Min 4 characters with numbers (0-9) and letters. Special characters like #@ are optional.",
+                            fontSize = 10.sp,
+                            color = Color(0xFF718096)
+                        )
+                    },
                     leadingIcon = {
                         Icon(Icons.Default.VpnKey, contentDescription = null, tint = BrandNavy)
                     },
@@ -454,8 +461,9 @@ private fun performPasswordUpdate(
         return
     }
 
-    if (cleanNew.length < 4) {
-        onError("New password must be at least 4 characters long.")
+    val validationError = com.example.data.datasource.remote.CentralAuthRemoteManager.validatePasswordRequirements(cleanNew)
+    if (validationError != null) {
+        onError(validationError)
         return
     }
 
@@ -481,6 +489,12 @@ private fun performPasswordUpdate(
         )
         when (result) {
             is com.example.data.datasource.remote.CentralAuthRemoteManager.PasswordChangeResult.Success -> {
+                // Ensure all user profile aliases are marked changed
+                profile.rollNumber?.let { com.example.data.datasource.PasswordRegistryStore.markPasswordChanged(it) }
+                profile.facultyId?.let { com.example.data.datasource.PasswordRegistryStore.markPasswordChanged(it) }
+                profile.username?.let { com.example.data.datasource.PasswordRegistryStore.markPasswordChanged(it) }
+                com.example.data.datasource.PasswordRegistryStore.markPasswordChanged(primaryIdentifier)
+                com.example.data.datasource.PasswordRegistryStore.markLoginPasswordPromptShown(primaryIdentifier)
                 onSuccess(result.message)
             }
             is com.example.data.datasource.remote.CentralAuthRemoteManager.PasswordChangeResult.Error -> {

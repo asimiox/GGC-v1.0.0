@@ -100,6 +100,13 @@ object UserProfileManager {
             appRole = computedRole
         )
 
+        val primaryId = roll ?: facultyId ?: username ?: (if (computedRole == AppRole.ADMIN) "ADMIN_CENTRAL" else null)
+        if (!primaryId.isNullOrBlank()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                com.example.data.datasource.remote.CentralAuthRemoteManager.syncUserPasswordStatusFromDatabase(primaryId)
+            }
+        }
+
         if (isVerified && (computedRole == AppRole.STUDENT_BS || computedRole == AppRole.STUDENT_INTERMEDIATE)) {
             val validRoll = roll ?: username ?: "STUDENT"
             CoroutineScope(Dispatchers.IO).launch {
@@ -443,6 +450,17 @@ object UserProfileManager {
     }
 
     private fun onLoginSuccess(context: Context) {
+        val currentProfile = _userProfile.value
+        val userIdentifier = currentProfile.rollNumber
+            ?: currentProfile.facultyId
+            ?: currentProfile.username
+            ?: (if (currentProfile.appRole == AppRole.ADMIN) "ADMIN_CENTRAL" else null)
+
+        if (!userIdentifier.isNullOrBlank()) {
+            CoroutineScope(Dispatchers.IO).launch {
+                com.example.data.datasource.remote.CentralAuthRemoteManager.syncUserPasswordStatusFromDatabase(userIdentifier)
+            }
+        }
         try {
             com.example.util.NotificationSyncScheduler.startSync(context)
         } catch (e: Exception) {

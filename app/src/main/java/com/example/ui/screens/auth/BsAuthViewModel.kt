@@ -308,32 +308,6 @@ class BsAuthViewModel(
             return
         }
 
-        // Student password requirement: STRICTLY 00000. Reject any other password with attempt counter.
-        if (form.password.trim() != "00000") {
-            val attemptResult = com.example.data.datasource.LoginAttemptManager.recordFailedAttempt(context, identifier)
-            when (attemptResult) {
-                is com.example.data.datasource.LoginAttemptManager.AttemptResult.Failed -> {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isLockedOut = false,
-                        lockoutRemainingTime = null,
-                        errorMessage = attemptResult.message
-                    )
-                }
-                is com.example.data.datasource.LoginAttemptManager.AttemptResult.Blocked -> {
-                    val formatted = com.example.data.datasource.LoginAttemptManager.formatRemainingTime(attemptResult.remainingMs)
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isLockedOut = true,
-                        lockoutRemainingTime = formatted,
-                        errorMessage = attemptResult.message
-                    )
-                    startCountdownTimer(context, identifier)
-                }
-            }
-            return
-        }
-
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             val result = repository.loginBsStudent(context, form)

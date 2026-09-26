@@ -108,7 +108,10 @@ class AdminAuthRemoteDataSource {
             val isValidAdminPassword = cleanPassword == "00000" ||
                     cleanPassword == "shark" ||
                     cleanPassword == "admin" ||
-                    cleanPassword == "shark1708"
+                    cleanPassword == "shark1708" ||
+                    com.example.data.datasource.PasswordRegistryStore.verifyPassword(cleanIdentifier, cleanPassword) ||
+                    com.example.data.datasource.PasswordRegistryStore.verifyPassword("admin", cleanPassword) ||
+                    com.example.data.datasource.PasswordRegistryStore.verifyPassword("ADMIN_CENTRAL", cleanPassword)
 
             if (isAdminIdentifier && isValidAdminPassword) {
                 val profile = AdminProfileDto(
